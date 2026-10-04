@@ -1,0 +1,307 @@
+.ordersPage {
+  padding-bottom: 80px;
+}
+
+.banner {
+  background-color: var(--color-bg-subtle);
+  border-bottom: 1px solid var(--color-border);
+  padding: 40px 0;
+  margin-bottom: 36px;
+}
+
+.bannerSubtitle {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  margin-top: 6px;
+}
+
+.trackCard {
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-sm);
+}
+
+.trackContent h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.trackContent p {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.trackForm {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  max-width: 440px;
+}
+
+.inputWrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  color: var(--color-text-muted);
+}
+
+.trackInput {
+  width: 100%;
+  height: 42px;
+  padding: 0 16px 0 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.trackInput:focus {
+  border-color: var(--color-primary);
+}
+
+.tabsRow {
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 24px;
+}
+
+.tabBtn {
+  background: none;
+  border: none;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.tabBtn:hover {
+  color: var(--color-text-main);
+}
+
+.activeTab {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.ordersList {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.orderCard {
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.orderHeader {
+  padding: 20px 24px;
+  background-color: var(--color-bg-subtle);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.orderRef {
+  display: block;
+  font-size: 0.9375rem;
+  color: var(--color-text-main);
+}
+
+.orderDate {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.badgeActive {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+}
+
+.badgeDelivered {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+}
+
+.timeline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  background-color: var(--color-primary-subtle);
+  border-bottom: 1px solid var(--color-primary-border);
+}
+
+.timelineStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1.5px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.stepDone {
+  color: var(--color-primary);
+}
+
+.stepDone .dot {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.stepCurrent {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.stepCurrent .dot {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.timelineLine {
+  flex: 1;
+  height: 2px;
+  background-color: var(--color-primary-border);
+  margin: 0 12px;
+}
+
+.itemsBlock {
+  padding: 20px 24px;
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.itemImg {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  object-fit: cover;
+}
+
+.itemInfo {
+  flex: 1;
+}
+
+.itemInfo h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  margin-bottom: 4px;
+}
+
+.itemInfo p {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.itemPrice {
+  font-size: 1rem;
+  color: var(--color-primary);
+}
+
+.orderFooter {
+  padding: 16px 24px;
+  background-color: var(--color-bg-subtle);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footerAddress {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.driverNote {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  margin-top: 4px;
+}
+
+.footerTotal {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.footerTotal span {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.footerTotal strong {
+  font-size: 1.125rem;
+  color: var(--color-text-main);
+}
+
+@media (max-width: 900px) {
+  .trackCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .trackForm {
+    max-width: 100%;
+  }
+  .timeline {
+    padding: 16px 12px;
+  }
+  .timelineLine {
+    margin: 0 4px;
+  }
+  .orderFooter {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

@@ -1,0 +1,127 @@
+.section {
+  padding: 60px 0;
+  background-color: #ffffff;
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.subtitle {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  margin-top: 6px;
+  max-width: 600px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.storeCard {
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all var(--transition-normal);
+}
+
+.storeCard:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHeader {
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-primary);
+  margin-bottom: 4px;
+}
+
+.cityTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  letter-spacing: -0.015em;
+}
+
+.detailsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.detailRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.addressText {
+  font-size: 0.9375rem;
+  color: var(--color-text-main);
+  font-weight: 500;
+  margin: 0;
+}
+
+.landmarkText {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.phoneLink {
+  font-size: 0.9375rem;
+  color: var(--color-text-main);
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.phoneLink:hover {
+  color: var(--color-primary);
+}
+
+.hoursText {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.cardFooter {
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.directionsBtn {
+  font-size: 0.875rem;
+  width: fit-content;
+}
+
+.extIcon {
+  opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

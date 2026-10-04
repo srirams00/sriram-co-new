@@ -1,0 +1,94 @@
+.section {
+  padding: 60px 0;
+  background-color: #ffffff;
+}
+
+.bentoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+}
+
+.bentoCell {
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+}
+
+.textCell {
+  background-color: var(--color-bg-warm);
+  padding: 48px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+  margin-bottom: 14px;
+}
+
+.title {
+  font-size: clamp(1.75rem, 3.2vw, 2.375rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text-main);
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+  max-width: 440px;
+}
+
+.paragraph {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  margin-bottom: 28px;
+  max-width: 420px;
+}
+
+.ctaBtn {
+  box-shadow: 0 4px 12px rgba(25, 77, 51, 0.2);
+}
+
+.imageCell {
+  background-color: var(--color-bg-subtle);
+  position: relative;
+  min-height: 380px;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 500ms ease;
+}
+
+.imageCell:hover .image {
+  transform: scale(1.03);
+}
+
+@media (max-width: 900px) {
+  .bentoGrid {
+    grid-template-columns: 1fr;
+  }
+  .textCell {
+    padding: 32px 24px;
+  }
+  .imageCell {
+    min-height: 280px;
+  }
+  /* On mobile, stack text then image */
+  .cellTopRight {
+    order: 2;
+  }
+  .cellBottomLeft {
+    order: 3;
+  }
+  .cellBottomRight {
+    order: 4;
+  }
+}

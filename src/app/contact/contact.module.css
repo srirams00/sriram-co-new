@@ -1,0 +1,273 @@
+.contactPage {
+  padding-bottom: 80px;
+}
+
+.banner {
+  background-color: var(--color-bg-subtle);
+  border-bottom: 1px solid var(--color-border);
+  padding: 56px 0;
+  text-align: center;
+}
+
+.bannerSubtitle {
+  font-size: 1.0625rem;
+  color: var(--color-text-secondary);
+  max-width: 640px;
+  margin: 12px auto 0;
+  line-height: 1.6;
+}
+
+.quickBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 24px 32px;
+  margin: -28px auto 48px;
+  box-shadow: var(--shadow-md);
+  max-width: 1040px;
+  position: relative;
+  z-index: 10;
+}
+
+.quickItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.quickIcon {
+  color: var(--color-primary);
+}
+
+.whatsappColor {
+  color: #25d366;
+}
+
+.quickItem strong {
+  display: block;
+  font-size: 0.9375rem;
+  color: var(--color-text-main);
+}
+
+.quickItem span {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.waLink {
+  font-size: 0.8125rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.quickDivider {
+  width: 1px;
+  height: 36px;
+  background-color: var(--color-border);
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 48px;
+}
+
+.branchesCol {
+  display: flex;
+  flex-direction: column;
+}
+
+.branchesDesc {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  margin: 8px 0 24px;
+}
+
+.branchesList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.branchCard {
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.branchHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.branchTag {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-primary);
+}
+
+.branchCity {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.branchDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.detailIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.addressLine {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.landmarkLine {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.phoneLink {
+  font-size: 0.875rem;
+  color: var(--color-text-main);
+  font-weight: 600;
+}
+
+.hoursLine {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.formCard {
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 36px;
+  box-shadow: var(--shadow-sm);
+}
+
+.formTitle {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin-bottom: 6px;
+}
+
+.formDesc {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 24px;
+}
+
+.inquiryForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroup label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  outline: none;
+  background-color: var(--color-bg-subtle);
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  border-color: var(--color-primary);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.submitBtn {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.formSuccess {
+  text-align: center;
+  padding: 32px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.formSuccess h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.formSuccess p {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  max-width: 440px;
+}
+
+@media (max-width: 900px) {
+  .quickBar {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 20px;
+    margin-top: 16px;
+  }
+  .quickDivider {
+    display: none;
+  }
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}
