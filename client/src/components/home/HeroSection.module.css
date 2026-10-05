@@ -1,7 +1,7 @@
 .heroSection {
-  padding-top: var(--space-3xl);
-  padding-bottom: var(--space-3xl);
-  background-color: #ffffff;
+  padding-top: var(--space-4xl);
+  padding-bottom: var(--space-4xl);
+  background-color: var(--color-bg-page); /* Warm off-white #F7F8F5 */
   overflow: hidden;
 }
 
@@ -9,7 +9,7 @@
   display: grid;
   grid-template-columns: 1.15fr 1fr;
   align-items: center;
-  gap: 48px;
+  gap: var(--space-2xl);
 }
 
 .heroContent {
@@ -21,10 +21,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  background-color: var(--color-bg-neutral);
+  color: var(--color-forest-green);
+  border: 1px solid var(--color-border);
+  font-family: var(--font-body);
+  font-size: 0.775rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   padding: 6px 14px;
   border-radius: var(--radius-pill);
   width: fit-content;
@@ -32,26 +36,28 @@
 }
 
 .eyebrowIcon {
-  color: var(--color-primary);
+  color: var(--color-commerce-green);
 }
 
 .heroTitle {
-  font-size: clamp(2.5rem, 5.5vw, 4rem);
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: var(--color-text-main);
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 5.5vw, 3.85rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  color: var(--color-forest-green);
   margin-bottom: 20px;
 }
 
 .heroTitleAccent {
-  color: var(--color-primary);
+  color: var(--color-commerce-green);
 }
 
 .heroSubtitle {
-  font-size: 1.125rem;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
   line-height: 1.6;
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary); /* Soft sage gray #68786D */
   max-width: 520px;
   margin-bottom: 32px;
 }
@@ -65,12 +71,31 @@
 }
 
 .heroBtn {
-  box-shadow: 0 4px 14px rgba(25, 77, 51, 0.25);
+  font-family: var(--font-body);
+  font-weight: 600;
+  background-color: var(--color-commerce-green);
+  color: #ffffff;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 14px rgba(24, 169, 87, 0.25);
+}
+
+.heroBtn:hover {
+  background-color: var(--color-accent-hover);
+  transform: translateY(-1px);
 }
 
 .secondaryBtn {
-  background-color: var(--color-bg-subtle);
+  font-family: var(--font-body);
+  font-weight: 600;
+  background-color: #ffffff;
+  color: var(--color-forest-green);
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+.secondaryBtn:hover {
+  background-color: var(--color-bg-neutral);
+  border-color: var(--color-border-hover);
 }
 
 .trustMetrics {
@@ -87,14 +112,16 @@
 }
 
 .metricItem strong {
+  font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--color-text-main);
+  color: var(--color-forest-green);
 }
 
 .metricItem span {
+  font-family: var(--font-body);
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 
 .metricDivider {
@@ -110,11 +137,12 @@
 
 .imageBackdrop {
   position: relative;
-  border-radius: var(--radius-2xl);
+  border-radius: var(--radius-xl); /* 20px */
+  border: 1px solid var(--color-border);
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   aspect-ratio: 4 / 3.4;
-  background-color: var(--color-bg-subtle);
+  background-color: var(--color-bg-neutral);
 }
 
 .heroImage {
@@ -136,18 +164,18 @@
   backdrop-filter: blur(8px);
   padding: 12px 18px;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--color-border);
 }
 
 .floatingIcon {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: var(--color-primary);
+  background-color: var(--color-forest-green);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -162,13 +190,15 @@
 }
 
 .floatingText strong {
+  font-family: var(--font-heading);
   font-size: 0.875rem;
-  color: var(--color-text-main);
+  color: var(--color-forest-green);
 }
 
 .floatingText span {
+  font-family: var(--font-body);
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 
 @media (max-width: 960px) {

@@ -1,69 +1,77 @@
 :root {
-  /* Brand Green Colors matching reference */
-  --color-primary: #194d33;
-  --color-primary-hover: #133c27;
-  --color-primary-active: #0e2e1e;
-  --color-primary-light: #eaf5ee;
-  --color-primary-subtle: #f2f9f5;
-  --color-primary-border: #c8e3d3;
+  /* Exact Design Tokens for Sri Ram & Co */
+  /* Primary Branding & Headings */
+  --color-forest-green: #174A2B;
+  --color-primary: #174A2B;
+  --color-primary-hover: #113820;
+  --color-primary-active: #0c2716;
 
-  /* Accent & Status Colors */
-  --color-accent-amber: #d97706;
-  --color-accent-gold: #f59e0b;
-  --color-danger: #dc2626;
-  --color-danger-light: #fef2f2;
-  --color-success: #16a34a;
+  /* Fresh Commerce Green (Buttons, Active States & Badges) */
+  --color-commerce-green: #18A957;
+  --color-accent: #18A957;
+  --color-accent-hover: #148f49;
+  --color-accent-light: #e8f7ee;
 
-  /* Neutrals & Backgrounds */
-  --color-bg-page: #ffffff;
-  --color-bg-card: #ffffff;
-  --color-bg-subtle: #f8f9fa;
-  --color-bg-warm: #f5f4f0;
-  --color-bg-warm-tint: #eae8e1;
-  --color-bg-dark: #111827;
+  /* Neutrals & Surfaces */
+  --color-bg-page: #F7F8F5; /* Warm off-white background */
+  --color-bg-card: #FFFFFF;
+  --color-bg-neutral: #F0F3EF; /* Warm neutral image background */
+  --color-bg-subtle: #F2F4F0;
+  --color-bg-dark: #174A2B;
 
   /* Typography Colors */
-  --color-text-main: #111827;
-  --color-text-secondary: #4b5563;
-  --color-text-muted: #8b949e;
-  --color-text-inverted: #ffffff;
+  --color-text-main: #174A2B; /* Headings */
+  --color-text-dark: #121814; /* Deep dark for primary readability */
+  --color-text-secondary: #68786D; /* Soft sage gray for secondary text */
+  --color-text-muted: #829286;
+  --color-text-inverted: #FFFFFF;
 
   /* Borders & Dividers */
-  --color-border: #e5e7eb;
-  --color-border-subtle: #f0f2f1;
-  --color-border-hover: #cbd5e1;
+  --color-border: #E5EDE7; /* Subtle pale green border */
+  --color-border-subtle: #EBF2ED;
+  --color-border-hover: #C5D8C9;
 
-  /* Spacing Scale */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
+  /* Accents & Status */
+  --color-danger: #D9383A;
+  --color-danger-light: #FDF2F2;
+  --color-gold: #E5A11A;
+
+  /* Typography Font Families */
+  --font-heading: var(--font-poppins), 'Poppins', sans-serif;
+  --font-body: var(--font-montserrat), 'Montserrat', sans-serif;
+  --font-sans: var(--font-montserrat), 'Montserrat', sans-serif;
+
+  /* Spacing Scale (8px increments) */
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 32px;
+  --space-xl: 40px;
   --space-2xl: 48px;
   --space-3xl: 64px;
   --space-4xl: 80px;
 
-  /* Border Radius */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
+  /* Border Radii (12-20px rounded cards) */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 22px;
-  --radius-2xl: 32px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
   --radius-pill: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
-  --shadow-hover: 0 12px 28px -4px rgba(25, 77, 51, 0.12);
+  /* Subtle Minimal Shadows */
+  --shadow-sm: 0 1px 3px rgba(23, 74, 43, 0.04);
+  --shadow-md: 0 4px 14px rgba(23, 74, 43, 0.05);
+  --shadow-lg: 0 10px 24px -4px rgba(23, 74, 43, 0.07);
+  --shadow-hover: 0 10px 22px -3px rgba(23, 74, 43, 0.09);
 
-  /* Layout Container */
+  /* Container */
   --container-max: 1240px;
   --container-padding: 24px;
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-smooth: 350ms cubic-bezier(0.16, 1, 0.3, 1);
 }

@@ -1,61 +1,69 @@
 .section {
-  padding: 60px 0;
-  background-color: #ffffff;
+  padding: var(--space-4xl) 0;
+  background-color: var(--color-bg-page);
 }
 
 .bentoGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
-  gap: 20px;
+  gap: var(--space-md);
 }
 
 .bentoCell {
   overflow: hidden;
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-xl); /* 20px */
+  border: 1px solid var(--color-border); /* Subtle pale green border #E5EDE7 */
   display: flex;
   flex-direction: column;
+  box-shadow: var(--shadow-sm);
 }
 
 .textCell {
-  background-color: var(--color-bg-warm);
+  background-color: var(--color-bg-neutral); /* Warm neutral surface */
   padding: 48px;
   justify-content: center;
   align-items: flex-start;
 }
 
 .eyebrow {
+  font-family: var(--font-body);
   font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--color-primary);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-forest-green);
   margin-bottom: 14px;
 }
 
 .title {
+  font-family: var(--font-heading);
   font-size: clamp(1.75rem, 3.2vw, 2.375rem);
   font-weight: 700;
   line-height: 1.2;
-  color: var(--color-text-main);
+  color: var(--color-forest-green);
   letter-spacing: -0.02em;
   margin-bottom: 16px;
   max-width: 440px;
 }
 
 .paragraph {
-  font-size: 1rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
   line-height: 1.6;
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary); /* Soft sage gray #68786D */
   margin-bottom: 28px;
   max-width: 420px;
 }
 
 .ctaBtn {
-  box-shadow: 0 4px 12px rgba(25, 77, 51, 0.2);
+  font-family: var(--font-body);
+  font-weight: 600;
+  border-radius: var(--radius-pill);
 }
 
 .imageCell {
-  background-color: var(--color-bg-subtle);
+  background-color: var(--color-bg-neutral);
   position: relative;
   min-height: 380px;
 }
@@ -81,7 +89,6 @@
   .imageCell {
     min-height: 280px;
   }
-  /* On mobile, stack text then image */
   .cellTopRight {
     order: 2;
   }

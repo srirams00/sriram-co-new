@@ -14,12 +14,23 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  color: var(--color-text-main);
+  font-family: var(--font-body);
+  color: var(--color-text-dark);
   background-color: var(--color-bg-page);
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings use Poppins */
+h1, h2, h3, h4, h5, h6,
+.heading-hero,
+.heading-section,
+.price-display {
+  font-family: var(--font-heading);
+  color: var(--color-forest-green);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 img, picture, video, canvas, svg {
@@ -28,7 +39,7 @@ img, picture, video, canvas, svg {
 }
 
 input, button, textarea, select {
-  font: inherit;
+  font-family: var(--font-body);
 }
 
 a {
@@ -38,6 +49,12 @@ a {
 
 ul, ol {
   list-style: none;
+}
+
+/* Keyboard Focus States */
+:focus-visible {
+  outline: 2px solid var(--color-commerce-green);
+  outline-offset: 2px;
 }
 
 /* Layout Container */
@@ -50,15 +67,54 @@ ul, ol {
   padding-right: var(--container-padding);
 }
 
-/* Section Wrapper */
+/* Section Wrappers */
 .section {
-  padding-top: var(--space-3xl);
-  padding-bottom: var(--space-3xl);
+  padding-top: var(--space-4xl);
+  padding-bottom: var(--space-4xl);
 }
 
 .section-tight {
   padding-top: var(--space-xl);
   padding-bottom: var(--space-xl);
+}
+
+/* Typography Utility Classes */
+.text-eyebrow {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-forest-green);
+  margin-bottom: var(--space-xs);
+}
+
+.heading-section {
+  font-size: 2.25rem;
+  line-height: 1.2;
+  margin-bottom: var(--space-xs);
+}
+
+.text-subheading {
+  font-size: 1.025rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  max-width: 620px;
+}
+
+/* Section Headers */
+.section-header {
+  margin-bottom: var(--space-2xl);
+}
+
+.section-header.text-center {
+  text-align: center;
+}
+
+.section-header.text-center .text-subheading {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Buttons */
@@ -67,156 +123,96 @@ ul, ol {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-weight: 500;
-  font-size: 0.9375rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
   border-radius: var(--radius-pill);
-  padding: 10px 20px;
+  padding: 10px 22px;
   cursor: pointer;
   transition: all var(--transition-fast);
   border: 1px solid transparent;
   white-space: nowrap;
 }
 
+/* Fresh Commerce Green Button */
 .btn-primary {
-  background-color: var(--color-primary);
-  color: var(--color-text-inverted);
+  background-color: var(--color-commerce-green);
+  color: #ffffff;
 }
 
 .btn-primary:hover {
-  background-color: var(--color-primary-hover);
+  background-color: var(--color-accent-hover);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 169, 87, 0.22);
 }
 
 .btn-secondary {
-  background-color: var(--color-bg-subtle);
-  color: var(--color-text-main);
+  background-color: #ffffff;
+  color: var(--color-forest-green);
   border-color: var(--color-border);
 }
 
 .btn-secondary:hover {
-  background-color: var(--color-border-subtle);
+  background-color: var(--color-bg-neutral);
   border-color: var(--color-border-hover);
 }
 
-.btn-outline {
-  background-color: transparent;
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.btn-outline:hover {
-  background-color: var(--color-primary-light);
-}
-
-.btn-whatsapp {
-  background-color: #25d366;
+.btn-forest {
+  background-color: var(--color-forest-green);
   color: #ffffff;
 }
 
-.btn-whatsapp:hover {
-  background-color: #20bd5a;
+.btn-forest:hover {
+  background-color: var(--color-primary-hover);
 }
 
 .btn-sm {
-  font-size: 0.8125rem;
   padding: 6px 14px;
+  font-size: 0.8125rem;
 }
 
 .btn-lg {
+  padding: 14px 30px;
   font-size: 1rem;
-  padding: 14px 28px;
 }
 
-/* Badges */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: var(--radius-pill);
-  line-height: 1.2;
+/* Grid Utilities */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
 }
 
-.badge-primary {
-  background-color: var(--color-primary);
-  color: var(--color-text-inverted);
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
 }
 
-.badge-light {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-}
-
-.badge-count {
-  background-color: #ffffff;
-  color: var(--color-text-main);
-  box-shadow: var(--shadow-sm);
-  font-size: 0.7rem;
-  padding: 2px 7px;
-}
-
-/* Typography Helpers */
-.heading-hero {
-  font-size: clamp(2.25rem, 5vw, 3.5rem);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.025em;
-  color: var(--color-text-main);
-}
-
-.heading-section {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: -0.015em;
-  color: var(--color-text-main);
-}
-
-.heading-sub {
-  font-size: 1.125rem;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-
-.text-eyebrow {
-  display: inline-block;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-primary);
-  margin-bottom: 8px;
-}
-
-/* Cards */
-.card {
-  background-color: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  transition: all var(--transition-normal);
-}
-
-.card:hover {
-  border-color: var(--color-border-hover);
-  box-shadow: var(--shadow-md);
-}
-
-/* Responsive Grid Utilities */
 .grid-4 {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: var(--space-md);
 }
 
 @media (max-width: 1024px) {
   .grid-4 {
     grid-template-columns: repeat(2, 1fr);
   }
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 640px) {
-  .grid-4 {
+  .grid-4, .grid-3, .grid-2 {
     grid-template-columns: 1fr;
+  }
+  .section {
+    padding-top: var(--space-2xl);
+    padding-bottom: var(--space-2xl);
+  }
+  .heading-section {
+    font-size: 1.75rem;
   }
 }

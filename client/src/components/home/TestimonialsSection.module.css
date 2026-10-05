@@ -1,6 +1,6 @@
 .section {
-  padding: 60px 0;
-  background-color: #ffffff;
+  padding: var(--space-4xl) 0;
+  background-color: var(--color-bg-page);
 }
 
 .header {
@@ -14,13 +14,14 @@
 }
 
 .featuredCard {
-  background-color: var(--color-bg-subtle);
+  background-color: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: 36px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  box-shadow: var(--shadow-sm);
 }
 
 .ratingRow {
@@ -30,9 +31,10 @@
 }
 
 .featuredQuote {
-  font-size: 1.1875rem;
-  line-height: 1.6;
-  color: var(--color-text-main);
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  line-height: 1.65;
+  color: var(--color-forest-green);
   font-style: italic;
   margin-bottom: 24px;
 }
@@ -44,7 +46,7 @@
 }
 
 .secondaryCard {
-  background-color: var(--color-bg-subtle);
+  background-color: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: 24px 28px;
@@ -52,12 +54,14 @@
   flex-direction: column;
   justify-content: space-between;
   flex: 1;
+  box-shadow: var(--shadow-sm);
 }
 
 .secondaryQuote {
+  font-family: var(--font-body);
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: var(--color-text-main);
+  color: var(--color-forest-green);
   font-style: italic;
   margin-bottom: 16px;
 }
@@ -65,18 +69,21 @@
 .authorGroup {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--color-border-subtle);
-  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 14px;
 }
 
 .authorName {
+  font-family: var(--font-heading);
   font-size: 0.9375rem;
-  color: var(--color-text-main);
+  font-weight: 700;
+  color: var(--color-forest-green);
 }
 
 .authorMeta {
+  font-family: var(--font-body);
   font-size: 0.8125rem;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 
 @media (max-width: 900px) {

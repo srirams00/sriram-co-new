@@ -1,5 +1,5 @@
 .footer {
-  background-color: var(--color-bg-subtle);
+  background-color: var(--color-bg-page);
   border-top: 1px solid var(--color-border);
   padding-top: var(--space-4xl);
   margin-top: var(--space-4xl);
@@ -25,10 +25,10 @@
 }
 
 .logoIcon {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-sm);
-  background-color: var(--color-primary);
+  background-color: var(--color-forest-green);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,13 +42,15 @@
 }
 
 .logoText {
+  font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--color-primary);
+  color: var(--color-forest-green);
   letter-spacing: -0.02em;
 }
 
 .brandDesc {
+  font-family: var(--font-body);
   font-size: 0.9375rem;
   color: var(--color-text-secondary);
   line-height: 1.6;
@@ -59,15 +61,17 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  font-family: var(--font-body);
   font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-primary);
+  font-weight: 600;
+  color: var(--color-forest-green);
 }
 
 .colTitle {
+  font-family: var(--font-heading);
   font-size: 0.9375rem;
   font-weight: 700;
-  color: var(--color-text-main);
+  color: var(--color-forest-green);
   margin-bottom: 20px;
   letter-spacing: -0.01em;
 }
@@ -79,13 +83,14 @@
 }
 
 .linkList a {
+  font-family: var(--font-body);
   font-size: 0.875rem;
   color: var(--color-text-secondary);
   transition: color var(--transition-fast);
 }
 
 .linkList a:hover {
-  color: var(--color-primary);
+  color: var(--color-commerce-green);
 }
 
 .contactList {
@@ -98,13 +103,14 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  font-family: var(--font-body);
   font-size: 0.875rem;
   color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
 .contactIcon {
-  color: var(--color-primary);
+  color: var(--color-forest-green);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -112,15 +118,16 @@
 .bottomBar {
   border-top: 1px solid var(--color-border);
   padding: 20px 0;
-  background-color: #ffffff;
+  background-color: var(--color-bg-page);
 }
 
 .bottomInner {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  font-family: var(--font-body);
   font-size: 0.8125rem;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 
 .bottomLinks {

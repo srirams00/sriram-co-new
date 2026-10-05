@@ -1,6 +1,6 @@
 .section {
-  padding: 60px 0;
-  background-color: #ffffff;
+  padding: var(--space-4xl) 0;
+  background-color: var(--color-bg-page);
 }
 
 .header {
@@ -14,14 +14,16 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-family: var(--font-body);
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-primary);
-  transition: transform var(--transition-fast);
+  color: var(--color-forest-green);
+  transition: transform var(--transition-fast), color var(--transition-fast);
 }
 
 .viewAllLink:hover {
   transform: translateX(3px);
+  color: var(--color-commerce-green);
 }
 
 .grid {

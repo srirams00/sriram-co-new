@@ -59,7 +59,9 @@ export const api = {
 
     const query = new URLSearchParams(params as Record<string, string>).toString();
     const res = await fetch(`${API_BASE}/products?${query}`);
-    return res.json();
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : data.data || [];
   },
 
   async getProductBySlug(slug: string): Promise<Product | null> {
