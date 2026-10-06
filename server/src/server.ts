@@ -20,6 +20,10 @@ import authRoutes from './routes/authRoutes';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 // Connect to MongoDB
 connectDB();
@@ -27,7 +31,19 @@ connectDB();
 // Middleware
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      const isLocalDevelopmentOrigin =
+        process.env.NODE_ENV !== 'production' &&
+        origin !== undefined &&
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
+      if (!origin || allowedOrigins.includes(origin) || isLocalDevelopmentOrigin) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   })
 );

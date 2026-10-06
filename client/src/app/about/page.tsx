@@ -12,7 +12,7 @@ export default function AboutPage() {
           <span className="text-eyebrow">Our Legacy</span>
           <h1 className="heading-hero">35 Years of Honest Guidance &amp; Quality Tools</h1>
           <p className={styles.bannerLead}>
-            Since 1989, Sriram &amp; Co has been the trusted destination for home appliances, power tools, and kitchen essentials in Trichy and Chennai.
+            Since 2007, Sriram &amp; Co has been the trusted destination for home appliances, power tools, and kitchen essentials in Trichy and Chennai.
           </p>
         </div>
       </section>

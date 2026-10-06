@@ -7,7 +7,6 @@ import {
   Truck, 
   Store, 
   CreditCard, 
-  Banknote, 
   QrCode, 
   ArrowLeft, 
   ShieldCheck 
@@ -31,7 +30,7 @@ export default function CheckoutPage() {
   });
 
   const [deliveryMethod, setDeliveryMethod] = useState<'store_delivery' | 'express' | 'pickup'>('store_delivery');
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'upi' | 'card'>('cod');
+  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card'>('upi');
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
 
@@ -70,7 +69,7 @@ export default function CheckoutPage() {
             <div className={styles.orderSummaryBox}>
               <h4>Delivery Details</h4>
               <p><strong>Deliver to:</strong> {formData.address}, {formData.city} - {formData.pincode}</p>
-              <p><strong>Payment Choice:</strong> {paymentMethod === 'cod' ? 'Cash on Delivery' : paymentMethod === 'upi' ? 'UPI upon Delivery' : 'Online Payment'}</p>
+              <p><strong>Payment Choice:</strong> {paymentMethod === 'upi' ? 'UPI' : 'Card'}</p>
             </div>
 
             <div className={styles.successActions}>
@@ -265,23 +264,6 @@ export default function CheckoutPage() {
                 <h3>Payment Method</h3>
               </div>
               <div className={styles.optionsList}>
-                <label className={`${styles.optionLabel} ${paymentMethod === 'cod' ? styles.optionActive : ''}`}>
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="cod"
-                    checked={paymentMethod === 'cod'}
-                    onChange={() => setPaymentMethod('cod')}
-                  />
-                  <div className={styles.optionContent}>
-                    <Banknote size={20} className={styles.optionIcon} />
-                    <div>
-                      <strong>Cash on Delivery (COD)</strong>
-                      <span>Inspect your appliance and pay cash directly to the delivery person</span>
-                    </div>
-                  </div>
-                </label>
-
                 <label className={`${styles.optionLabel} ${paymentMethod === 'upi' ? styles.optionActive : ''}`}>
                   <input
                     type="radio"
@@ -293,7 +275,7 @@ export default function CheckoutPage() {
                   <div className={styles.optionContent}>
                     <QrCode size={20} className={styles.optionIcon} />
                     <div>
-                      <strong>UPI (GPay / PhonePe / Paytm on Delivery)</strong>
+                      <strong>UPI (GPay / PhonePe / Paytm)</strong>
                       <span>Scan our driver's store QR code when the parcel arrives at your door</span>
                     </div>
                   </div>
@@ -310,7 +292,7 @@ export default function CheckoutPage() {
                   <div className={styles.optionContent}>
                     <CreditCard size={20} className={styles.optionIcon} />
                     <div>
-                      <strong>Card Machine on Delivery</strong>
+                      <strong>Debit or Credit Card</strong>
                       <span>Pay by debit/credit card via our handheld POS terminal</span>
                     </div>
                   </div>

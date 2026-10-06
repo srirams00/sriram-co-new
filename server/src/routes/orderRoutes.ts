@@ -13,13 +13,18 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    if (!['upi', 'card'].includes(paymentMethod)) {
+      res.status(400).json({ message: 'Payment method must be UPI or card' });
+      return;
+    }
+
     const orderNumber = `SRC-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
     const newOrder = new Order({
       orderNumber,
       customerInfo,
       orderItems,
-      paymentMethod: paymentMethod || 'cod',
+      paymentMethod,
       pricing,
     });
 

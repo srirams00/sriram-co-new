@@ -22,7 +22,7 @@ export interface IOrder extends Document {
     notes?: string;
   };
   orderItems: IOrderItem[];
-  paymentMethod: 'cod' | 'online' | 'whatsapp_inquiry' | 'store_pickup';
+  paymentMethod: 'upi' | 'card';
   paymentStatus: 'pending' | 'paid' | 'failed';
   orderStatus: 'placed' | 'confirmed' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
   pricing: {
@@ -79,8 +79,8 @@ const OrderSchema = new Schema<IOrder>(
     },
     paymentMethod: {
       type: String,
-      enum: ['cod', 'online', 'whatsapp_inquiry', 'store_pickup'],
-      default: 'cod',
+      enum: ['upi', 'card'],
+      required: true,
     },
     paymentStatus: {
       type: String,

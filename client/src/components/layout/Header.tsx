@@ -67,11 +67,21 @@ export default function Header() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className={styles.searchInput}
           />
+          {searchQuery && (
+            <button
+              type="button"
+              className={styles.clearSearchBtn}
+              aria-label="Clear search"
+              onClick={() => setSearchQuery('')}
+            >
+              <X size={16} />
+            </button>
+          )}
         </form>
 
         {/* Right: Actions */}
         <div className={styles.actions}>
-          <Link href="/account" className={styles.actionBtn} aria-label="My Account" title="My Account">
+          <Link href="/login" className={styles.actionBtn} aria-label="My Account" title="My Account">
             <User size={20} />
           </Link>
 
@@ -109,6 +119,16 @@ export default function Header() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className={styles.searchInput}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                className={styles.clearSearchBtn}
+                aria-label="Clear search"
+                onClick={() => setSearchQuery('')}
+              >
+                <X size={16} />
+              </button>
+            )}
           </form>
 
           <nav className={styles.mobileNav}>
@@ -145,7 +165,7 @@ export default function Header() {
               <ArrowRight size={16} />
             </Link>
             <Link 
-              href="/account" 
+              href="/login" 
               className={styles.mobileNavLink}
               onClick={() => setMobileMenuOpen(false)}
             >

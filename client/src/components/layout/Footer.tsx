@@ -54,7 +54,7 @@ export default function Footer() {
           <ul className={styles.contactList}>
             <li className={styles.contactItem}>
               <Phone size={16} className={styles.contactIcon} />
-              <span>+91 94432 12345 / 98410 67890</span>
+              <span>+91 93454 03136  / 91713 14888</span>
             </li>
             <li className={styles.contactItem}>
               <Mail size={16} className={styles.contactIcon} />
@@ -62,7 +62,7 @@ export default function Footer() {
             </li>
             <li className={styles.contactItem}>
               <MapPin size={16} className={styles.contactIcon} />
-              <span>West Boulevard Rd, Trichy &amp; T. Nagar, Chennai</span>
+              <span>No. 11, vinola Complex, Trichy &amp; Kothaval , Chavadi Street, Chennai</span>
             </li>
           </ul>
         </div>

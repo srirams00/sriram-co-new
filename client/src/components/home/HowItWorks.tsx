@@ -22,7 +22,7 @@ const STEPS = [
   {
     step: '04',
     title: 'Pay the way you like',
-    description: 'Cash, UPI, or card on delivery. Pay comfortably after receiving your product.',
+    description: 'Pay by UPI or debit/credit card when your order arrives.',
   },
 ];
 

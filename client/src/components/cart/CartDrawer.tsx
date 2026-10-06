@@ -158,7 +158,7 @@ export default function CartDrawer() {
               </Link>
             </div>
             <p className={styles.guaranteeText}>
-              ✓ Cash on delivery / UPI available • Fast local dispatch
+              ✓ UPI and card payments available • Fast local dispatch
             </p>
           </div>
         )}

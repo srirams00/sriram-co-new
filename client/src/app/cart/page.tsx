@@ -194,7 +194,7 @@ export default function CartPage() {
               <div className={styles.trustBadges}>
                 <div className={styles.trustItem}>
                   <ShieldCheck size={16} className={styles.trustIcon} />
-                  <span>Cash on delivery or UPI upon receipt</span>
+                  <span>Pay by UPI or card</span>
                 </div>
                 <div className={styles.trustItem}>
                   <ShieldCheck size={16} className={styles.trustIcon} />

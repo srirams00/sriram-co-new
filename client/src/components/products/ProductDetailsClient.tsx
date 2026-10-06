@@ -243,8 +243,8 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
               <div className={styles.guaranteeItem}>
                 <RotateCcw size={20} className={styles.guaranteeIcon} />
                 <div>
-                  <strong>Pay On Delivery</strong>
-                  <span>Cash or UPI upon delivery inspection</span>
+                  <strong>UPI or Card Payment</strong>
+                  <span>Pay by UPI or debit/credit card when your order arrives</span>
                 </div>
               </div>
             </div>
