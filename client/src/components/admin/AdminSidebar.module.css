@@ -1,0 +1,141 @@
+.sidebar {
+  width: 250px;
+  min-width: 250px;
+  background-color: #174A2B;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--font-montserrat, 'Montserrat', sans-serif);
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+.brandSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px 24px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 24px;
+}
+
+.brandIcon {
+  width: 36px;
+  height: 36px;
+  background-color: #18A957;
+  color: #FFFFFF;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-poppins, 'Poppins', sans-serif);
+  font-weight: 700;
+  font-size: 1.15rem;
+  box-shadow: 0 2px 6px rgba(24, 169, 87, 0.35);
+}
+
+.brandMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.brandTitle {
+  font-family: var(--font-poppins, 'Poppins', sans-serif);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #FFFFFF;
+  line-height: 1.2;
+}
+
+.brandSubtitle {
+  font-size: 0.72rem;
+  color: #A3B8AA;
+  margin-top: 2px;
+}
+
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: #C2D4C7;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+}
+
+.navItem:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: #FFFFFF;
+}
+
+.navItemActive {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.navItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navBadge {
+  background-color: #21683E;
+  color: #8AE3AF;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.sidebarFooter {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #A3B8AA;
+}
+
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #8AE3AF;
+  font-weight: 500;
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  background-color: #18A957;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #18A957;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}

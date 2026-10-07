@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
-import { PRODUCTS } from '@/data/products';
 import { CATEGORIES } from '@/data/categories';
+import { Product } from '@/types/product';
+import { api } from '@/lib/api';
 import ProductCard from '@/components/products/ProductCard';
 import styles from './shop.module.css';
 
@@ -13,14 +14,31 @@ function ShopContent() {
   const initialCategory = searchParams.get('category') || 'all';
   const initialQuery = searchParams.get('q') || '';
 
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [sortBy, setSortBy] = useState('featured');
-  const [maxPrice, setMaxPrice] = useState(20000);
+  const [maxPrice, setMaxPrice] = useState(50000);
+
+  useEffect(() => {
+    let isMounted = true;
+    api.getProducts().then((data) => {
+      if (isMounted) {
+        setProducts(data);
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (isMounted) setLoading(false);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Filtered & sorted products
   const filteredProducts = useMemo(() => {
-    let result = [...PRODUCTS];
+    let result = [...products];
 
     if (selectedCategory !== 'all') {
       result = result.filter(p => p.categorySlug === selectedCategory);
@@ -46,7 +64,7 @@ function ShopContent() {
     }
 
     return result;
-  }, [selectedCategory, searchQuery, sortBy, maxPrice]);
+  }, [products, selectedCategory, searchQuery, sortBy, maxPrice]);
 
   return (
     <div className={styles.shopPage}>
@@ -99,7 +117,7 @@ function ShopContent() {
             className={`${styles.pill} ${selectedCategory === 'all' ? styles.activePill : ''}`}
             onClick={() => setSelectedCategory('all')}
           >
-            All Products ({PRODUCTS.length})
+            All Products ({products.length})
           </button>
           {CATEGORIES.map(cat => (
             <button

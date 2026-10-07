@@ -1,0 +1,154 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ExternalLink, ShieldAlert, LogOut } from 'lucide-react';
+import AdminSidebar from '@/components/admin/AdminSidebar';
+import styles from './layout.module.css';
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [adminUser, setAdminUser] = useState<any>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('src_user');
+      const token = localStorage.getItem('src_auth_token');
+
+      if (token && storedUser) {
+        const user = JSON.parse(storedUser);
+        if (user.role === 'admin') {
+          setIsAdmin(true);
+          setAdminUser(user);
+          return;
+        }
+      }
+      setIsAdmin(false);
+    } catch {
+      setIsAdmin(false);
+    }
+  }, []);
+
+  const handleQuickAdminLogin = async () => {
+    setIsLoggingIn(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'admin@sriramandco.com',
+          password: 'AdminPassword123!',
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.token) {
+        localStorage.setItem('src_auth_token', data.token);
+        localStorage.setItem('src_user', JSON.stringify(data.user));
+        setIsAdmin(true);
+        setAdminUser(data.user);
+      } else {
+        router.push('/login?redirect=/admin/products');
+      }
+    } catch {
+      router.push('/login?redirect=/admin/products');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('src_auth_token');
+    localStorage.removeItem('src_user');
+    setIsAdmin(false);
+    router.push('/login');
+  };
+
+  // While checking local storage
+  if (isAdmin === null) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#F7F8F5' }}>
+        <p style={{ color: '#174A2B', fontFamily: 'var(--font-poppins)', fontWeight: 600 }}>Loading workspace...</p>
+      </div>
+    );
+  }
+
+  // If unauthorized, show auth guard modal with quick-login option
+  if (!isAdmin) {
+    return (
+      <div className={styles.adminShell}>
+        <div className={styles.mainWrapper}>
+          <div className={styles.authGuardCard}>
+            <ShieldAlert size={48} color="#174A2B" style={{ margin: '0 auto 16px auto' }} />
+            <h2 className={styles.guardTitle}>Admin Access Required</h2>
+            <p className={styles.guardText}>
+              You must be authenticated with an administrator account to access the Sri Ram &amp; Co catalog management tools.
+            </p>
+            <button
+              onClick={handleQuickAdminLogin}
+              disabled={isLoggingIn}
+              className={styles.quickAdminBtn}
+            >
+              {isLoggingIn ? 'Authenticating...' : 'Sign in as Admin (admin@sriramandco.com)'}
+            </button>
+            <div>
+              <Link href="/login?redirect=/admin/products" className={styles.loginRedirectLink}>
+                Go to standard login page
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Derive admin initials for the avatar badge (e.g. "AR" or "SA")
+  const initials = adminUser?.name
+    ? adminUser.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    : 'AR';
+
+  return (
+    <div className={styles.adminShell}>
+      {/* Sidebar */}
+      <AdminSidebar />
+
+      {/* Main Content Area */}
+      <div className={styles.mainWrapper}>
+        {/* Top Header Bar */}
+        <header className={styles.topBar}>
+          <div className={styles.breadcrumbGroup}>
+            <span className={styles.breadcrumbTag}>CATALOG</span>
+            <h1 className={styles.pageHeaderTitle}>Products</h1>
+          </div>
+
+          <div className={styles.topActions}>
+            <Link href="/" target="_blank" className={styles.viewStoreLink}>
+              <span>View storefront</span>
+              <ExternalLink size={14} />
+            </Link>
+
+            <div
+              className={styles.adminAvatar}
+              title={`Logged in as ${adminUser?.name || 'Administrator'} (${adminUser?.email || ''}) - Click to logout`}
+              onClick={handleLogout}
+            >
+              {initials}
+            </div>
+          </div>
+        </header>
+
+        {/* Child Pages */}
+        <main className={styles.contentArea}>
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}

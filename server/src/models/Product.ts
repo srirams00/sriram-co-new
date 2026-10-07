@@ -14,6 +14,9 @@ export interface IProduct extends Document {
   additionalImages: string[];
   badge?: 'Best Seller' | 'New' | 'Top Rated' | 'Popular' | 'Sale';
   inStock: boolean;
+  inventoryCount?: number;
+  sku?: string;
+  isArchived?: boolean;
   rating: number;
   reviewCount: number;
   specifications: Record<string, string>;
@@ -82,6 +85,20 @@ const ProductSchema = new Schema<IProduct>(
     inStock: {
       type: Boolean,
       default: true,
+    },
+    inventoryCount: {
+      type: Number,
+      default: 15,
+      min: [0, 'Inventory count cannot be negative'],
+    },
+    sku: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    isArchived: {
+      type: Boolean,
+      default: false,
     },
     rating: {
       type: Number,

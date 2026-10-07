@@ -55,6 +55,7 @@ export default function Header() {
           <Link href="/#categories" className={styles.navLink}>Categories</Link>
           <Link href="/about" className={styles.navLink}>About us</Link>
           <Link href="/contact" className={styles.navLink}>Contact</Link>
+          <Link href="/admin/products" className={styles.navLink} style={{ color: '#18A957', fontWeight: 600 }}>Admin</Link>
         </nav>
 
         {/* Center-Right: Search Input */}

@@ -12,6 +12,9 @@ export interface Product {
   additionalImages?: string[];
   badge?: 'Best Seller' | 'New' | 'Top Rated' | 'Popular' | 'Sale';
   inStock: boolean;
+  inventoryCount?: number;
+  sku?: string;
+  isArchived?: boolean;
   rating: number;
   reviewCount: number;
   specifications: Record<string, string>;

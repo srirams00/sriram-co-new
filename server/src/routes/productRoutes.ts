@@ -1,14 +1,39 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import mongoose from 'mongoose';
 import { Product } from '../models/Product';
+import { Order } from '../models/Order';
 import { AppError } from '../middleware/errorHandler';
+import { requireAdmin, AuthRequest } from '../middleware/authMiddleware';
 
 const router = Router();
+
+// Helper to convert strings to clean URL slugs
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+}
+
+// 24-character hexadecimal MongoDB ObjectId validator
+const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid MongoDB ObjectId');
+
+// Secure Image URL validator (HTTPS protocol or relative site asset paths)
+const HttpsUrlSchema = z.string().trim().refine(
+  (val) => /^https:\/\/.+/i.test(val) || val.startsWith('/'),
+  { message: 'Image URL must use secure https:// protocol or local asset path' }
+);
 
 // Validation schema for query parameters
 const ProductQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(50).default(12),
+  limit: z.coerce.number().int().positive().max(100).default(12),
   category: z.string().trim().optional(),
   query: z.string().trim().optional(),
   minPrice: z.coerce.number().nonnegative().optional(),
@@ -16,15 +41,89 @@ const ProductQuerySchema = z.object({
   sortBy: z.enum(['featured', 'price-low', 'price-high', 'rating']).optional(),
 });
 
-// GET /api/products/featured - Featured products
+// Product input validation schema (create & update)
+const ProductInputSchema = z.object({
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').max(150),
+  category: z.string().trim().min(2, 'Category is required'),
+  categorySlug: z.string().trim().optional(),
+  sku: z.string().trim().max(50).optional(),
+  shortDescription: z.string().trim().min(5, 'Short description is required').max(300),
+  fullDescription: z.string().trim().min(10, 'Full description is required'),
+  price: z.coerce.number().positive('Price must be greater than 0'),
+  originalPrice: z.coerce.number().positive().optional(),
+  image: HttpsUrlSchema,
+  additionalImages: z.array(HttpsUrlSchema).optional().default([]),
+  badge: z.enum(['Best Seller', 'New', 'Top Rated', 'Popular', 'Sale']).nullable().optional(),
+  inStock: z.boolean().default(true),
+  inventoryCount: z.coerce.number().int().nonnegative().default(15),
+  specifications: z.record(z.string(), z.string()).optional().default({}),
+  features: z.array(z.string().trim()).optional().default([]),
+});
+
+// GET /api/products/admin/stats - Aggregated metrics for admin dashboard
+router.get('/admin/stats', requireAdmin, async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const [totalProducts, activeProducts, lowStockProducts, allProducts] = await Promise.all([
+      Product.countDocuments({ isArchived: { $ne: true } }),
+      Product.countDocuments({ inStock: true, isArchived: { $ne: true } }),
+      Product.countDocuments({ inventoryCount: { $lte: 5, $gt: 0 }, isArchived: { $ne: true } }),
+      Product.find({ isArchived: { $ne: true } }).select('price inventoryCount category'),
+    ]);
+
+    const categories = new Set(allProducts.map((p) => p.category)).size;
+    const totalCatalogValue = allProducts.reduce((sum, p) => sum + (p.price * (p.inventoryCount ?? 1)), 0);
+
+    res.json({
+      totalProducts,
+      activeProducts,
+      lowStockProducts,
+      categoriesCount: categories,
+      totalCatalogValue,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/products/admin/all - Full catalog for admin management table
+router.get('/admin/all', requireAdmin, async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const products = await Product.find({ isArchived: { $ne: true } }).sort({ createdAt: -1 });
+    res.json(products);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/products/id/:id - Single product lookup by MongoDB ID (for edit view)
+router.get('/id/:id', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const parsedId = ObjectIdSchema.safeParse(req.params.id);
+    if (!parsedId.success) {
+      throw new AppError('Invalid MongoDB ObjectId format', 400, 'INVALID_OBJECT_ID');
+    }
+
+    const product = await Product.findById(req.params.id);
+    if (!product || product.isArchived) {
+      throw new AppError(`Product not found`, 404, 'PRODUCT_NOT_FOUND');
+    }
+
+    res.json(product);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/products/featured - Featured products for storefront
 router.get('/featured', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const products = await Product.find({
+      isArchived: { $ne: true },
       $or: [{ badge: 'Best Seller' }, { badge: 'Top Rated' }],
     }).limit(8);
 
     if (products.length === 0) {
-      const fallback = await Product.find({}).limit(8);
+      const fallback = await Product.find({ isArchived: { $ne: true } }).limit(8);
       res.json(fallback);
       return;
     }
@@ -41,7 +140,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
     const parsed = ProductQuerySchema.parse(req.query);
     const { page, limit, category, query, minPrice, maxPrice, sortBy } = parsed;
 
-    const filter: Record<string, any> = {};
+    const filter: Record<string, any> = { isArchived: { $ne: true } };
 
     if (category) {
       filter.categorySlug = category;
@@ -52,6 +151,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
         { name: { $regex: query, $options: 'i' } },
         { category: { $regex: query, $options: 'i' } },
         { shortDescription: { $regex: query, $options: 'i' } },
+        { sku: { $regex: query, $options: 'i' } },
       ];
     }
 
@@ -94,10 +194,169 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
   }
 });
 
-// GET /api/products/:slug - Single product lookup
+// POST /api/products - Create a new product (Protected: Admin only)
+router.post('/', requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const validatedData = ProductInputSchema.parse(req.body);
+
+    // Auto-generate clean slug
+    let baseSlug = slugify(validatedData.name);
+    let finalSlug = baseSlug;
+    let counter = 1;
+    while (await Product.findOne({ slug: finalSlug })) {
+      finalSlug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    // Auto-derive category slug if not provided
+    const categorySlug = validatedData.categorySlug || slugify(validatedData.category);
+
+    // Auto-generate SKU if omitted
+    const sku = validatedData.sku || `SRM-${baseSlug.slice(0, 4).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+
+    const newProduct = new Product({
+      ...validatedData,
+      slug: finalSlug,
+      categorySlug,
+      sku,
+      rating: 0,
+      reviewCount: 0,
+    });
+
+    await newProduct.save();
+
+    res.status(201).json(newProduct);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /api/products/:id - Update product details (Protected: Admin only)
+router.put('/:id', requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const parsedId = ObjectIdSchema.safeParse(req.params.id);
+    if (!parsedId.success) {
+      throw new AppError('Invalid MongoDB ObjectId format', 400, 'INVALID_OBJECT_ID');
+    }
+
+    const validatedData = ProductInputSchema.parse(req.body);
+
+    const product = await Product.findById(req.params.id);
+    if (!product || product.isArchived) {
+      throw new AppError('Product not found', 404, 'PRODUCT_NOT_FOUND');
+    }
+
+    // If name changed, optionally regenerate slug if needed
+    if (product.name !== validatedData.name) {
+      let baseSlug = slugify(validatedData.name);
+      let finalSlug = baseSlug;
+      let counter = 1;
+      while (await Product.findOne({ slug: finalSlug, _id: { $ne: product._id } })) {
+        finalSlug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+      product.slug = finalSlug;
+    }
+
+    product.name = validatedData.name;
+    product.category = validatedData.category;
+    product.categorySlug = validatedData.categorySlug || slugify(validatedData.category);
+    product.sku = validatedData.sku || product.sku;
+    product.shortDescription = validatedData.shortDescription;
+    product.fullDescription = validatedData.fullDescription;
+    product.price = validatedData.price;
+    product.originalPrice = validatedData.originalPrice;
+    product.image = validatedData.image;
+    product.additionalImages = validatedData.additionalImages || [];
+    product.badge = validatedData.badge || undefined;
+    product.inStock = validatedData.inStock;
+    product.inventoryCount = validatedData.inventoryCount;
+    product.specifications = validatedData.specifications || {};
+    product.features = validatedData.features || [];
+
+    await product.save();
+
+    res.json(product);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /api/products/:id/stock - Quick toggle stock / inventory (Protected: Admin only)
+router.patch('/:id/stock', requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const parsedId = ObjectIdSchema.safeParse(req.params.id);
+    if (!parsedId.success) {
+      throw new AppError('Invalid MongoDB ObjectId format', 400, 'INVALID_OBJECT_ID');
+    }
+
+    const { inStock, inventoryCount } = req.body;
+
+    const product = await Product.findById(req.params.id);
+    if (!product || product.isArchived) {
+      throw new AppError('Product not found', 404, 'PRODUCT_NOT_FOUND');
+    }
+
+    if (typeof inStock === 'boolean') {
+      product.inStock = inStock;
+    }
+
+    if (typeof inventoryCount === 'number' && inventoryCount >= 0) {
+      product.inventoryCount = inventoryCount;
+      if (inventoryCount === 0) {
+        product.inStock = false;
+      }
+    }
+
+    await product.save();
+    res.json(product);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/products/:id - Delete product safely with active order check (Protected: Admin only)
+router.delete('/:id', requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const parsedId = ObjectIdSchema.safeParse(req.params.id);
+    if (!parsedId.success) {
+      throw new AppError('Invalid MongoDB ObjectId format', 400, 'INVALID_OBJECT_ID');
+    }
+
+    const product = await Product.findById(req.params.id);
+    if (!product || product.isArchived) {
+      throw new AppError('Product not found', 404, 'PRODUCT_NOT_FOUND');
+    }
+
+    // Integrity check: Check if product is in active customer orders
+    const activeOrderCount = await Order.countDocuments({
+      'orderItems.product': req.params.id,
+      orderStatus: { $in: ['placed', 'confirmed', 'processing', 'out_for_delivery'] },
+    });
+
+    if (activeOrderCount > 0) {
+      throw new AppError(
+        `Cannot delete product: it is part of ${activeOrderCount} active customer order(s). Toggle it out of stock instead.`,
+        409,
+        'PRODUCT_HAS_ACTIVE_ORDERS'
+      );
+    }
+
+    // Soft delete or remove
+    product.isArchived = true;
+    product.inStock = false;
+    await product.save();
+
+    res.json({ message: 'Product successfully removed from catalog', id: req.params.id });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/products/:slug - Single product lookup by slug (for public store)
 router.get('/:slug', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug });
+    const product = await Product.findOne({ slug: req.params.slug, isArchived: { $ne: true } });
     if (!product) {
       throw new AppError(`Product with slug '${req.params.slug}' not found`, 404, 'PRODUCT_NOT_FOUND');
     }

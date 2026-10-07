@@ -1,0 +1,147 @@
+.adminShell {
+  display: flex;
+  min-height: 100vh;
+  background-color: #F7F8F5;
+  color: #174A2B;
+  font-family: var(--font-montserrat, 'Montserrat', sans-serif);
+}
+
+.mainWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 36px 12px 36px;
+  background-color: transparent;
+}
+
+.breadcrumbGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.breadcrumbTag {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #68786D;
+  text-transform: uppercase;
+}
+
+.pageHeaderTitle {
+  font-family: var(--font-poppins, 'Poppins', sans-serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #174A2B;
+  margin-top: 2px;
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.viewStoreLink {
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #174A2B;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.15s ease;
+}
+
+.viewStoreLink:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.adminAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #E2ECE5;
+  color: #174A2B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-poppins, 'Poppins', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: 1px solid #D1E2D6;
+  cursor: pointer;
+}
+
+.contentArea {
+  padding: 12px 36px 40px 36px;
+  flex: 1;
+}
+
+.authGuardCard {
+  max-width: 480px;
+  margin: 60px auto;
+  background: #FFFFFF;
+  border: 1px solid #E5EDE7;
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.guardTitle {
+  font-family: var(--font-poppins, 'Poppins', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #174A2B;
+  margin-bottom: 8px;
+}
+
+.guardText {
+  color: #68786D;
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+}
+
+.quickAdminBtn {
+  background-color: #18A957;
+  color: #FFFFFF;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.quickAdminBtn:hover {
+  background-color: #148f49;
+}
+
+.loginRedirectLink {
+  color: #174A2B;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .adminShell {
+    flex-direction: column;
+  }
+  .topBar, .contentArea {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
