@@ -138,4 +138,10 @@ const ProductSchema = new Schema<IProduct>(
   }
 );
 
+// Performance compound and secondary indexes
+ProductSchema.index({ sku: 1 });
+ProductSchema.index({ isArchived: 1, inStock: 1 });
+ProductSchema.index({ isArchived: 1, categorySlug: 1, price: 1 });
+ProductSchema.index({ isArchived: 1, createdAt: -1 });
+
 export const Product = model<IProduct>('Product', ProductSchema);

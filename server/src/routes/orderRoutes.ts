@@ -30,8 +30,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 
     const savedOrder = await newOrder.save();
     res.status(201).json(savedOrder);
-  } catch (error: any) {
-    res.status(500).json({ message: 'Failed to create order', error: error.message });
+  } catch (_error: any) {
+    res.status(500).json({ message: 'Failed to create order. Please try again.' });
   }
 });
 
@@ -44,8 +44,8 @@ router.get('/:orderNumber', async (req: Request, res: Response): Promise<void> =
       return;
     }
     res.json(order);
-  } catch (error) {
-    res.status(500).json({ message: 'Error retrieving order', error });
+  } catch (_error) {
+    res.status(500).json({ message: 'Error retrieving order' });
   }
 });
 

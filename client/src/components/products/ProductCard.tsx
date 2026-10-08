@@ -50,6 +50,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             className={styles.image}
             loading="lazy"
+            decoding="async"
           />
         </Link>
       </div>

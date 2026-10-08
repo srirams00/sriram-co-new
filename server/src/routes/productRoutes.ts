@@ -63,22 +63,57 @@ const ProductInputSchema = z.object({
 // GET /api/products/admin/stats - Aggregated metrics for admin dashboard
 router.get('/admin/stats', requireAdmin, async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const [totalProducts, activeProducts, lowStockProducts, allProducts] = await Promise.all([
-      Product.countDocuments({ isArchived: { $ne: true } }),
-      Product.countDocuments({ inStock: true, isArchived: { $ne: true } }),
-      Product.countDocuments({ inventoryCount: { $lte: 5, $gt: 0 }, isArchived: { $ne: true } }),
-      Product.find({ isArchived: { $ne: true } }).select('price inventoryCount category'),
+    const [statsResult, distinctCategories] = await Promise.all([
+      Product.aggregate([
+        { $match: { isArchived: { $ne: true } } },
+        {
+          $group: {
+            _id: null,
+            totalProducts: { $sum: 1 },
+            activeProducts: {
+              $sum: { $cond: [{ $eq: ['$inStock', true] }, 1, 0] },
+            },
+            lowStockProducts: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $gt: ['$inventoryCount', 0] },
+                      { $lte: ['$inventoryCount', 5] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            totalCatalogValue: {
+              $sum: {
+                $multiply: [
+                  '$price',
+                  { $ifNull: ['$inventoryCount', 1] },
+                ],
+              },
+            },
+          },
+        },
+      ]),
+      Product.distinct('category', { isArchived: { $ne: true } }),
     ]);
 
-    const categories = new Set(allProducts.map((p) => p.category)).size;
-    const totalCatalogValue = allProducts.reduce((sum, p) => sum + (p.price * (p.inventoryCount ?? 1)), 0);
+    const stats = statsResult[0] || {
+      totalProducts: 0,
+      activeProducts: 0,
+      lowStockProducts: 0,
+      totalCatalogValue: 0,
+    };
 
     res.json({
-      totalProducts,
-      activeProducts,
-      lowStockProducts,
-      categoriesCount: categories,
-      totalCatalogValue,
+      totalProducts: stats.totalProducts,
+      activeProducts: stats.activeProducts,
+      lowStockProducts: stats.lowStockProducts,
+      categoriesCount: distinctCategories.length,
+      totalCatalogValue: stats.totalCatalogValue,
     });
   } catch (error) {
     next(error);

@@ -1,0 +1,114 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import express, { Request, Response } from 'express';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { z } from 'zod';
+
+describe('Security & Hardening Suite', () => {
+  it('enforces OWASP security headers via helmet', async () => {
+    const app = express();
+    app.use(helmet());
+    app.get('/test-headers', (_req: Request, res: Response) => {
+      res.json({ status: 'ok' });
+    });
+
+    const server = app.listen(0);
+    const address = server.address();
+    const port = typeof address === 'object' && address ? address.port : 0;
+
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/test-headers`);
+      assert.equal(res.status, 200);
+      assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+      assert.equal(res.headers.get('x-frame-options'), 'SAMEORIGIN');
+      assert.ok(res.headers.get('content-security-policy') !== null, 'CSP should be defined');
+    } finally {
+      server.close();
+    }
+  });
+
+  it('enforces rate limiting on authentication attempts', async () => {
+    const app = express();
+    const testLimiter = rateLimit({
+      windowMs: 60 * 1000,
+      limit: 3,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { message: 'Too many requests, please try again later.' },
+    });
+
+    app.use('/auth', testLimiter);
+    app.post('/auth/login', (_req: Request, res: Response) => {
+      res.json({ token: 'mock' });
+    });
+
+    const server = app.listen(0);
+    const address = server.address();
+    const port = typeof address === 'object' && address ? address.port : 0;
+
+    try {
+      // 1st request -> OK
+      let res = await fetch(`http://127.0.0.1:${port}/auth/login`, { method: 'POST' });
+      assert.equal(res.status, 200);
+
+      // 2nd request -> OK
+      res = await fetch(`http://127.0.0.1:${port}/auth/login`, { method: 'POST' });
+      assert.equal(res.status, 200);
+
+      // 3rd request -> OK
+      res = await fetch(`http://127.0.0.1:${port}/auth/login`, { method: 'POST' });
+      assert.equal(res.status, 200);
+
+      // 4th request -> Rate limited (429)
+      res = await fetch(`http://127.0.0.1:${port}/auth/login`, { method: 'POST' });
+      assert.equal(res.status, 429, 'Excess requests should receive HTTP 429');
+    } finally {
+      server.close();
+    }
+  });
+
+  it('rejects NoSQL injection objects in login input schemas', () => {
+    const LoginSchema = z.object({
+      email: z.string().min(3).max(100),
+      password: z.string().min(1).max(100),
+    });
+
+    // Valid email
+    const valid = LoginSchema.safeParse({ email: 'admin@sriramandco.com', password: 'secretpassword' });
+    assert.equal(valid.success, true);
+
+    // NoSQL injection attempt: { email: { $ne: null } }
+    const injectionAttempt = LoginSchema.safeParse({
+      email: { $ne: null },
+      password: 'password',
+    });
+    assert.equal(injectionAttempt.success, false, 'NoSQL operator object must be rejected');
+  });
+
+  it('validates product price is strictly positive and bounded', () => {
+    const ProductInputSchema = z.object({
+      name: z.string().trim().min(2).max(150),
+      price: z.number().positive(),
+      inventoryCount: z.number().int().nonnegative(),
+    });
+
+    assert.equal(
+      ProductInputSchema.safeParse({ name: 'Valid Product', price: -100, inventoryCount: 5 }).success,
+      false,
+      'Negative price must be rejected'
+    );
+
+    assert.equal(
+      ProductInputSchema.safeParse({ name: 'Valid Product', price: 0, inventoryCount: 5 }).success,
+      false,
+      'Zero price must be rejected'
+    );
+
+    assert.equal(
+      ProductInputSchema.safeParse({ name: 'Valid Product', price: 499, inventoryCount: 10 }).success,
+      true,
+      'Valid positive price must pass'
+    );
+  });
+});

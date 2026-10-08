@@ -7,6 +7,8 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import helmet from 'helmet';
+import compression from 'compression';
 import { connectDB } from './config/db';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
@@ -27,6 +29,12 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
 
 // Connect to MongoDB
 connectDB();
+
+// Security and Performance Middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+app.use(compression());
 
 // Middleware
 app.use(
