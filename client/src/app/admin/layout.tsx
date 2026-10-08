@@ -17,29 +17,62 @@ export default function AdminLayout({
   const [adminUser, setAdminUser] = useState<any>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('src_user');
-      const token = localStorage.getItem('src_auth_token');
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
 
-      if (token && storedUser) {
-        const user = JSON.parse(storedUser);
-        if (user.role === 'admin') {
-          setIsAdmin(true);
-          setAdminUser(user);
+  useEffect(() => {
+    async function verifyAdminAuth() {
+      try {
+        const token = localStorage.getItem('src_auth_token');
+        const storedUser = localStorage.getItem('src_user');
+
+        if (!token) {
+          setIsAdmin(false);
           return;
         }
+
+        // Verify active token against backend
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const user = await res.json();
+          if (user.role === 'admin') {
+            setIsAdmin(true);
+            setAdminUser(user);
+            localStorage.setItem('src_user', JSON.stringify(user));
+            return;
+          }
+        }
+
+        // Token expired or invalid (e.g., after DB re-seeding)
+        localStorage.removeItem('src_auth_token');
+        localStorage.removeItem('src_user');
+        setIsAdmin(false);
+      } catch {
+        // Fallback for offline or local cache
+        const storedUser = localStorage.getItem('src_user');
+        if (storedUser) {
+          try {
+            const u = JSON.parse(storedUser);
+            if (u.role === 'admin') {
+              setIsAdmin(true);
+              setAdminUser(u);
+              return;
+            }
+          } catch {}
+        }
+        setIsAdmin(false);
       }
-      setIsAdmin(false);
-    } catch {
-      setIsAdmin(false);
     }
-  }, []);
+
+    verifyAdminAuth();
+  }, [API_BASE]);
 
   const handleQuickAdminLogin = async () => {
     setIsLoggingIn(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,6 +87,7 @@ export default function AdminLayout({
         localStorage.setItem('src_user', JSON.stringify(data.user));
         setIsAdmin(true);
         setAdminUser(data.user);
+        window.location.reload();
       } else {
         router.push('/login?redirect=/admin/products');
       }

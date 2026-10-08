@@ -32,17 +32,20 @@ connectDB();
 app.use(
   cors({
     origin: (origin, callback) => {
-      const isLocalDevelopmentOrigin =
-        process.env.NODE_ENV !== 'production' &&
+      const isLocal =
         origin !== undefined &&
-        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
-      if (!origin || allowedOrigins.includes(origin) || isLocalDevelopmentOrigin) {
+      const isVercel =
+        origin !== undefined &&
+        (origin.endsWith('.vercel.app') || origin.includes('sriram'));
+
+      if (!origin || allowedOrigins.includes(origin) || isLocal || isVercel) {
         callback(null, true);
         return;
       }
 
-      callback(new Error('Not allowed by CORS'));
+      callback(null, false);
     },
     credentials: true,
   })
