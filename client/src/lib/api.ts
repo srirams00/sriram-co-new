@@ -99,38 +99,53 @@ export const api = {
 
   // Categories
   async getCategories(): Promise<Category[]> {
-    if (USE_MOCK) {
-      return CATEGORIES;
+    if (!USE_MOCK) {
+      try {
+        const res = await fetch(`${API_BASE}/categories`, { cache: 'no-store' });
+        if (res.ok) return await res.json();
+      } catch {
+        // Fall back to local categories on build/offline
+      }
     }
-    const res = await fetch(`${API_BASE}/categories`);
-    return res.json();
+    return CATEGORIES;
   },
 
   async getCategoryBySlug(slug: string): Promise<Category | null> {
-    if (USE_MOCK) {
-      return CATEGORIES.find(c => c.slug === slug) || null;
+    if (!USE_MOCK) {
+      try {
+        const res = await fetch(`${API_BASE}/categories/${slug}`, { cache: 'no-store' });
+        if (res.ok) return await res.json();
+      } catch {
+        // Fall back to local categories
+      }
     }
-    const res = await fetch(`${API_BASE}/categories/${slug}`);
-    if (!res.ok) return null;
-    return res.json();
+    return CATEGORIES.find(c => c.slug === slug) || null;
   },
 
   // Stores
   async getStores(): Promise<StoreLocation[]> {
-    if (USE_MOCK) {
-      return STORES;
+    if (!USE_MOCK) {
+      try {
+        const res = await fetch(`${API_BASE}/stores`, { cache: 'no-store' });
+        if (res.ok) return await res.json();
+      } catch {
+        // Fall back to local stores on build/offline
+      }
     }
-    const res = await fetch(`${API_BASE}/stores`);
-    return res.json();
+    return STORES;
   },
 
   // Testimonials
   async getTestimonials(): Promise<Testimonial[]> {
-    if (USE_MOCK) {
-      return TESTIMONIALS;
+    if (!USE_MOCK) {
+      try {
+        const res = await fetch(`${API_BASE}/testimonials`, { cache: 'no-store' });
+        if (res.ok) return await res.json();
+      } catch {
+        // Fall back to local testimonials on build/offline
+      }
     }
-    const res = await fetch(`${API_BASE}/testimonials`);
-    return res.json();
+    return TESTIMONIALS;
   },
 
   // Admin Product Operations
