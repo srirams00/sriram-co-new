@@ -1,5 +1,5 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup, Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,12 +11,31 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase once
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let googleProvider: GoogleAuthProvider | null = null;
+
+export function getFirebaseAuth(): Auth | null {
+  if (typeof window === 'undefined') return null;
+  if (!auth) {
+    if (!firebaseConfig.apiKey) {
+      console.warn('Firebase API key is missing. Google Auth will not function.');
+      return null;
+    }
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    auth = getAuth(app);
+  }
+  return auth;
+}
 
 export async function loginWithGooglePopup() {
-  const result = await signInWithPopup(auth, googleProvider);
+  const authInstance = getFirebaseAuth();
+  if (!authInstance) {
+    throw new Error('Firebase Authentication is not available. Please verify configuration.');
+  }
+  if (!googleProvider) {
+    googleProvider = new GoogleAuthProvider();
+  }
+  const result = await signInWithPopup(authInstance, googleProvider);
   return result.user;
 }

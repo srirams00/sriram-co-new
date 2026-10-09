@@ -45,3 +45,6 @@ jobs:
         env:
           NEXT_PUBLIC_API_BASE_URL: 'http://localhost:5000/api'
           NEXT_PUBLIC_USE_MOCK_API: 'true'
+          NEXT_PUBLIC_FIREBASE_API_KEY: 'ci-build-placeholder'
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: 'sriramandco-04'
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: 'auth.sriramandco.in'
