@@ -1,12 +1,73 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, ShoppingBag, Heart, User, Menu, X, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { api } from '@/lib/api';
+import { Product } from '@/types/product';
 import styles from './Header.module.css';
+
+interface ProductSearchSuggestionsProps {
+  id: string;
+  query: string;
+  products: Product[];
+  productsLoaded: boolean;
+  productsLoadFailed: boolean;
+  onSelect: () => void;
+}
+
+function ProductSearchSuggestions({
+  id,
+  query,
+  products,
+  productsLoaded,
+  productsLoadFailed,
+  onSelect,
+}: ProductSearchSuggestionsProps) {
+  if (!query.trim()) return null;
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const suggestions = products
+    .filter(product =>
+      product.name.toLowerCase().includes(normalizedQuery) ||
+      product.category.toLowerCase().includes(normalizedQuery) ||
+      product.shortDescription.toLowerCase().includes(normalizedQuery)
+    )
+    .slice(0, 5);
+
+  return (
+    <div id={id} className={styles.searchSuggestions}>
+      {!productsLoaded ? (
+        <p className={styles.searchSuggestionMessage} role="status">Loading products...</p>
+      ) : productsLoadFailed ? (
+        <p className={styles.searchSuggestionMessage} role="alert">Product suggestions could not be loaded.</p>
+      ) : suggestions.length === 0 ? (
+        <p className={styles.searchSuggestionMessage} role="status">No matching products.</p>
+      ) : (
+        <ul className={styles.searchSuggestionList}>
+          {suggestions.map(product => (
+            <li key={product.id}>
+              <Link
+                href={`/product/${product.slug}`}
+                className={styles.searchSuggestion}
+                onClick={onSelect}
+              >
+                <img src={product.image} alt="" className={styles.searchSuggestionImage} />
+                <span className={styles.searchSuggestionText}>
+                  <strong>{product.name}</strong>
+                  <span>{product.category}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export default function Header() {
   const router = useRouter();
@@ -14,6 +75,30 @@ export default function Header() {
   const { wishlistIds } = useWishlist();
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchProducts, setSearchProducts] = useState<Product[]>([]);
+  const [searchProductsLoaded, setSearchProductsLoaded] = useState(false);
+  const [searchProductsLoadFailed, setSearchProductsLoadFailed] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    api.getProducts().then(products => {
+      if (isMounted) {
+        setSearchProducts(products);
+        setSearchProductsLoaded(true);
+      }
+    }).catch(error => {
+      console.error('Failed to load products for search suggestions.', error);
+      if (isMounted) {
+        setSearchProductsLoadFailed(true);
+        setSearchProductsLoaded(true);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +106,11 @@ export default function Header() {
       router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
       setMobileMenuOpen(false);
     }
+  };
+
+  const handleSuggestionSelect = () => {
+    setSearchQuery('');
+    setMobileMenuOpen(false);
   };
 
   return (
@@ -67,6 +157,17 @@ export default function Header() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={styles.searchInput}
+            aria-label="Search products"
+            aria-controls="desktop-product-suggestions"
+            aria-expanded={Boolean(searchQuery.trim())}
+          />
+          <ProductSearchSuggestions
+            id="desktop-product-suggestions"
+            query={searchQuery}
+            products={searchProducts}
+            productsLoaded={searchProductsLoaded}
+            productsLoadFailed={searchProductsLoadFailed}
+            onSelect={handleSuggestionSelect}
           />
           {searchQuery && (
             <button
@@ -119,6 +220,17 @@ export default function Header() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={styles.searchInput}
+              aria-label="Search products"
+              aria-controls="mobile-product-suggestions"
+              aria-expanded={Boolean(searchQuery.trim())}
+            />
+            <ProductSearchSuggestions
+              id="mobile-product-suggestions"
+              query={searchQuery}
+              products={searchProducts}
+              productsLoaded={searchProductsLoaded}
+              productsLoadFailed={searchProductsLoadFailed}
+              onSelect={handleSuggestionSelect}
             />
             {searchQuery && (
               <button
