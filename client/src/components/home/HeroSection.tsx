@@ -56,7 +56,7 @@ export default function HeroSection() {
         <div className={styles.heroVisual}>
           <div className={styles.imageBackdrop}>
             <img
-              src=".\logo.png"
+              src="/logo.png"
               alt="Modern home kitchen appliances"
               className={styles.heroImage}
             />
