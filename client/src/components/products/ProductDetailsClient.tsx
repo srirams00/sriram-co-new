@@ -92,8 +92,10 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
                     type="button"
                     className={`${styles.thumbBtn} ${selectedImage === img ? styles.activeThumb : ''}`}
                     onClick={() => setSelectedImage(img)}
+                    aria-label={`View product image ${idx + 1}`}
+                    aria-pressed={selectedImage === img}
                   >
-                    <img src={img} alt={`Thumbnail ${idx + 1}`} className={styles.thumbImage} />
+                    <img src={img} alt="" className={styles.thumbImage} />
                   </button>
                 ))}
               </div>

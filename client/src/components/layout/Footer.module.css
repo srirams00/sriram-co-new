@@ -24,21 +24,11 @@
   gap: 10px;
 }
 
-.logoIcon {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  background-color: var(--color-forest-green);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logoDot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background-color: #ffffff;
+.logoImage {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .logoText {

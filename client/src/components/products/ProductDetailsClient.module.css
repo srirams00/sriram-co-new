@@ -74,9 +74,12 @@
 .thumbnailRow {
   display: flex;
   gap: 12px;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
 }
 
 .thumbBtn {
+  flex: 0 0 76px;
   width: 76px;
   height: 76px;
   border-radius: var(--radius-md);

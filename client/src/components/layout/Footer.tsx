@@ -10,9 +10,7 @@ export default function Footer() {
         {/* Col 1: Brand Info */}
         <div className={styles.brandCol}>
           <div className={styles.logo}>
-            <span className={styles.logoIcon}>
-              <span className={styles.logoDot} />
-            </span>
+            <img src="/logo.png" alt="Sriram & Co logo" className={styles.logoImage} />
             <span className={styles.logoText}>Sriram &amp; Co</span>
           </div>
           <p className={styles.brandDesc}>

@@ -49,6 +49,13 @@ export default function NewProductPage() {
     } else if (!formData.image.startsWith('https://') && !formData.image.startsWith('/')) {
       errors.image = 'Image URL must use secure https:// protocol or /path';
     }
+    const additionalImageUrls = formData.additionalImages
+      .split('\n')
+      .map((url) => url.trim())
+      .filter(Boolean);
+    if (additionalImageUrls.some((url) => !url.startsWith('https://') && !url.startsWith('/'))) {
+      errors.additionalImages = 'Each image URL must use secure https:// protocol or /path';
+    }
     if (!formData.shortDescription.trim()) errors.shortDescription = 'Short description is required';
     if (!formData.fullDescription.trim()) errors.fullDescription = 'Full description is required';
     return errors;
@@ -77,6 +84,7 @@ export default function NewProductPage() {
       category: true,
       price: true,
       image: true,
+      additionalImages: true,
       shortDescription: true,
       fullDescription: true,
     });
@@ -103,7 +111,7 @@ export default function NewProductPage() {
       const addImagesArray = formData.additionalImages
         .split('\n')
         .map((img) => img.trim())
-        .filter((img) => img.startsWith('https://') || img.startsWith('/'));
+        .filter(Boolean);
 
       await api.createProduct(
         {
@@ -317,6 +325,26 @@ export default function NewProductPage() {
               )}
             </div>
           </div>
+        </div>
+
+        <div className={styles.fieldGroup}>
+          <label className={styles.fieldLabel} htmlFor="additionalImages">
+            Additional Image URLs
+          </label>
+          <textarea
+            id="additionalImages"
+            name="additionalImages"
+            rows={4}
+            placeholder={'https://example.com/product-side.jpg\nhttps://example.com/product-detail.jpg'}
+            value={formData.additionalImages}
+            onChange={handleChange}
+            onBlur={() => handleBlur('additionalImages')}
+            className={`${styles.textareaField} ${touched.additionalImages && errors.additionalImages ? styles.fieldError : ''}`}
+          />
+          <span className={styles.hintText}>Add one URL per line. Customers can select these images on the product page.</span>
+          {touched.additionalImages && errors.additionalImages && (
+            <span className={styles.errorText}>{errors.additionalImages}</span>
+          )}
         </div>
 
         {/* Short Description */}

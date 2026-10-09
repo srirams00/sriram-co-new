@@ -30,7 +30,7 @@ export default function HeroSection() {
             </Link>
 
             <Link href="/about" className={`btn btn-secondary btn-lg ${styles.secondaryBtn}`}>
-              Our 35-year story
+              Our 20-year story
             </Link>
           </div>
 
