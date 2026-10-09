@@ -149,21 +149,29 @@ router.get('/id/:id', async (req: Request, res: Response, next: NextFunction): P
   }
 });
 
+let cachedFeatured: any = null;
+let featuredCacheTime = 0;
+const FEATURED_CACHE_TTL = 60 * 1000;
+
 // GET /api/products/featured - Featured products for storefront
 router.get('/featured', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    const now = Date.now();
+    if (cachedFeatured && now - featuredCacheTime < FEATURED_CACHE_TTL) {
+      res.json(cachedFeatured);
+      return;
+    }
+
     const products = await Product.find({
       isArchived: { $ne: true },
       $or: [{ badge: 'Best Seller' }, { badge: 'Top Rated' }],
     }).limit(8);
 
-    if (products.length === 0) {
-      const fallback = await Product.find({ isArchived: { $ne: true } }).limit(8);
-      res.json(fallback);
-      return;
-    }
-
-    res.json(products);
+    const result = products.length > 0 ? products : await Product.find({ isArchived: { $ne: true } }).limit(8);
+    cachedFeatured = result;
+    featuredCacheTime = now;
+    res.json(result);
   } catch (error) {
     next(error);
   }

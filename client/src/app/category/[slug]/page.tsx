@@ -12,13 +12,16 @@ interface CategoryPageProps {
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const category = await api.getCategoryBySlug(slug);
+  
+  // Parallel concurrent fetch to avoid network waterfall
+  const [category, products] = await Promise.all([
+    api.getCategoryBySlug(slug),
+    api.getProducts({ category: slug }),
+  ]);
 
   if (!category) {
     notFound();
   }
-
-  const products = await api.getProducts({ category: slug });
 
   return (
     <div className={styles.categoryPage}>

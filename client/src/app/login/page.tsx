@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { loginWithGooglePopup } from '@/lib/firebase';
 import styles from './auth.module.css';
 
 interface LoginErrors {
@@ -19,7 +20,57 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      setServerError(null);
+
+      const firebaseUser = await loginWithGooglePopup();
+      if (!firebaseUser.email) {
+        throw new Error('Google sign-in did not return an email address');
+      }
+
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${API_BASE}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: firebaseUser.email,
+          name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+          photoUrl: firebaseUser.photoURL || '',
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Google authentication failed');
+      }
+
+      if (data.token) {
+        localStorage.setItem('src_auth_token', data.token);
+        localStorage.setItem('src_user', JSON.stringify(data.user));
+        window.dispatchEvent(new Event('auth-change'));
+      }
+
+      const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
+      if (redirectParam) {
+        router.push(redirectParam);
+      } else if (data.user?.role === 'admin') {
+        router.push('/48191d90cc476d1c72aaec9997cc977c');
+      } else {
+        router.push('/account');
+      }
+    } catch (err: any) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setServerError(err.message || 'Failed to authenticate with Google.');
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const validateField = (field: 'email' | 'password', value: string): string | undefined => {
     if (field === 'email') {
@@ -88,6 +139,7 @@ export default function LoginPage() {
       if (data.token) {
         localStorage.setItem('src_auth_token', data.token);
         localStorage.setItem('src_user', JSON.stringify(data.user));
+        window.dispatchEvent(new Event('auth-change'));
       }
 
       const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
@@ -147,9 +199,14 @@ export default function LoginPage() {
           <button
             type="button"
             className={styles.googleBtn}
-            onClick={() => alert('Google authentication is configured in production environment.')}
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading}
           >
-            <svg className={styles.googleIcon} viewBox="0 0 24 24">
+            {googleLoading ? (
+              <span>Connecting to Google...</span>
+            ) : (
+              <>
+                <svg className={styles.googleIcon} viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -168,7 +225,9 @@ export default function LoginPage() {
               />
             </svg>
             Continue with Google
-          </button>
+          </>
+        )}
+      </button>
 
           {/* Divider */}
           <div className={styles.divider}>

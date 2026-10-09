@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
+import { api } from '@/lib/api';
 import styles from './checkout.module.css';
 
 export default function CheckoutPage() {
@@ -33,22 +34,61 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card'>('upi');
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmitOrder = (e: React.FormEvent) => {
+  const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fullName || !formData.phone || !formData.address) {
       alert('Please fill in your name, phone number, and delivery address.');
       return;
     }
 
-    const orderId = `SRC-${Math.floor(100000 + Math.random() * 900000)}`;
-    setPlacedOrderId(orderId);
-    setOrderPlaced(true);
-    clearCart();
+    setIsSubmitting(true);
+    try {
+      // Find fallback user token/id if available
+      const storedUser = typeof window !== 'undefined' ? localStorage.getItem('src_user') : null;
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
+      const orderPayload = {
+        user: parsedUser?.id || undefined,
+        customerInfo: {
+          name: formData.fullName.trim(),
+          phone: formData.phone.trim(),
+          email: formData.email.trim() || undefined,
+          address: formData.address.trim(),
+          city: formData.city.trim(),
+          postalCode: formData.pincode.trim() || undefined,
+          notes: formData.notes.trim() || undefined,
+        },
+        orderItems: items.map((item) => ({
+          product: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
+          quantity: item.quantity,
+          image: item.product.image,
+        })),
+        paymentMethod: paymentMethod,
+        pricing: {
+          subtotal: summary.subtotal,
+          deliveryFee: summary.deliveryFee,
+          discount: summary.discount,
+          total: summary.total,
+        },
+      };
+
+      const savedOrder = await api.createOrder(orderPayload);
+      setPlacedOrderId(savedOrder.orderNumber);
+      setOrderPlaced(true);
+      clearCart();
+    } catch (err: any) {
+      alert(`Could not process order: ${err.message || 'Please check your information and try again.'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (orderPlaced) {
@@ -336,8 +376,14 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <button type="submit" className={`btn btn-primary btn-lg ${styles.placeOrderBtn}`}>
-                Place Order ({formatCurrency(summary.total)})
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`btn btn-primary btn-lg ${styles.placeOrderBtn}`}
+              >
+                {isSubmitting
+                  ? 'Saving Order...'
+                  : `Place Order (${formatCurrency(summary.total)})`}
               </button>
 
               <div className={styles.securityNote}>

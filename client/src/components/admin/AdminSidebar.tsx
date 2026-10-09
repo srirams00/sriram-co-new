@@ -3,13 +3,16 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Package, ShoppingBag, Users } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Users } from 'lucide-react';
 import styles from './AdminSidebar.module.css';
+
+const DASHBOARD_ROUTE = '/48191d90cc476d1c72aaec9997cc977c';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
 
-  const isProductsActive = pathname.startsWith('/admin/products') || pathname === '/admin';
+  const isDashboardActive = pathname.startsWith(DASHBOARD_ROUTE);
+  const isProductsActive = pathname.startsWith('/admin/products');
 
   return (
     <aside className={styles.sidebar}>
@@ -24,6 +27,16 @@ export default function AdminSidebar() {
 
       {/* Nav Menu */}
       <nav className={styles.navGroup}>
+        <Link
+          href={DASHBOARD_ROUTE}
+          className={`${styles.navItem} ${isDashboardActive ? styles.navItemActive : ''}`}
+        >
+          <div className={styles.navItemLeft}>
+            <LayoutDashboard size={18} />
+            <span>Dashboard</span>
+          </div>
+        </Link>
+
         <Link
           href="/admin/products"
           className={`${styles.navItem} ${isProductsActive ? styles.navItemActive : ''}`}

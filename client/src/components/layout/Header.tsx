@@ -78,6 +78,27 @@ export default function Header() {
   const [searchProducts, setSearchProducts] = useState<Product[]>([]);
   const [searchProductsLoaded, setSearchProductsLoaded] = useState(false);
   const [searchProductsLoadFailed, setSearchProductsLoadFailed] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const syncUser = () => {
+      try {
+        const stored = localStorage.getItem('src_user');
+        setCurrentUser(stored ? JSON.parse(stored) : null);
+      } catch {
+        setCurrentUser(null);
+      }
+    };
+
+    syncUser();
+    window.addEventListener('auth-change', syncUser);
+    window.addEventListener('storage', syncUser);
+
+    return () => {
+      window.removeEventListener('auth-change', syncUser);
+      window.removeEventListener('storage', syncUser);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -183,8 +204,28 @@ export default function Header() {
 
         {/* Right: Actions */}
         <div className={styles.actions}>
-          <Link href="/login" className={styles.actionBtn} aria-label="My Account" title="My Account">
+          <Link
+            href={currentUser ? (currentUser.role === 'admin' ? '/48191d90cc476d1c72aaec9997cc977c' : '/account') : '/login'}
+            className={styles.actionBtn}
+            aria-label={currentUser ? `My Account (${currentUser.name})` : 'My Account'}
+            title={currentUser ? `Logged in as ${currentUser.name}` : 'My Account'}
+            style={{ position: 'relative' }}
+          >
             <User size={20} />
+            {currentUser && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '6px',
+                  right: '6px',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#18A957',
+                  border: '2px solid #ffffff',
+                }}
+              />
+            )}
           </Link>
 
           <Link href="/shop" className={styles.actionBtn} aria-label="Wishlist" title="Wishlist">

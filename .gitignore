@@ -34,3 +34,7 @@ Thumbs.db
 # Agent Skills
 .agents/
 skills-lock.json
+
+# Test artifacts
+.playwright-mcp/
+

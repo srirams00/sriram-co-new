@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { ExternalLink, ShieldAlert, LogOut } from 'lucide-react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import styles from './layout.module.css';
@@ -15,7 +15,6 @@ export default function AdminLayout({
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [adminUser, setAdminUser] = useState<any>(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
 
@@ -69,35 +68,6 @@ export default function AdminLayout({
     verifyAdminAuth();
   }, [API_BASE]);
 
-  const handleQuickAdminLogin = async () => {
-    setIsLoggingIn(true);
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: 'admin@sriramandco.com',
-          password: 'AdminPassword123!',
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data.token) {
-        localStorage.setItem('src_auth_token', data.token);
-        localStorage.setItem('src_user', JSON.stringify(data.user));
-        setIsAdmin(true);
-        setAdminUser(data.user);
-        window.location.reload();
-      } else {
-        router.push('/login?redirect=/admin/products');
-      }
-    } catch {
-      router.push('/login?redirect=/admin/products');
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('src_auth_token');
     localStorage.removeItem('src_user');
@@ -114,27 +84,36 @@ export default function AdminLayout({
     );
   }
 
-  // If unauthorized, show auth guard modal with quick-login option
+  // If unauthorized, show security perimeter notice
   if (!isAdmin) {
     return (
       <div className={styles.adminShell}>
         <div className={styles.mainWrapper}>
           <div className={styles.authGuardCard}>
             <ShieldAlert size={48} color="#174A2B" style={{ margin: '0 auto 16px auto' }} />
-            <h2 className={styles.guardTitle}>Admin Access Required</h2>
+            <h2 className={styles.guardTitle}>Admin Access Restricted</h2>
             <p className={styles.guardText}>
-              You must be authenticated with an administrator account to access the Sri Ram &amp; Co catalog management tools.
+              This administrative zone is protected. Please authenticate via your secure administrator gateway.
             </p>
-            <button
-              onClick={handleQuickAdminLogin}
-              disabled={isLoggingIn}
-              className={styles.quickAdminBtn}
-            >
-              {isLoggingIn ? 'Authenticating...' : 'Sign in as Admin (admin@sriramandco.com)'}
-            </button>
-            <div>
-              <Link href="/login?redirect=/admin/products" className={styles.loginRedirectLink}>
-                Go to standard login page
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+              <Link
+                href="/f0d06b7799107f8da21a05984c29bb10"
+                style={{
+                  display: 'inline-block',
+                  backgroundColor: '#174A2B',
+                  color: '#FFFFFF',
+                  padding: '12px 24px',
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  textDecoration: 'none',
+                  textAlign: 'center',
+                }}
+              >
+                Go to Secure Gateway
+              </Link>
+              <Link href="/" className={styles.loginRedirectLink}>
+                Return to Storefront
               </Link>
             </div>
           </div>
@@ -148,6 +127,24 @@ export default function AdminLayout({
     ? adminUser.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'AR';
 
+  const pathname = usePathname();
+  let breadcrumbTag = 'CATALOG';
+  let pageHeaderTitle = 'Products';
+
+  if (pathname.startsWith('/admin/orders')) {
+    breadcrumbTag = 'FULFILLMENT';
+    pageHeaderTitle = 'Orders';
+  } else if (pathname.startsWith('/admin/customers')) {
+    breadcrumbTag = 'RELATIONSHIPS';
+    pageHeaderTitle = 'Customers';
+  } else if (pathname.includes('/new')) {
+    breadcrumbTag = 'CATALOG';
+    pageHeaderTitle = 'Add Product';
+  } else if (pathname.includes('/products/')) {
+    breadcrumbTag = 'CATALOG';
+    pageHeaderTitle = 'Edit Product';
+  }
+
   return (
     <div className={styles.adminShell}>
       {/* Sidebar */}
@@ -158,8 +155,8 @@ export default function AdminLayout({
         {/* Top Header Bar */}
         <header className={styles.topBar}>
           <div className={styles.breadcrumbGroup}>
-            <span className={styles.breadcrumbTag}>CATALOG</span>
-            <h1 className={styles.pageHeaderTitle}>Products</h1>
+            <span className={styles.breadcrumbTag}>{breadcrumbTag}</span>
+            <h1 className={styles.pageHeaderTitle}>{pageHeaderTitle}</h1>
           </div>
 
           <div className={styles.topActions}>

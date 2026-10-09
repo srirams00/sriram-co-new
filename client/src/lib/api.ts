@@ -17,21 +17,55 @@ export interface FilterParams {
   sortBy?: 'featured' | 'price-low' | 'price-high' | 'rating';
 }
 
-/**
- * Unified API Client for Sriram & Co
- * Prioritizes live Express + MongoDB endpoints with instant cache invalidation,
- * with graceful fallback to local mock data if the server is offline.
- */
+// High-speed in-memory client/server cache with 60s TTL
+const memoryCache = new Map<string, { data: any; expiry: number }>();
+const CACHE_TTL = 60 * 1000; // 60 seconds
+
+function getCached<T>(key: string): T | null {
+  const item = memoryCache.get(key);
+  if (item && Date.now() < item.expiry) {
+    return item.data as T;
+  }
+  memoryCache.delete(key);
+  return null;
+}
+
+function setCached<T>(key: string, data: T, ttl: number = CACHE_TTL): void {
+  memoryCache.set(key, { data, expiry: Date.now() + ttl });
+}
+
 export const api = {
+  clearCache(): void {
+    memoryCache.clear();
+  },
+
   // Products
   async getProducts(params?: FilterParams): Promise<Product[]> {
+    const cacheKey = `products_${JSON.stringify(params || {})}`;
+    const cached = getCached<Product[]>(cacheKey);
+    if (cached) return cached;
+
     if (!USE_MOCK) {
       try {
-        const query = new URLSearchParams(params as Record<string, string>).toString();
-        const res = await fetch(`${API_BASE}/products?${query}`, { cache: 'no-store' });
+        const queryObj: Record<string, string> = {};
+        if (params?.category) queryObj.category = params.category;
+        if (params?.query) queryObj.query = params.query;
+        if (params?.minPrice !== undefined) queryObj.minPrice = String(params.minPrice);
+        if (params?.maxPrice !== undefined) queryObj.maxPrice = String(params.maxPrice);
+        if (params?.sortBy) queryObj.sortBy = params.sortBy;
+
+        const qs = new URLSearchParams(queryObj).toString();
+        const url = `${API_BASE}/products${qs ? `?${qs}` : ''}`;
+
+        const res = await fetch(url, {
+          next: { revalidate: 60 },
+        });
+
         if (res.ok) {
           const data = await res.json();
-          return Array.isArray(data) ? data : data.data || [];
+          const list = Array.isArray(data) ? data : data.data || [];
+          setCached(cacheKey, list);
+          return list;
         }
       } catch {
         // Fall back to mock if server offline
@@ -67,84 +101,153 @@ export const api = {
       if (params.sortBy === 'rating') filtered.sort((a, b) => b.rating - a.rating);
     }
 
+    setCached(cacheKey, filtered);
     return filtered;
   },
 
   async getProductBySlug(slug: string): Promise<Product | null> {
+    const cacheKey = `product_slug_${slug}`;
+    const cached = getCached<Product>(cacheKey);
+    if (cached) return cached;
+
     if (!USE_MOCK) {
       try {
-        const res = await fetch(`${API_BASE}/products/${slug}`, { cache: 'no-store' });
-        if (res.ok) return await res.json();
+        const res = await fetch(`${API_BASE}/products/${slug}`, {
+          next: { revalidate: 60 },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCached(cacheKey, data);
+          return data;
+        }
       } catch {
         // Fall back to mock
       }
     }
 
-    const found = PRODUCTS.find(p => p.slug === slug);
-    return found || null;
+    const found = PRODUCTS.find(p => p.slug === slug) || null;
+    if (found) setCached(cacheKey, found);
+    return found;
   },
 
   async getBestSellers(): Promise<Product[]> {
+    const cacheKey = 'products_featured';
+    const cached = getCached<Product[]>(cacheKey);
+    if (cached) return cached;
+
     if (!USE_MOCK) {
       try {
-        const res = await fetch(`${API_BASE}/products/featured`, { cache: 'no-store' });
-        if (res.ok) return await res.json();
+        const res = await fetch(`${API_BASE}/products/featured`, {
+          next: { revalidate: 60 },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCached(cacheKey, data);
+          return data;
+        }
       } catch {
         // Fall back to mock
       }
     }
 
-    return PRODUCTS.slice(0, 8);
+    const items = PRODUCTS.slice(0, 8);
+    setCached(cacheKey, items);
+    return items;
   },
 
   // Categories
   async getCategories(): Promise<Category[]> {
+    const cacheKey = 'categories_all';
+    const cached = getCached<Category[]>(cacheKey);
+    if (cached) return cached;
+
     if (!USE_MOCK) {
       try {
-        const res = await fetch(`${API_BASE}/categories`, { cache: 'no-store' });
-        if (res.ok) return await res.json();
+        const res = await fetch(`${API_BASE}/categories`, {
+          next: { revalidate: 120 },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCached(cacheKey, data, 120 * 1000);
+          return data;
+        }
       } catch {
         // Fall back to local categories on build/offline
       }
     }
+    setCached(cacheKey, CATEGORIES, 120 * 1000);
     return CATEGORIES;
   },
 
   async getCategoryBySlug(slug: string): Promise<Category | null> {
+    const cacheKey = `category_slug_${slug}`;
+    const cached = getCached<Category>(cacheKey);
+    if (cached) return cached;
+
     if (!USE_MOCK) {
       try {
-        const res = await fetch(`${API_BASE}/categories/${slug}`, { cache: 'no-store' });
-        if (res.ok) return await res.json();
+        const res = await fetch(`${API_BASE}/categories/${slug}`, {
+          next: { revalidate: 120 },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCached(cacheKey, data, 120 * 1000);
+          return data;
+        }
       } catch {
         // Fall back to local categories
       }
     }
-    return CATEGORIES.find(c => c.slug === slug) || null;
+    const found = CATEGORIES.find(c => c.slug === slug) || null;
+    if (found) setCached(cacheKey, found, 120 * 1000);
+    return found;
   },
 
   // Stores
   async getStores(): Promise<StoreLocation[]> {
+    const cacheKey = 'stores_all';
+    const cached = getCached<StoreLocation[]>(cacheKey);
+    if (cached) return cached;
+
     if (!USE_MOCK) {
       try {
-        const res = await fetch(`${API_BASE}/stores`, { cache: 'no-store' });
-        if (res.ok) return await res.json();
+        const res = await fetch(`${API_BASE}/stores`, {
+          next: { revalidate: 300 },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCached(cacheKey, data, 300 * 1000);
+          return data;
+        }
       } catch {
         // Fall back to local stores on build/offline
       }
     }
+    setCached(cacheKey, STORES, 300 * 1000);
     return STORES;
   },
 
   // Testimonials
   async getTestimonials(): Promise<Testimonial[]> {
+    const cacheKey = 'testimonials_all';
+    const cached = getCached<Testimonial[]>(cacheKey);
+    if (cached) return cached;
+
     if (!USE_MOCK) {
       try {
-        const res = await fetch(`${API_BASE}/testimonials`, { cache: 'no-store' });
-        if (res.ok) return await res.json();
+        const res = await fetch(`${API_BASE}/testimonials`, {
+          next: { revalidate: 300 },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCached(cacheKey, data, 300 * 1000);
+          return data;
+        }
       } catch {
         // Fall back to local testimonials on build/offline
       }
     }
+    setCached(cacheKey, TESTIMONIALS, 300 * 1000);
     return TESTIMONIALS;
   },
 
@@ -159,7 +262,10 @@ export const api = {
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${API_BASE}/products/admin/stats`, { headers });
+    const res = await fetch(`${API_BASE}/products/admin/stats`, {
+      headers,
+      cache: 'no-store',
+    });
     if (!res.ok) {
       throw new Error('Failed to fetch admin stats');
     }
@@ -170,7 +276,10 @@ export const api = {
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${API_BASE}/products/admin/all`, { headers });
+    const res = await fetch(`${API_BASE}/products/admin/all`, {
+      headers,
+      cache: 'no-store',
+    });
     if (!res.ok) {
       return this.getProducts();
     }
@@ -178,7 +287,7 @@ export const api = {
   },
 
   async getProductById(id: string): Promise<Product | null> {
-    const res = await fetch(`${API_BASE}/products/id/${id}`);
+    const res = await fetch(`${API_BASE}/products/id/${id}`, { cache: 'no-store' });
     if (!res.ok) return null;
     return res.json();
   },
@@ -197,6 +306,7 @@ export const api = {
       const err = await res.json().catch(() => ({ message: 'Failed to create product' }));
       throw new Error(err.message || 'Failed to create product');
     }
+    this.clearCache();
     return res.json();
   },
 
@@ -214,6 +324,7 @@ export const api = {
       const err = await res.json().catch(() => ({ message: 'Failed to update product' }));
       throw new Error(err.message || 'Failed to update product');
     }
+    this.clearCache();
     return res.json();
   },
 
@@ -231,6 +342,7 @@ export const api = {
       const err = await res.json().catch(() => ({ message: 'Failed to update stock status' }));
       throw new Error(err.message || 'Failed to update stock status');
     }
+    this.clearCache();
     return res.json();
   },
 
@@ -247,5 +359,83 @@ export const api = {
       const err = await res.json().catch(() => ({ message: 'Failed to delete product' }));
       throw new Error(err.message || 'Failed to delete product');
     }
+    this.clearCache();
+  },
+
+  // Orders
+  async createOrder(orderData: any): Promise<any> {
+    const res = await fetch(`${API_BASE}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed to create order' }));
+      throw new Error(err.message || 'Failed to create order');
+    }
+    return res.json();
+  },
+
+  async getOrderByNumber(orderNumber: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/orders/${orderNumber}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Order not found' }));
+      throw new Error(err.message || 'Order not found');
+    }
+    return res.json();
+  },
+
+  async getAdminOrders(token?: string, status?: string, search?: string): Promise<{ orders: any[]; stats: any }> {
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const params = new URLSearchParams();
+    if (status && status !== 'all') params.set('status', status);
+    if (search) params.set('search', search);
+
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE}/orders${qs}`, { headers });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed to fetch orders' }));
+      throw new Error(err.message || 'Failed to fetch orders');
+    }
+    return res.json();
+  },
+
+  async updateOrderStatus(id: string, orderStatus?: string, paymentStatus?: string, token?: string): Promise<any> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/orders/${id}/status`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ orderStatus, paymentStatus }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed to update order' }));
+      throw new Error(err.message || 'Failed to update order');
+    }
+    return res.json();
+  },
+
+  // Customers
+  async getAdminCustomers(token?: string, search?: string): Promise<{ customers: any[]; stats: any }> {
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE}/auth/customers${qs}`, { headers });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed to fetch customers' }));
+      throw new Error(err.message || 'Failed to fetch customers');
+    }
+    return res.json();
   },
 };

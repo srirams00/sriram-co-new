@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
+import ImageDropzone from '@/components/admin/ImageDropzone';
 import styles from '../../form.module.css';
 
 const DEFAULT_CATEGORIES = [
@@ -85,15 +86,15 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     if (!formData.price || Number(formData.price) <= 0) errors.price = 'Valid price is required';
     if (!formData.image.trim()) {
       errors.image = 'Primary image URL is required';
-    } else if (!formData.image.startsWith('https://') && !formData.image.startsWith('/')) {
-      errors.image = 'Image URL must use secure https:// protocol or /path';
+    } else if (!formData.image.startsWith('https://') && !formData.image.startsWith('/') && !formData.image.startsWith('data:image/')) {
+      errors.image = 'Image URL must use secure https:// protocol or local path';
     }
     const additionalImageUrls = formData.additionalImages
       .split('\n')
       .map((url) => url.trim())
       .filter(Boolean);
-    if (additionalImageUrls.some((url) => !url.startsWith('https://') && !url.startsWith('/'))) {
-      errors.additionalImages = 'Each image URL must use secure https:// protocol or /path';
+    if (additionalImageUrls.some((url) => !url.startsWith('https://') && !url.startsWith('/') && !url.startsWith('data:image/'))) {
+      errors.additionalImages = 'Each image URL must use secure https:// protocol or local path';
     }
     if (!formData.shortDescription.trim()) errors.shortDescription = 'Short description is required';
     if (!formData.fullDescription.trim()) errors.fullDescription = 'Full description is required';
@@ -327,70 +328,32 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
-        {/* Image Preview & URL */}
-        <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>
-            <span>Primary Image URL <span className={styles.requiredMarker}>*</span></span>
-          </label>
-          <div className={styles.imageSection}>
-            <div className={styles.imageInputs}>
-              <input
-                type="text"
-                name="image"
-                placeholder="https://images.unsplash.com/... or /images/..."
-                value={formData.image}
-                onChange={handleChange}
-                onBlur={() => handleBlur('image')}
-                className={`${styles.inputField} ${touched.image && errors.image ? styles.fieldError : ''}`}
-                style={{ width: '100%' }}
-              />
-              {touched.image && errors.image && <span className={styles.errorText}>{errors.image}</span>}
-              <span className={styles.hintText} style={{ display: 'block', marginTop: '4px' }}>
-                Must start with secure https:// or local path
-              </span>
-            </div>
+        {/* Primary Image Drag and Drop */}
+        <ImageDropzone
+          label="Primary Image URL"
+          required
+          value={formData.image}
+          onChange={(img: string) => {
+            setFormData((prev) => ({ ...prev, image: img }));
+          }}
+          error={touched.image ? errors.image : undefined}
+          hint="Drag & drop image file from desktop, drop image from browser, or paste image URL"
+        />
 
-            {/* Live Preview Box */}
-            <div className={styles.previewBox}>
-              {formData.image ? (
-                <img
-                  src={formData.image}
-                  alt="Preview"
-                  className={styles.previewImg}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=200&q=80';
-                  }}
-                />
-              ) : (
-                <div className={styles.previewPlaceholder}>
-                  <ImageIcon size={22} style={{ margin: '0 auto 4px auto', opacity: 0.5 }} />
-                  <span>Preview</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel} htmlFor="additionalImages">
-            Additional Image URLs
-          </label>
-          <textarea
-            id="additionalImages"
-            name="additionalImages"
-            rows={4}
-            placeholder={'https://example.com/product-side.jpg\nhttps://example.com/product-detail.jpg'}
-            value={formData.additionalImages}
-            onChange={handleChange}
-            onBlur={() => handleBlur('additionalImages')}
-            className={`${styles.textareaField} ${touched.additionalImages && errors.additionalImages ? styles.fieldError : ''}`}
-          />
-          <span className={styles.hintText}>Add one URL per line. Customers can select these images on the product page.</span>
-          {touched.additionalImages && errors.additionalImages && (
-            <span className={styles.errorText}>{errors.additionalImages}</span>
-          )}
-        </div>
+        {/* Additional Images Drag and Drop Gallery */}
+        <ImageDropzone
+          label="Additional Image URLs (Gallery)"
+          isMultiple
+          value={
+            formData.additionalImages
+              ? formData.additionalImages.split('\n').filter(Boolean)
+              : []
+          }
+          onChange={(imgs: string[]) => {
+            setFormData((prev) => ({ ...prev, additionalImages: imgs.join('\n') }));
+          }}
+          hint="Drag multiple image files or drop images to build the customer gallery"
+        />
 
         {/* Short Description */}
         <div className={styles.fieldGroup}>

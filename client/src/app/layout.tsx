@@ -3,10 +3,7 @@ import { Poppins, Montserrat } from 'next/font/google';
 import '@/styles/globals.css';
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
-import AnnouncementBar from '@/components/layout/AnnouncementBar';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import CartDrawer from '@/components/cart/CartDrawer';
+import StoreLayoutWrapper from '@/components/layout/StoreLayoutWrapper';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -47,11 +44,7 @@ export default function RootLayout({
       <body>
         <CartProvider>
           <WishlistProvider>
-            <AnnouncementBar />
-            <Header />
-            <main>{children}</main>
-            <Footer />
-            <CartDrawer />
+            <StoreLayoutWrapper>{children}</StoreLayoutWrapper>
           </WishlistProvider>
         </CartProvider>
       </body>

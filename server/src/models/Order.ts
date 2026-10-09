@@ -35,11 +35,10 @@ export interface IOrder extends Document {
   updatedAt: Date;
 }
 
-const OrderItemSchema = new Schema<IOrderItem>(
+const OrderItemSchema = new Schema<any>(
   {
     product: {
-      type: Schema.Types.ObjectId,
-      ref: 'Product',
+      type: Schema.Types.Mixed,
       required: true,
     },
     name: { type: String, required: true },
