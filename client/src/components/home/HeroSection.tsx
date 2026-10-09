@@ -36,7 +36,7 @@ export default function HeroSection() {
 
           <div className={styles.trustMetrics}>
             <div className={styles.metricItem}>
-              <strong>35+</strong>
+              <strong>20+</strong>
               <span>Years of trust</span>
             </div>
             <div className={styles.metricDivider} />

@@ -24,7 +24,7 @@ export default function PromoEditorialGrid() {
           {/* Cell 2: Image Block (Top-Right) */}
           <div className={`${styles.bentoCell} ${styles.imageCell} ${styles.cellTopRight}`}>
             <img
-              src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=80"
+              src="./mop.jpeg"
               alt="Kitchen mixer appliance"
               className={styles.image}
               loading="lazy"
@@ -34,7 +34,7 @@ export default function PromoEditorialGrid() {
           {/* Cell 3: Image Block (Bottom-Left) */}
           <div className={`${styles.bentoCell} ${styles.imageCell} ${styles.cellBottomLeft}`}>
             <img
-              src="https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=800&q=80"
+              src="./fan.jpeg"
               alt="Heavy duty cleaning appliance"
               className={styles.image}
               loading="lazy"

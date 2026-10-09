@@ -64,15 +64,36 @@
 }
 
 .navLink {
+  position: relative;
   font-size: 0.9375rem;
   font-weight: 500;
   color: var(--color-text-main);
-  transition: color var(--transition-fast);
+  transition: color var(--transition-normal);
   padding: 4px 0;
 }
 
-.navLink:hover {
-  color: var(--color-primary);
+.navLink::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-normal);
+}
+
+.navLink:hover,
+.navLink:focus-visible {
+  color: var(--color-accent-hover);
+}
+
+.navLink:hover::after,
+.navLink:focus-visible::after {
+  transform: scaleX(1);
 }
 
 .searchForm {
@@ -207,6 +228,32 @@
   font-weight: 500;
   color: var(--color-text-main);
   border-bottom: 1px solid var(--color-border-subtle);
+  transition: color var(--transition-normal), border-color var(--transition-normal);
+}
+
+.mobileNavLink svg {
+  transition: color var(--transition-normal), transform var(--transition-normal);
+}
+
+.mobileNavLink:hover,
+.mobileNavLink:focus-visible {
+  color: var(--color-accent-hover);
+  border-color: var(--color-accent);
+}
+
+.mobileNavLink:hover svg,
+.mobileNavLink:focus-visible svg {
+  color: var(--color-accent);
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navLink,
+  .navLink::after,
+  .mobileNavLink,
+  .mobileNavLink svg {
+    transition: none;
+  }
 }
 
 @media (max-width: 900px) {
