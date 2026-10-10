@@ -54,20 +54,36 @@ export const api = {
         if (params?.minPrice !== undefined) queryObj.minPrice = String(params.minPrice);
         if (params?.maxPrice !== undefined) queryObj.maxPrice = String(params.maxPrice);
         if (params?.sortBy) queryObj.sortBy = params.sortBy;
+        queryObj.limit = '100';
 
-        const qs = new URLSearchParams(queryObj).toString();
-        const url = `${API_BASE}/products${qs ? `?${qs}` : ''}`;
+        const fetchPage = async (page: number) => {
+          const qs = new URLSearchParams({ ...queryObj, page: String(page) }).toString();
+          const res = await fetch(`${API_BASE}/products?${qs}`, {
+            next: { revalidate: 60 },
+          });
 
-        const res = await fetch(url, {
-          next: { revalidate: 60 },
-        });
+          if (!res.ok) {
+            throw new Error(`Failed to fetch products: ${res.status} ${res.statusText}`);
+          }
 
-        if (res.ok) {
-          const data = await res.json();
-          const list = Array.isArray(data) ? data : data.data || [];
-          setCached(cacheKey, list);
-          return list;
-        }
+          return res.json() as Promise<
+            Product[] | { data?: Product[]; pagination?: { totalPages?: number } }
+          >;
+        };
+
+        const firstPage = await fetchPage(1);
+        const list = Array.isArray(firstPage) ? firstPage : firstPage.data || [];
+        const totalPages = Array.isArray(firstPage) ? 1 : firstPage.pagination?.totalPages || 1;
+        const remainingPages = await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, index) => fetchPage(index + 2))
+        );
+        const allProducts = [
+          ...list,
+          ...remainingPages.flatMap((page) => Array.isArray(page) ? page : page.data || []),
+        ];
+
+        setCached(cacheKey, allProducts);
+        return allProducts;
       } catch {
         // Fall back to mock if server offline
       }
