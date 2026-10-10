@@ -42,6 +42,15 @@ export const authenticate = async (req: AuthRequest, _res: Response, next: NextF
   }
 };
 
+export const authenticateIfPresent = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  if (!req.headers.authorization) {
+    next();
+    return;
+  }
+
+  void authenticate(req, res, next);
+};
+
 /**
  * Middleware to restrict access strictly to Admin role
  */

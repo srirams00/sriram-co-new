@@ -1,10 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { Order } from '../models/Order';
+import { AuthRequest, authenticate, authenticateIfPresent } from '../middleware/authMiddleware';
 
 const router = Router();
 
 // POST /api/orders - Create a new order
-router.post('/', async (req: Request, res: Response): Promise<void> => {
+router.post('/', authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { customerInfo, orderItems, paymentMethod, pricing } = req.body;
 
@@ -21,6 +22,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     const orderNumber = `SRC-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
     const newOrder = new Order({
+      user: req.user?._id,
       orderNumber,
       customerInfo,
       orderItems,
@@ -33,6 +35,22 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   } catch (_error: any) {
     console.error('Order creation error:', _error);
     res.status(500).json({ message: _error?.message || 'Failed to create order. Please try again.' });
+  }
+});
+
+// GET /api/orders/mine - List orders belonging to the authenticated customer
+router.get('/mine', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Authentication required' });
+      return;
+    }
+
+    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    console.error('Customer order retrieval error:', error);
+    res.status(500).json({ message: 'Error retrieving customer orders' });
   }
 });
 

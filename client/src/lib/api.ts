@@ -5,6 +5,7 @@ import { TESTIMONIALS } from '@/data/testimonials';
 import { Product, Category } from '@/types/product';
 import { StoreLocation } from '@/types/store';
 import { Testimonial } from '@/types/testimonial';
+import { Order } from '@/types/order';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
@@ -363,10 +364,13 @@ export const api = {
   },
 
   // Orders
-  async createOrder(orderData: any): Promise<any> {
+  async createOrder(orderData: any, token?: string): Promise<Order> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
     const res = await fetch(`${API_BASE}/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(orderData),
     });
 
@@ -377,7 +381,19 @@ export const api = {
     return res.json();
   },
 
-  async getOrderByNumber(orderNumber: string): Promise<any> {
+  async getMyOrders(token: string): Promise<Order[]> {
+    const res = await fetch(`${API_BASE}/orders/mine`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed to fetch your orders' }));
+      throw new Error(err.message || 'Failed to fetch your orders');
+    }
+    return res.json();
+  },
+
+  async getOrderByNumber(orderNumber: string): Promise<Order> {
     const res = await fetch(`${API_BASE}/orders/${orderNumber}`);
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: 'Order not found' }));

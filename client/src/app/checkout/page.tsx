@@ -49,12 +49,9 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
     try {
-      // Find fallback user token/id if available
-      const storedUser = typeof window !== 'undefined' ? localStorage.getItem('src_user') : null;
-      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+      const token = localStorage.getItem('src_auth_token') || undefined;
 
       const orderPayload = {
-        user: parsedUser?.id || undefined,
         customerInfo: {
           name: formData.fullName.trim(),
           phone: formData.phone.trim(),
@@ -80,7 +77,7 @@ export default function CheckoutPage() {
         },
       };
 
-      const savedOrder = await api.createOrder(orderPayload);
+      const savedOrder = await api.createOrder(orderPayload, token);
       setPlacedOrderId(savedOrder.orderNumber);
       setOrderPlaced(true);
       clearCart();
