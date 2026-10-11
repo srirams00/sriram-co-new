@@ -1,10 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { Order } from '../models/Order';
-import { AuthRequest, authenticate, authenticateIfPresent } from '../middleware/authMiddleware';
+import { AuthRequest, authenticate, authenticateIfPresent, requireAdmin } from '../middleware/authMiddleware';
 
 const router = Router();
 
-// POST /api/orders - Create a new order
+// POST /api/orders - Create a new order (Public storefront checkout, associates user if authenticated)
 router.post('/', authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { customerInfo, orderItems, paymentMethod, pricing } = req.body;
@@ -54,8 +54,8 @@ router.get('/mine', authenticate, async (req: AuthRequest, res: Response): Promi
   }
 });
 
-// GET /api/orders - List all orders with aggregated statistics
-router.get('/', async (req: Request, res: Response): Promise<void> => {
+// GET /api/orders - List all orders with aggregated statistics (Protected: Admin only)
+router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
     const { status, search } = req.query;
     const query: any = {};
@@ -111,8 +111,8 @@ router.get('/:orderNumber', async (req: Request, res: Response): Promise<void> =
   }
 });
 
-// PATCH /api/orders/:id/status - Update order status and/or payment status
-router.patch('/:id/status', async (req: Request, res: Response): Promise<void> => {
+// PATCH /api/orders/:id/status - Update order status and/or payment status (Protected: Admin only)
+router.patch('/:id/status', requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { orderStatus, paymentStatus } = req.body;

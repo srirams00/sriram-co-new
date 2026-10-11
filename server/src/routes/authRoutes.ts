@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { User, IUser } from '../models/User';
 import { Order } from '../models/Order';
 import { AppError } from '../middleware/errorHandler';
+import { requireAdmin } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -119,7 +120,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response, next: 
   }
 });
 
-// POST /api/auth/login
+// POST /api/auth/login (Customer-only storefront authentication)
 router.post('/login', authLimiter, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, password } = LoginSchema.parse(req.body);
@@ -133,9 +134,53 @@ router.post('/login', authLimiter, async (req: Request, res: Response, next: Nex
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }
 
+    // Role boundary protection: Admins must not authenticate through customer portal
+    if (user.role === 'admin') {
+      throw new AppError(
+        'This portal is exclusively for customer accounts. Administrators must sign in through the authorized operations gateway.',
+        403,
+        'ADMIN_ACCOUNT_CUSTOMER_PORTAL_FORBIDDEN'
+      );
+    }
+
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
+    }
+
+    const token = generateToken(user._id.toString());
+
+    res.json({
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
+      token,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/auth/admin-login (Protected administrator authentication gateway)
+router.post('/admin-login', authLimiter, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { email, password } = LoginSchema.parse(req.body);
+
+    const user = await User.findOne({
+      $or: [{ email: email.toLowerCase() }, { phone: email }],
+    }).select('+password');
+
+    if (!user || user.role !== 'admin') {
+      throw new AppError('Invalid administrator credentials or unauthorized account', 401, 'INVALID_ADMIN_CREDENTIALS');
+    }
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      throw new AppError('Invalid administrator credentials or unauthorized account', 401, 'INVALID_ADMIN_CREDENTIALS');
     }
 
     const token = generateToken(user._id.toString());
@@ -230,8 +275,8 @@ router.put('/profile', async (req: Request, res: Response, next: NextFunction): 
   }
 });
 
-// GET /api/auth/customers - List all registered customers with aggregate order statistics
-router.get('/customers', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// GET /api/auth/customers - List all registered customers with aggregate order statistics (Protected: Admin only)
+router.get('/customers', requireAdmin, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { search } = req.query;
     const query: any = { role: 'customer' };

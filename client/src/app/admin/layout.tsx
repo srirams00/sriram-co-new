@@ -44,23 +44,12 @@ export default function AdminLayout({
           }
         }
 
-        // Token expired or invalid (e.g., after DB re-seeding)
+        // Token expired or invalid
         localStorage.removeItem('src_auth_token');
         localStorage.removeItem('src_user');
         setIsAdmin(false);
       } catch {
-        // Fallback for offline or local cache
-        const storedUser = localStorage.getItem('src_user');
-        if (storedUser) {
-          try {
-            const u = JSON.parse(storedUser);
-            if (u.role === 'admin') {
-              setIsAdmin(true);
-              setAdminUser(u);
-              return;
-            }
-          } catch {}
-        }
+        // Network failure or offline: do not allow unverified bypass
         setIsAdmin(false);
       }
     }
@@ -72,7 +61,8 @@ export default function AdminLayout({
     localStorage.removeItem('src_auth_token');
     localStorage.removeItem('src_user');
     setIsAdmin(false);
-    router.push('/login');
+    window.dispatchEvent(new Event('auth-change'));
+    router.push('/f0d06b7799107f8da21a05984c29bb10');
   };
 
   // While checking local storage
@@ -165,10 +155,19 @@ export default function AdminLayout({
               <ExternalLink size={14} />
             </Link>
 
+            <button
+              type="button"
+              className={styles.headerLogoutBtn}
+              onClick={handleLogout}
+              title="End administrator session and sign out"
+            >
+              <LogOut size={15} />
+              <span>Sign Out</span>
+            </button>
+
             <div
               className={styles.adminAvatar}
-              title={`Logged in as ${adminUser?.name || 'Administrator'} (${adminUser?.email || ''}) - Click to logout`}
-              onClick={handleLogout}
+              title={`Logged in as ${adminUser?.name || 'Administrator'} (${adminUser?.email || ''})`}
             >
               {initials}
             </div>
