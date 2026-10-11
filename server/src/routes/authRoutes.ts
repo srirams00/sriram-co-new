@@ -130,17 +130,11 @@ router.post('/login', authLimiter, async (req: Request, res: Response, next: Nex
       $or: [{ email: email.toLowerCase() }, { phone: email }],
     }).select('+password');
 
-    if (!user) {
+    // Prevent account enumeration & credential sniffing (OWASP ASVS):
+    // Always return identical generic 401 error whether the account does not exist,
+    // has a mismatched password, or is not an authorized customer account.
+    if (!user || user.role !== 'customer') {
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
-    }
-
-    // Role boundary protection: Admins must not authenticate through customer portal
-    if (user.role === 'admin') {
-      throw new AppError(
-        'This portal is exclusively for customer accounts. Administrators must sign in through the authorized operations gateway.',
-        403,
-        'ADMIN_ACCOUNT_CUSTOMER_PORTAL_FORBIDDEN'
-      );
     }
 
     const isMatch = await user.matchPassword(password);
@@ -175,12 +169,12 @@ router.post('/admin-login', authLimiter, async (req: Request, res: Response, nex
     }).select('+password');
 
     if (!user || user.role !== 'admin') {
-      throw new AppError('Invalid administrator credentials or unauthorized account', 401, 'INVALID_ADMIN_CREDENTIALS');
+      throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }
 
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      throw new AppError('Invalid administrator credentials or unauthorized account', 401, 'INVALID_ADMIN_CREDENTIALS');
+      throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }
 
     const token = generateToken(user._id.toString());

@@ -148,18 +148,18 @@ describe('Security & Hardening Suite', () => {
     assert.ok(claims.exp > claims.iat, 'Token must have non-zero expiration time');
   });
 
-  it('enforces customer login rejects administrative accounts with 403', () => {
+  it('enforces customer login rejects administrative accounts with generic 401 to prevent account enumeration', () => {
     function processCustomerLogin(userRole: string) {
-      if (userRole === 'admin') {
-        throw new Error('This portal is exclusively for customer accounts. Administrators must sign in through the authorized operations gateway.');
+      if (userRole !== 'customer') {
+        throw new Error('Invalid email or password');
       }
       return { success: true };
     }
 
     assert.throws(
       () => processCustomerLogin('admin'),
-      /This portal is exclusively for customer accounts/,
-      'Customer login must reject admin accounts'
+      /Invalid email or password/,
+      'Customer login must reject admin accounts with generic credentials error'
     );
     assert.equal(processCustomerLogin('customer').success, true, 'Customer login should allow customers');
   });
