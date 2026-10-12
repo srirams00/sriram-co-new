@@ -71,6 +71,8 @@ export default function Footer() {
         <div className={`container ${styles.bottomInner}`}>
           <p>© {new Date().getFullYear()} Sriram &amp; Co. All rights reserved.</p>
           <div className={styles.bottomLinks}>
+            <span className={styles.devCredit}>Develop by Sriram and Silvest A. J</span>
+            <span>•</span>
             <span>Terms of Service</span>
             <span>•</span>
             <span>Privacy Policy</span>
