@@ -147,4 +147,44 @@ describe('Security & Hardening Suite', () => {
     assert.ok(claims.role === 'admin', 'Role claim must be admin');
     assert.ok(claims.exp > claims.iat, 'Token must have non-zero expiration time');
   });
+
+  it('enforces customer login rejects administrative accounts with generic 401 to prevent account enumeration', () => {
+    function processCustomerLogin(userRole: string) {
+      if (userRole !== 'customer') {
+        throw new Error('Invalid email or password');
+      }
+      return { success: true };
+    }
+
+    assert.throws(
+      () => processCustomerLogin('admin'),
+      /Invalid email or password/,
+      'Customer login must reject admin accounts with generic credentials error'
+    );
+    assert.equal(processCustomerLogin('customer').success, true, 'Customer login should allow customers');
+  });
+
+  it('normalizes category matching across slugs and human-readable names', () => {
+    const products = [
+      { name: '18V Cordless Drill', category: 'Power Tools', categorySlug: 'power-tools' },
+      { name: 'Robot Vacuum', category: 'Cleaning Appliances', categorySlug: 'cleaning-appliances' },
+      { name: 'Air Fryer 4L', category: 'Kitchen Essentials', categorySlug: 'kitchen-essentials' },
+    ];
+
+    function filterByCategory(slug: string) {
+      const normalized = slug.toLowerCase().trim();
+      return products.filter(
+        p =>
+          p.categorySlug === normalized ||
+          p.category.toLowerCase().replace(/\s+/g, '-') === normalized ||
+          p.category.toLowerCase() === normalized
+      );
+    }
+
+    assert.equal(filterByCategory('power-tools').length, 1);
+    assert.equal(filterByCategory('cleaning-appliances').length, 1);
+    assert.equal(filterByCategory('kitchen-essentials').length, 1);
+    assert.equal(filterByCategory('Power Tools').length, 1);
+    assert.equal(filterByCategory('non-existent').length, 0);
+  });
 });

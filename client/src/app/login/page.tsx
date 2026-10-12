@@ -58,8 +58,6 @@ export default function LoginPage() {
       const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
       if (redirectParam) {
         router.push(redirectParam);
-      } else if (data.user?.role === 'admin') {
-        router.push('/48191d90cc476d1c72aaec9997cc977c');
       } else {
         router.push('/account');
       }
@@ -145,8 +143,6 @@ export default function LoginPage() {
       const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
       if (redirectParam) {
         router.push(redirectParam);
-      } else if (data.user?.role === 'admin') {
-        router.push('/admin/products');
       } else {
         router.push('/account');
       }

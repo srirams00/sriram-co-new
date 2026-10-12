@@ -65,6 +65,27 @@
   opacity: 0.85;
 }
 
+.headerLogoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #FFFFFF;
+  color: #B42318;
+  border: 1px solid #FECDCA;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.headerLogoutBtn:hover {
+  background-color: #FEF3F2;
+  border-color: #FDA29B;
+  color: #912018;
+}
+
 .adminAvatar {
   width: 36px;
   height: 36px;

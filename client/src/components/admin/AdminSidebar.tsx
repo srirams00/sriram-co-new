@@ -2,14 +2,23 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingBag, Users } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { LayoutDashboard, Package, ShoppingBag, Users, LogOut } from 'lucide-react';
 import styles from './AdminSidebar.module.css';
 
 const DASHBOARD_ROUTE = '/48191d90cc476d1c72aaec9997cc977c';
+const ADMIN_LOGIN_ROUTE = '/f0d06b7799107f8da21a05984c29bb10';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem('src_auth_token');
+    localStorage.removeItem('src_user');
+    window.dispatchEvent(new Event('auth-change'));
+    router.push(ADMIN_LOGIN_ROUTE);
+  };
 
   const isDashboardActive = pathname.startsWith(DASHBOARD_ROUTE);
   const isProductsActive = pathname.startsWith('/admin/products');
@@ -67,6 +76,18 @@ export default function AdminSidebar() {
             <span>Customers</span>
           </div>
         </Link>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className={styles.sidebarLogoutBtn}
+          title="Sign out of admin session"
+        >
+          <div className={styles.navItemLeft}>
+            <LogOut size={18} />
+            <span>Log Out</span>
+          </div>
+        </button>
       </nav>
 
       {/* Store status footer */}

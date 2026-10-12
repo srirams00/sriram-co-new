@@ -205,7 +205,7 @@ export default function Header() {
         {/* Right: Actions */}
         <div className={styles.actions}>
           <Link
-            href={currentUser ? (currentUser.role === 'admin' ? '/48191d90cc476d1c72aaec9997cc977c' : '/account') : '/login'}
+            href={currentUser ? '/account' : '/login'}
             className={styles.actionBtn}
             aria-label={currentUser ? `My Account (${currentUser.name})` : 'My Account'}
             title={currentUser ? `Logged in as ${currentUser.name}` : 'My Account'}

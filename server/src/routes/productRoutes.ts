@@ -186,7 +186,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
     const filter: Record<string, any> = { isArchived: { $ne: true } };
 
     if (category) {
-      filter.categorySlug = category;
+      const normalizedSlug = category.toLowerCase().trim();
+      filter.$or = [
+        { categorySlug: normalizedSlug },
+        { categorySlug: category },
+        { category: new RegExp(`^${category.replace(/[-_]/g, ' ')}$`, 'i') },
+        { category: new RegExp(`^${category}$`, 'i') },
+      ];
     }
 
     if (query) {

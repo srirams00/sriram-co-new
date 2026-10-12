@@ -92,7 +92,12 @@ export const api = {
     let filtered = [...PRODUCTS];
 
     if (params?.category) {
-      filtered = filtered.filter(p => p.categorySlug === params.category);
+      const catParam = params.category.toLowerCase().trim();
+      filtered = filtered.filter(p => 
+        (p.categorySlug && p.categorySlug.toLowerCase() === catParam) ||
+        (p.category && p.category.toLowerCase().replace(/\s+/g, '-') === catParam) ||
+        (p.category && p.category.toLowerCase() === catParam)
+      );
     }
 
     if (params?.query) {
