@@ -7,6 +7,9 @@ import { Truck, MapPin, Store, Clock } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'Shipping & Delivery Policy | Sri Ram & Co',
   description: 'Shipping and delivery timelines, service zones, and direct store fulfillment across Tamil Nadu for Sri Ram & Co.',
+  alternates: {
+    canonical: '/shipping-policy',
+  },
   openGraph: {
     title: 'Shipping & Delivery Policy | Sri Ram & Co',
     description: 'Learn about our same-day Trichy & Chennai branch dispatch, Tamil Nadu delivery SLAs, and free shipping terms.',

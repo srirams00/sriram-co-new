@@ -1,7 +1,22 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck, Award, HeartHandshake, MapPin } from 'lucide-react';
 import styles from './about.module.css';
+
+export const metadata: Metadata = {
+  title: 'About Us — 35 Years of Trusted Guidance & Quality Tools',
+  description: 'Learn about Sriram & Co, founded in Trichy and expanding to Chennai. Providing genuine home appliances, power tools, and honest store service for over 35 years.',
+  alternates: {
+    canonical: '/about',
+  },
+  openGraph: {
+    title: 'About Sri Ram & Co — Our Legacy & Values',
+    description: 'Providing genuine home appliances, power tools, and honest store service for over 35 years across Trichy and Chennai.',
+    url: '/about',
+    type: 'website',
+  },
+};
 
 export default function AboutPage() {
   return (

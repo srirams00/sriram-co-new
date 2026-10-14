@@ -19,6 +19,8 @@ export interface Product {
   reviewCount: number;
   specifications: Record<string, string>;
   features: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Category {
@@ -28,4 +30,6 @@ export interface Category {
   description: string;
   image: string;
   itemCount: number;
+  createdAt?: string;
+  updatedAt?: string;
 }

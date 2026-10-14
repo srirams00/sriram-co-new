@@ -6,6 +6,9 @@ import styles from '@/app/legal.module.css';
 export const metadata: Metadata = {
   title: 'Terms of Service | Sri Ram & Co',
   description: 'Terms of Service, Conditions of Sale, and Indian statutory compliance framework for Sri Ram & Co.',
+  alternates: {
+    canonical: '/terms',
+  },
   openGraph: {
     title: 'Terms of Service | Sri Ram & Co',
     description: 'Official conditions of sale, GST compliance, and user agreement for Sri Ram & Co.',

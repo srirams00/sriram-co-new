@@ -7,6 +7,9 @@ import { ShieldCheck, Award, Wrench, CheckCircle2, AlertTriangle } from 'lucide-
 export const metadata: Metadata = {
   title: 'Warranty & Service Policy | Sri Ram & Co',
   description: 'Official 1-Year Comprehensive Warranty on all products, service guarantees, and grievance redressal for Sri Ram & Co.',
+  alternates: {
+    canonical: '/warranty-policy',
+  },
   openGraph: {
     title: 'Warranty & Service Policy | Sri Ram & Co',
     description: 'Every product sold by Sri Ram & Co includes a full 1-year warranty backed by official GST tax invoices.',

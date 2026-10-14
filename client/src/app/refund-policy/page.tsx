@@ -7,6 +7,9 @@ import { Clock, ShieldCheck, RefreshCw, CheckCircle2 } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'Return & Refund Policy | Sri Ram & Co',
   description: 'Return, replacement, and refund policy for Sri Ram & Co: 5 business days notification window and 5-7 days refund processing SLA.',
+  alternates: {
+    canonical: '/refund-policy',
+  },
   openGraph: {
     title: 'Return & Refund Policy | Sri Ram & Co',
     description: 'Learn about our 5-day return notification process, 5-7 days refund timeline, and 1-year product warranty.',

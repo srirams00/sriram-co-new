@@ -6,6 +6,9 @@ import styles from '@/app/legal.module.css';
 export const metadata: Metadata = {
   title: 'Privacy Policy | Sri Ram & Co',
   description: 'Digital Personal Data Protection Act (DPDP) 2023 compliant privacy and data handling policy for Sri Ram & Co.',
+  alternates: {
+    canonical: '/privacy',
+  },
   openGraph: {
     title: 'Privacy Policy | Sri Ram & Co',
     description: 'Learn how your personal information is protected under Indian data privacy regulations.',
