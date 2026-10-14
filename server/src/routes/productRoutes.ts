@@ -21,6 +21,38 @@ function slugify(text: string): string {
     .replace(/-+$/, '');
 }
 
+// Canonical category slug mapping & aliasing
+const CATEGORY_SLUG_MAP: Record<string, string> = {
+  'cleaning appliances': 'cleaning-appliances',
+  'cleaning-appliances': 'cleaning-appliances',
+  'cleaning': 'cleaning-appliances',
+  'kitchen essentials': 'kitchen-essentials',
+  'kitchen-essentials': 'kitchen-essentials',
+  'kitchen': 'kitchen-essentials',
+  'power tools': 'power-tools',
+  'power-tools': 'power-tools',
+  'power': 'power-tools',
+  'powertools': 'power-tools',
+  'garden & outdoor': 'garden-outdoor',
+  'garden and outdoor': 'garden-outdoor',
+  'garden-outdoor': 'garden-outdoor',
+  'garden': 'garden-outdoor',
+  'personal care': 'personal-care',
+  'personal-care': 'personal-care',
+  'personal': 'personal-care',
+};
+
+function deriveCategorySlug(categoryName: string, explicitSlug?: string): string {
+  if (explicitSlug && explicitSlug.trim()) {
+    const slugNorm = explicitSlug.trim().toLowerCase();
+    if (CATEGORY_SLUG_MAP[slugNorm]) return CATEGORY_SLUG_MAP[slugNorm];
+    return slugify(explicitSlug);
+  }
+  const catNorm = categoryName.trim().toLowerCase();
+  if (CATEGORY_SLUG_MAP[catNorm]) return CATEGORY_SLUG_MAP[catNorm];
+  return slugify(categoryName);
+}
+
 // 24-character hexadecimal MongoDB ObjectId validator
 const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid MongoDB ObjectId');
 
@@ -187,9 +219,30 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
 
     if (category) {
       const normalizedSlug = category.toLowerCase().trim();
+      const canonicalSlug = CATEGORY_SLUG_MAP[normalizedSlug] || normalizedSlug;
+      const slugVariants = new Set<string>([normalizedSlug, canonicalSlug, category]);
+
+      if (canonicalSlug === 'cleaning-appliances') {
+        slugVariants.add('cleaning-appliances');
+        slugVariants.add('cleaning');
+      } else if (canonicalSlug === 'kitchen-essentials') {
+        slugVariants.add('kitchen-essentials');
+        slugVariants.add('kitchen');
+      } else if (canonicalSlug === 'power-tools') {
+        slugVariants.add('power-tools');
+        slugVariants.add('power');
+        slugVariants.add('powertools');
+      } else if (canonicalSlug === 'garden-outdoor') {
+        slugVariants.add('garden-outdoor');
+        slugVariants.add('garden');
+        slugVariants.add('outdoor');
+      } else if (canonicalSlug === 'personal-care') {
+        slugVariants.add('personal-care');
+        slugVariants.add('personal');
+      }
+
       filter.$or = [
-        { categorySlug: normalizedSlug },
-        { categorySlug: category },
+        { categorySlug: { $in: Array.from(slugVariants) } },
         { category: new RegExp(`^${category.replace(/[-_]/g, ' ')}$`, 'i') },
         { category: new RegExp(`^${category}$`, 'i') },
       ];
@@ -258,7 +311,7 @@ router.post('/', requireAdmin, async (req: AuthRequest, res: Response, next: Nex
     }
 
     // Auto-derive category slug if not provided
-    const categorySlug = validatedData.categorySlug || slugify(validatedData.category);
+    const categorySlug = deriveCategorySlug(validatedData.category, validatedData.categorySlug);
 
     // Auto-generate SKU if omitted
     const sku = validatedData.sku || `SRM-${baseSlug.slice(0, 4).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
@@ -309,7 +362,7 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res: Response, next: N
 
     product.name = validatedData.name;
     product.category = validatedData.category;
-    product.categorySlug = validatedData.categorySlug || slugify(validatedData.category);
+    product.categorySlug = deriveCategorySlug(validatedData.category, validatedData.categorySlug);
     product.sku = validatedData.sku || product.sku;
     product.shortDescription = validatedData.shortDescription;
     product.fullDescription = validatedData.fullDescription;

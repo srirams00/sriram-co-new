@@ -7,7 +7,7 @@ export const CATEGORIES: Category[] = [
     slug: 'cleaning-appliances',
     description: 'Robotic vacuums, steam mops, and pressure washers',
     image: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?auto=format&fit=crop&w=600&q=80',
-    itemCount: 18,
+    itemCount: 14,
   },
   {
     id: 'cat-2',
@@ -15,7 +15,7 @@ export const CATEGORIES: Category[] = [
     slug: 'kitchen-essentials',
     description: 'Mixer grinders, air fryers, induction cooktops',
     image: 'https://images.unsplash.com/photo-1570222094114-d054a817e56b?auto=format&fit=crop&w=600&q=80',
-    itemCount: 24,
+    itemCount: 14,
   },
   {
     id: 'cat-3',
@@ -23,7 +23,7 @@ export const CATEGORIES: Category[] = [
     slug: 'power-tools',
     description: 'Cordless drills, impact drivers, multi-tools',
     image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=600&q=80',
-    itemCount: 15,
+    itemCount: 5,
   },
   {
     id: 'cat-4',
@@ -39,6 +39,6 @@ export const CATEGORIES: Category[] = [
     slug: 'personal-care',
     description: 'Grooming kits, hair dryers, massage guns',
     image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80',
-    itemCount: 10,
+    itemCount: 9,
   },
 ];

@@ -9,12 +9,11 @@ import ImageDropzone from '@/components/admin/ImageDropzone';
 import styles from '../../form.module.css';
 
 const DEFAULT_CATEGORIES = [
-  'Kitchen',
-  'Cleaning',
+  'Cleaning Appliances',
+  'Kitchen Essentials',
   'Power Tools',
-  'Home Appliances',
-  'Garden',
-  'Electricals',
+  'Garden & Outdoor',
+  'Personal Care',
 ];
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,7 +27,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Kitchen',
+    category: 'Kitchen Essentials',
     sku: '',
     price: '',
     originalPrice: '',

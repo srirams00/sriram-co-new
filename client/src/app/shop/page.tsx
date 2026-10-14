@@ -41,7 +41,12 @@ function ShopContent() {
     let result = [...products];
 
     if (selectedCategory !== 'all') {
-      result = result.filter(p => p.categorySlug === selectedCategory);
+      const targetSlug = selectedCategory.toLowerCase().trim();
+      result = result.filter(p => {
+        const pSlug = (p.categorySlug || '').toLowerCase().trim();
+        const pCat = (p.category || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        return pSlug === targetSlug || pCat === targetSlug || pSlug.startsWith(targetSlug) || targetSlug.startsWith(pSlug);
+      });
     }
 
     if (searchQuery.trim()) {

@@ -93,11 +93,17 @@ export const api = {
 
     if (params?.category) {
       const catParam = params.category.toLowerCase().trim();
-      filtered = filtered.filter(p => 
-        (p.categorySlug && p.categorySlug.toLowerCase() === catParam) ||
-        (p.category && p.category.toLowerCase().replace(/\s+/g, '-') === catParam) ||
-        (p.category && p.category.toLowerCase() === catParam)
-      );
+      filtered = filtered.filter(p => {
+        const pSlug = (p.categorySlug || '').toLowerCase().trim();
+        const pCat = (p.category || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        return (
+          pSlug === catParam ||
+          pCat === catParam ||
+          (p.category && p.category.toLowerCase() === catParam) ||
+          pSlug.startsWith(catParam) ||
+          catParam.startsWith(pSlug)
+        );
+      });
     }
 
     if (params?.query) {
