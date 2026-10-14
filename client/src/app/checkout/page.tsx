@@ -10,7 +10,9 @@ import {
   QrCode, 
   ArrowLeft, 
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Lock,
+  FileCheck
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
@@ -568,9 +570,15 @@ export default function CheckoutPage() {
                         Pay securely using UPI (Google Pay, PhonePe, Paytm, BHIM), Credit/Debit Cards (Visa, MasterCard, RuPay), NetBanking (50+ Banks) &amp; Wallets.
                       </p>
                       <div className={styles.trustBadgesRow}>
-                        <span className={styles.trustPill}>🔒 256-Bit SSL Encrypted</span>
-                        <span className={styles.trustPill}>⚡ Instant Order Confirmation</span>
-                        <span className={styles.trustPill}>🧾 Official GST Invoice</span>
+                        <span className={styles.trustPill}>
+                          <Lock size={12} className={styles.pillIcon} /> 256-Bit SSL Encrypted
+                        </span>
+                        <span className={styles.trustPill}>
+                          <CheckCircle2 size={12} className={styles.pillIcon} /> Instant Order Confirmation
+                        </span>
+                        <span className={styles.trustPill}>
+                          <FileCheck size={12} className={styles.pillIcon} /> Official GST Invoice
+                        </span>
                       </div>
                     </div>
                   </div>
