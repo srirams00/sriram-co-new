@@ -22,27 +22,29 @@ export const razorpay = new Razorpay({
 export function verifyPaymentSignature(
   orderId: string,
   paymentId: string,
-  signature: string
+  signature: string,
+  secret?: string
 ): boolean {
-  if (!orderId || !paymentId || !signature) {
-    return false;
-  }
-
-  const payload = `${orderId}|${paymentId}`;
-  const expectedSignature = crypto
-    .createHmac('sha256', RAZORPAY_KEY_SECRET)
-    .update(payload)
-    .digest('hex');
-
-  if (expectedSignature.length !== signature.length) {
+  const keySecret = secret || RAZORPAY_KEY_SECRET;
+  if (!orderId || !paymentId || !signature || !keySecret) {
     return false;
   }
 
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature, 'utf8'),
-      Buffer.from(signature, 'utf8')
-    );
+    const payloadBuffer = Buffer.from(`${orderId}|${paymentId}`, 'utf8');
+    const expectedSignature = crypto
+      .createHmac('sha256', keySecret)
+      .update(payloadBuffer)
+      .digest('hex');
+
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+    const signatureBuffer = Buffer.from(signature, 'utf8');
+
+    if (expectedBuffer.length !== signatureBuffer.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
   } catch {
     return false;
   }
@@ -54,26 +56,28 @@ export function verifyPaymentSignature(
 export function verifyWebhookSignature(
   rawBody: Buffer | string,
   signature: string,
-  secret: string = RAZORPAY_WEBHOOK_SECRET
+  secret?: string
 ): boolean {
-  if (!rawBody || !signature || !secret) {
-    return false;
-  }
-
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(rawBody)
-    .digest('hex');
-
-  if (expectedSignature.length !== signature.length) {
+  const webhookSecret = secret || RAZORPAY_WEBHOOK_SECRET;
+  if (!rawBody || !signature || !webhookSecret) {
     return false;
   }
 
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature, 'utf8'),
-      Buffer.from(signature, 'utf8')
-    );
+    const payloadBuffer = typeof rawBody === 'string' ? Buffer.from(rawBody, 'utf8') : rawBody;
+    const expectedSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(payloadBuffer)
+      .digest('hex');
+
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+    const signatureBuffer = Buffer.from(signature, 'utf8');
+
+    if (expectedBuffer.length !== signatureBuffer.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
   } catch {
     return false;
   }

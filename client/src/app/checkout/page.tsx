@@ -230,10 +230,16 @@ export default function CheckoutPage() {
       };
 
       const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', function (failResp: any) {
-        setIsSubmitting(false);
-        setSubmitError(`Payment failed: ${failResp.error?.description || 'Transaction declined by bank.'}`);
-      });
+      if (typeof rzp.on === 'function') {
+        try {
+          rzp.on('payment.failed', function (failResp: any) {
+            setIsSubmitting(false);
+            setSubmitError(`Payment failed: ${failResp?.error?.description || 'Transaction declined by bank.'}`);
+          });
+        } catch {
+          // Fallback gracefully if event listener is not supported by current SDK bundle
+        }
+      }
       rzp.open();
     } catch (err: any) {
       setSubmitError(err.message || 'Could not initiate online payment. Please check your network and try again.');

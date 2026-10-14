@@ -11,49 +11,52 @@ import {
 describe('Razorpay Security & Anti-Tampering Suite', () => {
   const testOrderId = 'order_DA1234567890';
   const testPaymentId = 'pay_9876543210ABC';
+  const testKeySecret = RAZORPAY_KEY_SECRET || 'test_key_secret_for_suite_123';
+  const testWebhookSecret = RAZORPAY_WEBHOOK_SECRET || 'test_webhook_secret_for_suite_456';
 
   // Helper to generate legitimate HMAC SHA-256 signature
   const generateLegitSignature = (orderId: string, paymentId: string, secret: string) => {
     return crypto
       .createHmac('sha256', secret)
-      .update(`${orderId}|${paymentId}`)
+      .update(Buffer.from(`${orderId}|${paymentId}`, 'utf8'))
       .digest('hex');
   };
 
   it('successfully validates a legitimate Razorpay payment signature', () => {
-    const signature = generateLegitSignature(testOrderId, testPaymentId, RAZORPAY_KEY_SECRET);
-    const isValid = verifyPaymentSignature(testOrderId, testPaymentId, signature);
+    const signature = generateLegitSignature(testOrderId, testPaymentId, testKeySecret);
+    const isValid = verifyPaymentSignature(testOrderId, testPaymentId, signature, testKeySecret);
     assert.strictEqual(isValid, true, 'Valid HMAC signature must verify to true');
   });
 
   it('rejects tampered payment ID in payment verification (anti-spoofing)', () => {
-    const signature = generateLegitSignature(testOrderId, testPaymentId, RAZORPAY_KEY_SECRET);
+    const signature = generateLegitSignature(testOrderId, testPaymentId, testKeySecret);
     const tamperedPaymentId = 'pay_HACKED_FAKE_999';
-    const isValid = verifyPaymentSignature(testOrderId, tamperedPaymentId, signature);
+    const isValid = verifyPaymentSignature(testOrderId, tamperedPaymentId, signature, testKeySecret);
     assert.strictEqual(isValid, false, 'Tampered payment ID must be rejected');
   });
 
   it('rejects tampered order ID in payment verification (replay protection)', () => {
-    const signature = generateLegitSignature(testOrderId, testPaymentId, RAZORPAY_KEY_SECRET);
+    const signature = generateLegitSignature(testOrderId, testPaymentId, testKeySecret);
     const tamperedOrderId = 'order_CHEAP_ORDER_123';
-    const isValid = verifyPaymentSignature(tamperedOrderId, testPaymentId, signature);
+    const isValid = verifyPaymentSignature(tamperedOrderId, testPaymentId, signature, testKeySecret);
     assert.strictEqual(isValid, false, 'Tampered order ID must be rejected');
   });
 
   it('rejects completely fabricated or random signatures', () => {
     const fakeSignature = 'deadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678';
-    const isValid = verifyPaymentSignature(testOrderId, testPaymentId, fakeSignature);
+    const isValid = verifyPaymentSignature(testOrderId, testPaymentId, fakeSignature, testKeySecret);
     assert.strictEqual(isValid, false, 'Fabricated signature must fail verification');
   });
 
   it('safely handles malformed, empty, or mismatched length signatures without throwing', () => {
-    assert.strictEqual(verifyPaymentSignature('', testPaymentId, 'abc'), false);
-    assert.strictEqual(verifyPaymentSignature(testOrderId, '', 'abc'), false);
-    assert.strictEqual(verifyPaymentSignature(testOrderId, testPaymentId, ''), false);
-    assert.strictEqual(verifyPaymentSignature(testOrderId, testPaymentId, 'too_short'), false);
+    assert.strictEqual(verifyPaymentSignature('', testPaymentId, 'abc', testKeySecret), false);
+    assert.strictEqual(verifyPaymentSignature(testOrderId, '', 'abc', testKeySecret), false);
+    assert.strictEqual(verifyPaymentSignature(testOrderId, testPaymentId, '', testKeySecret), false);
+    assert.strictEqual(verifyPaymentSignature(testOrderId, testPaymentId, 'too_short', testKeySecret), false);
+    assert.strictEqual(verifyPaymentSignature(testOrderId, testPaymentId, 'abc', ''), false);
   });
 
-  it('validates authentic Razorpay webhook raw payload signature', () => {
+  it('validates authentic Razorpay webhook raw payload signature for string and Buffer', () => {
     const webhookPayload = JSON.stringify({
       event: 'order.paid',
       payload: {
@@ -63,12 +66,17 @@ describe('Razorpay Security & Anti-Tampering Suite', () => {
     });
 
     const legitWebhookSig = crypto
-      .createHmac('sha256', RAZORPAY_WEBHOOK_SECRET)
-      .update(webhookPayload)
+      .createHmac('sha256', testWebhookSecret)
+      .update(Buffer.from(webhookPayload, 'utf8'))
       .digest('hex');
 
-    const isValid = verifyWebhookSignature(webhookPayload, legitWebhookSig, RAZORPAY_WEBHOOK_SECRET);
-    assert.strictEqual(isValid, true, 'Legitimate webhook payload signature must verify');
+    // Test with string payload
+    const isStringValid = verifyWebhookSignature(webhookPayload, legitWebhookSig, testWebhookSecret);
+    assert.strictEqual(isStringValid, true, 'Legitimate webhook string payload signature must verify');
+
+    // Test with Buffer payload
+    const isBufferValid = verifyWebhookSignature(Buffer.from(webhookPayload, 'utf8'), legitWebhookSig, testWebhookSecret);
+    assert.strictEqual(isBufferValid, true, 'Legitimate webhook Buffer payload signature must verify');
   });
 
   it('rejects forged webhook payloads or modified bodies', () => {
@@ -76,11 +84,11 @@ describe('Razorpay Security & Anti-Tampering Suite', () => {
     const forgedPayload = JSON.stringify({ event: 'order.paid' });
 
     const signature = crypto
-      .createHmac('sha256', RAZORPAY_WEBHOOK_SECRET)
-      .update(originalPayload)
+      .createHmac('sha256', testWebhookSecret)
+      .update(Buffer.from(originalPayload, 'utf8'))
       .digest('hex');
 
-    const isValid = verifyWebhookSignature(forgedPayload, signature, RAZORPAY_WEBHOOK_SECRET);
+    const isValid = verifyWebhookSignature(forgedPayload, signature, testWebhookSecret);
     assert.strictEqual(isValid, false, 'Tampered webhook payload must be rejected');
   });
 
