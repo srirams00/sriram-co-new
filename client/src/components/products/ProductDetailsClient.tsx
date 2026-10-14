@@ -18,7 +18,7 @@ import {
 import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { formatCurrency, calculateDiscount, getWhatsAppUrl } from '@/lib/utils';
+import { formatCurrency, calculateDiscount, getWhatsAppUrl, getOptimizedImageUrl } from '@/lib/utils';
 import styles from './ProductDetailsClient.module.css';
 
 interface ProductDetailsClientProps {
@@ -77,9 +77,11 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
                 <span className={styles.badge}>{product.badge}</span>
               )}
               <img
-                src={selectedImage}
+                src={getOptimizedImageUrl(selectedImage, 800)}
                 alt={product.name}
                 className={styles.mainImage}
+                width={600}
+                height={600}
               />
             </div>
 
@@ -95,7 +97,13 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
                     aria-label={`View product image ${idx + 1}`}
                     aria-pressed={selectedImage === img}
                   >
-                    <img src={img} alt="" className={styles.thumbImage} />
+                    <img
+                      src={getOptimizedImageUrl(img, 120)}
+                      alt=""
+                      className={styles.thumbImage}
+                      width={60}
+                      height={60}
+                    />
                   </button>
                 ))}
               </div>
@@ -289,11 +297,19 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
               {relatedProducts.slice(0, 4).map((rel) => (
                 <Link key={rel.id} href={`/product/${rel.slug}`} className={styles.relatedCard}>
                   <div className={styles.relatedImgWrapper}>
-                    <img src={rel.image} alt={rel.name} className={styles.relatedImg} />
+                    <img
+                      src={getOptimizedImageUrl(rel.image, 400)}
+                      alt={rel.name}
+                      className={styles.relatedImg}
+                      width={250}
+                      height={250}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
                   <div className={styles.relatedInfo}>
                     <span className={styles.relatedCategory}>{rel.category}</span>
-                    <h4 className={styles.relatedTitle}>{rel.name}</h4>
+                    <h3 className={styles.relatedTitle}>{rel.name}</h3>
                     <span className={styles.relatedPrice}>{formatCurrency(rel.price)}</span>
                   </div>
                 </Link>

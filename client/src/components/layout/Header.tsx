@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { api } from '@/lib/api';
 import { Product } from '@/types/product';
+import { getOptimizedImageUrl } from '@/lib/utils';
 import styles from './Header.module.css';
 
 interface ProductSearchSuggestionsProps {
@@ -55,7 +56,13 @@ function ProductSearchSuggestions({
                 className={styles.searchSuggestion}
                 onClick={onSelect}
               >
-                <img src={product.image} alt="" className={styles.searchSuggestionImage} />
+                <img
+                  src={getOptimizedImageUrl(product.image, 80)}
+                  alt=""
+                  className={styles.searchSuggestionImage}
+                  width={40}
+                  height={40}
+                />
                 <span className={styles.searchSuggestionText}>
                   <strong>{product.name}</strong>
                   <span>{product.category}</span>
@@ -150,9 +157,11 @@ export default function Header() {
 
           <Link href="/" className={styles.logo}>
             <img 
-              src="/logo.png" 
+              src="/logo.webp" 
               alt="Sriram & Co Logo" 
-              className={styles.logoImage} 
+              className={styles.logoImage}
+              width={40}
+              height={40}
             />
             <span className={styles.logoText}>
               Sriram <span className={styles.logoAmp}>&amp;</span> Co
@@ -173,7 +182,10 @@ export default function Header() {
         <form onSubmit={handleSearch} className={styles.searchForm}>
           <Search size={17} className={styles.searchIcon} />
           <input
-            type="text"
+            id="desktop-search-input"
+            name="q"
+            type="search"
+            autoComplete="off"
             placeholder="Search for appliances, tools, home..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -256,7 +268,10 @@ export default function Header() {
           <form onSubmit={handleSearch} className={styles.mobileSearchForm}>
             <Search size={17} className={styles.searchIcon} />
             <input
-              type="text"
+              id="mobile-search-input"
+              name="q_mobile"
+              type="search"
+              autoComplete="off"
               placeholder="Search appliances, tools..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

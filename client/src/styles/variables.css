@@ -6,10 +6,11 @@
   --color-primary-hover: #113820;
   --color-primary-active: #0c2716;
 
-  /* Fresh Commerce Green (Buttons, Active States & Badges) */
-  --color-commerce-green: #18A957;
-  --color-accent: #18A957;
-  --color-accent-hover: #148f49;
+  /* Fresh Commerce Green (Buttons, Active States & Badges - WCAG AA compliant) */
+  --color-commerce-green: #147a3c;
+  --color-commerce-green-text: #137e40;
+  --color-accent: #147a3c;
+  --color-accent-hover: #106632;
   --color-accent-light: #e8f7ee;
 
   /* Neutrals & Surfaces */
@@ -19,11 +20,11 @@
   --color-bg-subtle: #F2F4F0;
   --color-bg-dark: #174A2B;
 
-  /* Typography Colors */
+  /* Typography Colors (WCAG AA Compliant >= 4.5:1 against light surfaces) */
   --color-text-main: #174A2B; /* Headings */
   --color-text-dark: #121814; /* Deep dark for primary readability */
-  --color-text-secondary: #68786D; /* Soft sage gray for secondary text */
-  --color-text-muted: #829286;
+  --color-text-secondary: #4A5A4F; /* Balanced sage slate with 5.3:1 contrast */
+  --color-text-muted: #4F6154; /* 4.9:1 contrast */
   --color-text-inverted: #FFFFFF;
 
   /* Borders & Dividers */

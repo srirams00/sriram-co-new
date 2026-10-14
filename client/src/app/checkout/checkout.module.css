@@ -104,7 +104,73 @@
 .formGroup textarea:focus,
 .formGroup select:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-light);
+  box-shadow: 0 0 0 2px rgba(23, 74, 43, 0.12);
+}
+
+.inputError {
+  border-color: #dc2626 !important;
+  background-color: #fffaf0;
+}
+
+.inputError:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+}
+
+.inputValid {
+  border-color: #16a34a !important;
+}
+
+.fieldError {
+  font-size: 0.775rem;
+  color: #dc2626;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.fieldHint {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.phoneInputGroup {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.phonePrefix {
+  position: absolute;
+  left: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.phoneInput {
+  padding-left: 48px !important;
+  width: 100%;
+}
+
+.submitErrorBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 12px 18px;
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  grid-column: 1 / -1;
 }
 
 .optionsList {

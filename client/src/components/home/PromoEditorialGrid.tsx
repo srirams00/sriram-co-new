@@ -11,7 +11,7 @@ export default function PromoEditorialGrid() {
           {/* Cell 1: Text Block (Top-Left) */}
           <div className={`${styles.bentoCell} ${styles.textCell} ${styles.cellTopLeft}`}>
             <span className={styles.eyebrow}>BETTER LIVING</span>
-            <h3 className={styles.title}>Everyday appliances, chosen well.</h3>
+            <h2 className={styles.title}>Everyday appliances, chosen well.</h2>
             <p className={styles.paragraph}>
               Practical products for real life homes. Built with honest materials, efficient motors, and engineered for everyday comfort.
             </p>
@@ -24,27 +24,33 @@ export default function PromoEditorialGrid() {
           {/* Cell 2: Image Block (Top-Right) */}
           <div className={`${styles.bentoCell} ${styles.imageCell} ${styles.cellTopRight}`}>
             <img
-              src="/mop.jpeg"
+              src="/mop.webp"
               alt="Kitchen mixer appliance"
               className={styles.image}
               loading="lazy"
+              decoding="async"
+              width={540}
+              height={540}
             />
           </div>
 
           {/* Cell 3: Image Block (Bottom-Left) */}
           <div className={`${styles.bentoCell} ${styles.imageCell} ${styles.cellBottomLeft}`}>
             <img
-              src="/fan.jpeg"
+              src="/fan.webp"
               alt="Heavy duty cleaning appliance"
               className={styles.image}
               loading="lazy"
+              decoding="async"
+              width={540}
+              height={540}
             />
           </div>
 
           {/* Cell 4: Text Block (Bottom-Right) */}
           <div className={`${styles.bentoCell} ${styles.textCell} ${styles.cellBottomRight}`}>
             <span className={styles.eyebrow}>HOME UPGRADES</span>
-            <h3 className={styles.title}>Useful upgrades for a more comfortable home.</h3>
+            <h2 className={styles.title}>Useful upgrades for a more comfortable home.</h2>
             <p className={styles.paragraph}>
               Durable gear for routine maintenance, deep cleaning, and garden care. Backed by direct store warranty and genuine spare parts.
             </p>

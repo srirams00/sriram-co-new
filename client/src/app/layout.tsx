@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Poppins, Montserrat } from 'next/font/google';
+import '@/styles/variables.css';
 import '@/styles/globals.css';
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
@@ -48,8 +49,8 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
+    icon: '/logo.webp',
+    apple: '/logo.webp',
   },
   openGraph: {
     title: 'Sri Ram & Co — Good tools. Better living.',

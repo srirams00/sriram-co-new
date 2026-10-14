@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, ShoppingBag, ShieldCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
 import styles from './cart.module.css';
 
 export default function CartPage() {
@@ -76,7 +76,13 @@ export default function CartPage() {
               {items.map(({ product, quantity }) => (
                 <div key={product.id} className={styles.itemRow}>
                   <div className={styles.itemImageWrapper}>
-                    <img src={product.image} alt={product.name} className={styles.itemImage} />
+                    <img
+                      src={getOptimizedImageUrl(product.image, 160)}
+                      alt={product.name}
+                      className={styles.itemImage}
+                      width={80}
+                      height={80}
+                    />
                   </div>
 
                   <div className={styles.itemDetails}>
@@ -173,11 +179,14 @@ export default function CartPage() {
               {/* Coupon Form */}
               <form onSubmit={handleApplyCoupon} className={styles.couponForm}>
                 <input
+                  id="coupon-code"
+                  name="couponCode"
                   type="text"
                   placeholder="Promo code (e.g. WELCOME10)"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   className={styles.couponInput}
+                  aria-label="Promo code"
                 />
                 <button type="submit" className="btn btn-secondary btn-sm">
                   Apply

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { Order, OrderStatus } from '@/types/order';
 import styles from './orders.module.css';
@@ -81,7 +81,13 @@ function OrderCard({ order, highlighted = false }: { order: Order; highlighted?:
       <div className={styles.itemsBlock}>
         {order.orderItems.map((item, index) => (
           <div key={`${item.product}-${index}`} className={styles.itemRow}>
-            <img src={item.image} alt={item.name} className={styles.itemImg} />
+            <img
+              src={getOptimizedImageUrl(item.image, 160)}
+              alt={item.name}
+              className={styles.itemImg}
+              width={64}
+              height={64}
+            />
             <div className={styles.itemInfo}>
               <h4>{item.name}</h4>
               <p>Quantity: {item.quantity}</p>

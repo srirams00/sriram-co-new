@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Category } from '@/types/product';
+import { getOptimizedImageUrl } from '@/lib/utils';
 import styles from './CategoryGrid.module.css';
 
 interface CategoryGridProps {
@@ -35,10 +36,13 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
               <div className={styles.imageWrapper}>
                 <span className={styles.countBadge}>{cat.itemCount}+</span>
                 <img
-                  src={cat.image}
+                  src={getOptimizedImageUrl(cat.image, 400)}
                   alt={cat.name}
                   className={styles.image}
                   loading="lazy"
+                  decoding="async"
+                  width={320}
+                  height={240}
                 />
               </div>
               <div className={styles.info}>

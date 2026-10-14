@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { X, Trash2, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
 import styles from './CartDrawer.module.css';
 
 export default function CartDrawer() {
@@ -72,9 +72,11 @@ export default function CartDrawer() {
                 <div key={product.id} className={styles.cartItem}>
                   <div className={styles.itemImgWrapper}>
                     <img
-                      src={product.image}
+                      src={getOptimizedImageUrl(product.image, 160)}
                       alt={product.name}
                       className={styles.itemImg}
+                      width={80}
+                      height={80}
                     />
                   </div>
                   <div className={styles.itemInfo}>

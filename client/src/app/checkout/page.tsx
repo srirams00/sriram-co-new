@@ -9,11 +9,22 @@ import {
   CreditCard, 
   QrCode, 
   ArrowLeft, 
-  ShieldCheck 
+  ShieldCheck,
+  AlertCircle
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
 import { api } from '@/lib/api';
+import {
+  validateFullName,
+  validatePhoneNumber,
+  validateEmail,
+  validateAddress,
+  validatePincode,
+  validateCheckoutForm,
+  cleanPhoneNumber,
+  cleanPincode,
+} from '@/lib/validation';
 import styles from './checkout.module.css';
 
 export default function CheckoutPage() {
@@ -30,20 +41,104 @@ export default function CheckoutPage() {
     notes: '',
   });
 
+  // Real-time Validation State
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const [deliveryMethod, setDeliveryMethod] = useState<'store_delivery' | 'express' | 'pickup'>('store_delivery');
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card'>('upi');
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Validate a single field on demand
+  const validateField = (name: string, value: string): string | null => {
+    let error: string | null = null;
+    switch (name) {
+      case 'fullName':
+        error = validateFullName(value).error;
+        break;
+      case 'phone':
+        error = validatePhoneNumber(value).error;
+        break;
+      case 'email':
+        error = validateEmail(value).error;
+        break;
+      case 'address':
+        error = validateAddress(value).error;
+        break;
+      case 'pincode':
+        error = validatePincode(value).error;
+        break;
+      default:
+        break;
+    }
+
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (error) {
+        next[name] = error;
+      } else {
+        delete next[name];
+      }
+      return next;
+    });
+
+    return error;
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    validateField(field, formData[field as keyof typeof formData]);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let finalValue = value;
+
+    // Real-time input formatting & constraints
+    if (name === 'phone') {
+      finalValue = cleanPhoneNumber(value);
+    } else if (name === 'pincode') {
+      finalValue = cleanPincode(value);
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
+
+    // Reset general submit error on input
+    if (submitError) setSubmitError(null);
+
+    // If the field has been touched or contains input, perform live validation
+    if (touched[name] || finalValue.length > 0) {
+      validateField(name, finalValue);
+    }
   };
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.fullName || !formData.phone || !formData.address) {
-      alert('Please fill in your name, phone number, and delivery address.');
+
+    // Mark all fields as touched
+    setTouched({
+      fullName: true,
+      phone: true,
+      email: true,
+      address: true,
+      city: true,
+      pincode: true,
+    });
+
+    // Run complete form validation
+    const validation = validateCheckoutForm(formData);
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      setSubmitError('Please correct the highlighted fields before placing your order.');
+      // Auto-focus on first error input
+      const firstErrorField = Object.keys(validation.errors)[0];
+      if (firstErrorField) {
+        const el = document.getElementById(firstErrorField);
+        if (el) el.focus();
+      }
       return;
     }
 
@@ -150,7 +245,14 @@ export default function CheckoutPage() {
       </div>
 
       <div className="container">
-        <form onSubmit={handleSubmitOrder} className={styles.checkoutGrid}>
+        {submitError && (
+          <div className={styles.submitErrorBanner}>
+            <AlertCircle size={20} />
+            <span>{submitError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmitOrder} className={styles.checkoutGrid} noValidate>
           {/* Left Column: Information Steps */}
           <div className={styles.stepsCol}>
             {/* Step 1: Customer Contact */}
@@ -170,23 +272,59 @@ export default function CheckoutPage() {
                     placeholder="e.g. Ramesh Kumar"
                     value={formData.fullName}
                     onChange={handleChange}
+                    onBlur={() => handleBlur('fullName')}
+                    className={
+                      touched.fullName
+                        ? fieldErrors.fullName
+                          ? styles.inputError
+                          : styles.inputValid
+                        : ''
+                    }
                   />
+                  {touched.fullName && fieldErrors.fullName && (
+                    <span className={styles.fieldError}>
+                      <AlertCircle size={14} />
+                      {fieldErrors.fullName}
+                    </span>
+                  )}
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="phone">Phone Number (Required for confirmation call) *</label>
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    required
-                    placeholder="+91 98765 43210"
-                    value={formData.phone}
-                    onChange={handleChange}
-                  />
+                  <label htmlFor="phone">Phone Number (10 digits for confirmation call) *</label>
+                  <div className={styles.phoneInputGroup}>
+                    <span className={styles.phonePrefix}>+91</span>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      required
+                      placeholder="9876543210"
+                      maxLength={10}
+                      value={formData.phone}
+                      onChange={handleChange}
+                      onBlur={() => handleBlur('phone')}
+                      className={`${styles.phoneInput} ${
+                        touched.phone
+                          ? fieldErrors.phone
+                            ? styles.inputError
+                            : styles.inputValid
+                          : ''
+                      }`}
+                    />
+                  </div>
+                  {touched.phone && fieldErrors.phone ? (
+                    <span className={styles.fieldError}>
+                      <AlertCircle size={14} />
+                      {fieldErrors.phone}
+                    </span>
+                  ) : (
+                    <span className={styles.fieldHint}>
+                      Enter 10-digit mobile number starting with 6, 7, 8, or 9
+                    </span>
+                  )}
                 </div>
               </div>
               <div className={styles.formGroup}>
-                <label htmlFor="email">Email Address (Optional for invoice)</label>
+                <label htmlFor="email">Email Address (Optional for invoice receipt)</label>
                 <input
                   id="email"
                   name="email"
@@ -194,7 +332,23 @@ export default function CheckoutPage() {
                   placeholder="ramesh@example.com"
                   value={formData.email}
                   onChange={handleChange}
+                  onBlur={() => handleBlur('email')}
+                  className={
+                    touched.email
+                      ? fieldErrors.email
+                        ? styles.inputError
+                        : formData.email
+                        ? styles.inputValid
+                        : ''
+                      : ''
+                  }
                 />
+                {touched.email && fieldErrors.email && (
+                  <span className={styles.fieldError}>
+                    <AlertCircle size={14} />
+                    {fieldErrors.email}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -214,7 +368,25 @@ export default function CheckoutPage() {
                   placeholder="House/Door No, Street Name, Landmark..."
                   value={formData.address}
                   onChange={handleChange}
+                  onBlur={() => handleBlur('address')}
+                  className={
+                    touched.address
+                      ? fieldErrors.address
+                        ? styles.inputError
+                        : styles.inputValid
+                      : ''
+                  }
                 />
+                {touched.address && fieldErrors.address ? (
+                  <span className={styles.fieldError}>
+                    <AlertCircle size={14} />
+                    {fieldErrors.address}
+                  </span>
+                ) : (
+                  <span className={styles.fieldHint}>
+                    Minimum 10 characters required for dispatch accuracy
+                  </span>
+                )}
               </div>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
@@ -242,9 +414,28 @@ export default function CheckoutPage() {
                     type="text"
                     required
                     placeholder="620002"
+                    maxLength={6}
                     value={formData.pincode}
                     onChange={handleChange}
+                    onBlur={() => handleBlur('pincode')}
+                    className={
+                      touched.pincode
+                        ? fieldErrors.pincode
+                          ? styles.inputError
+                          : styles.inputValid
+                        : ''
+                    }
                   />
+                  {touched.pincode && fieldErrors.pincode ? (
+                    <span className={styles.fieldError}>
+                      <AlertCircle size={14} />
+                      {fieldErrors.pincode}
+                    </span>
+                  ) : (
+                    <span className={styles.fieldHint}>
+                      6-digit postal code
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -256,8 +447,9 @@ export default function CheckoutPage() {
                 <h3>Delivery Method</h3>
               </div>
               <div className={styles.optionsList}>
-                <label className={`${styles.optionLabel} ${deliveryMethod === 'store_delivery' ? styles.optionActive : ''}`}>
+                <label htmlFor="delivery-store" className={`${styles.optionLabel} ${deliveryMethod === 'store_delivery' ? styles.optionActive : ''}`}>
                   <input
+                    id="delivery-store"
                     type="radio"
                     name="deliveryMethod"
                     value="store_delivery"
@@ -274,8 +466,9 @@ export default function CheckoutPage() {
                   <strong className={styles.freeText}>FREE</strong>
                 </label>
 
-                <label className={`${styles.optionLabel} ${deliveryMethod === 'pickup' ? styles.optionActive : ''}`}>
+                <label htmlFor="delivery-pickup" className={`${styles.optionLabel} ${deliveryMethod === 'pickup' ? styles.optionActive : ''}`}>
                   <input
+                    id="delivery-pickup"
                     type="radio"
                     name="deliveryMethod"
                     value="pickup"
@@ -301,8 +494,9 @@ export default function CheckoutPage() {
                 <h3>Payment Method</h3>
               </div>
               <div className={styles.optionsList}>
-                <label className={`${styles.optionLabel} ${paymentMethod === 'upi' ? styles.optionActive : ''}`}>
+                <label htmlFor="payment-upi" className={`${styles.optionLabel} ${paymentMethod === 'upi' ? styles.optionActive : ''}`}>
                   <input
+                    id="payment-upi"
                     type="radio"
                     name="paymentMethod"
                     value="upi"
@@ -318,8 +512,9 @@ export default function CheckoutPage() {
                   </div>
                 </label>
 
-                <label className={`${styles.optionLabel} ${paymentMethod === 'card' ? styles.optionActive : ''}`}>
+                <label htmlFor="payment-card" className={`${styles.optionLabel} ${paymentMethod === 'card' ? styles.optionActive : ''}`}>
                   <input
+                    id="payment-card"
                     type="radio"
                     name="paymentMethod"
                     value="card"
@@ -346,7 +541,13 @@ export default function CheckoutPage() {
               <div className={styles.miniItemsList}>
                 {items.map(({ product, quantity }) => (
                   <div key={product.id} className={styles.miniItem}>
-                    <img src={product.image} alt={product.name} className={styles.miniThumb} />
+                    <img
+                      src={getOptimizedImageUrl(product.image, 120)}
+                      alt={product.name}
+                      className={styles.miniThumb}
+                      width={48}
+                      height={48}
+                    />
                     <div className={styles.miniInfo}>
                       <span className={styles.miniName}>{product.name}</span>
                       <span className={styles.miniQty}>Qty: {quantity}</span>

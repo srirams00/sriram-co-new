@@ -1,4 +1,4 @@
-import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import styles from './HeroSection.module.css';
@@ -55,9 +55,13 @@ export default function HeroSection() {
         {/* Right Column: Hero Visual */}
         <div className={styles.heroVisual}>
           <div className={styles.imageBackdrop}>
-            <img
-              src="/logo.png"
-              alt="Modern home kitchen appliances"
+            <Image
+              src="/logo.webp"
+              alt="Sri Ram & Co Home Kitchen Appliances"
+              width={853}
+              height={766}
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 550px"
               className={styles.heroImage}
             />
             {/* Floating Quality Badge */}

@@ -198,7 +198,7 @@
   font-family: var(--font-body);
   font-size: 0.725rem;
   font-weight: 700;
-  color: var(--color-commerce-green);
+  color: var(--color-commerce-green-text);
 }
 
 .addBtn {

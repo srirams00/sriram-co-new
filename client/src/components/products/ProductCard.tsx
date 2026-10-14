@@ -6,7 +6,7 @@ import { Heart, Star } from 'lucide-react';
 import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
 import styles from './ProductCard.module.css';
 
 interface ProductCardProps {
@@ -44,13 +44,20 @@ export default function ProductCard({ product }: ProductCardProps) {
           <Heart size={16} fill={inWishlist ? 'currentColor' : 'none'} />
         </button>
 
-        <Link href={`/product/${product.slug}`} className={styles.imageLink}>
+        <Link
+          href={`/product/${product.slug}`}
+          className={styles.imageLink}
+          aria-hidden="true"
+          tabIndex={-1}
+        >
           <img
-            src={product.image}
-            alt={product.name}
+            src={getOptimizedImageUrl(product.image, 500)}
+            alt=""
             className={styles.image}
             loading="lazy"
             decoding="async"
+            width={400}
+            height={300}
           />
         </Link>
       </div>

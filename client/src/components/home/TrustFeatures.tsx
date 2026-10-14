@@ -37,7 +37,7 @@ export default function TrustFeatures() {
                 <Icon size={20} className={styles.icon} />
               </div>
               <div className={styles.textGroup}>
-                <h4 className={styles.title}>{item.title}</h4>
+                <p className={styles.title}>{item.title}</p>
                 <p className={styles.description}>{item.description}</p>
               </div>
             </div>

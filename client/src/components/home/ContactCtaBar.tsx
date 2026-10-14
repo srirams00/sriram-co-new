@@ -10,7 +10,7 @@ export default function ContactCtaBar() {
     <section className={styles.section}>
       <div className={`container ${styles.bar}`}>
         <div className={styles.content}>
-          <h3 className={styles.title}>Have a question before you buy?</h3>
+          <h2 className={styles.title}>Have a question before you buy?</h2>
           <p className={styles.subtitle}>
             Message us on WhatsApp. We usually reply within a few minutes during shop hours. Or call our stores directly.
           </p>
