@@ -123,14 +123,38 @@
 .bottomLinks {
   display: flex;
   align-items: center;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 8px 10px;
   justify-content: flex-end;
 }
 
 .devCredit {
   color: var(--color-forest-green);
   font-weight: 700;
+}
+
+.devLink {
+  color: var(--color-forest-green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 700;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.devLink:hover {
+  color: var(--color-commerce-green);
+  opacity: 0.85;
+}
+
+.bottomLink {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.bottomLink:hover {
+  color: var(--color-forest-green);
+  text-decoration: underline;
 }
 
 @media (max-width: 900px) {

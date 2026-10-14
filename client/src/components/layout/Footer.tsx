@@ -36,13 +36,14 @@ export default function Footer() {
 
         {/* Col 3: Help */}
         <div className={styles.col}>
-          <h4 className={styles.colTitle}>Help</h4>
+          <h4 className={styles.colTitle}>Help &amp; Policies</h4>
           <ul className={styles.linkList}>
             <li><Link href="/orders">Track your order</Link></li>
-            <li><Link href="/contact">Warranty &amp; Service</Link></li>
+            <li><Link href="/warranty-policy">1-Year Warranty &amp; Service</Link></li>
+            <li><Link href="/refund-policy">Returns &amp; Refunds</Link></li>
+            <li><Link href="/shipping-policy">Shipping &amp; Delivery</Link></li>
             <li><Link href="/contact">Store Locations</Link></li>
             <li><Link href="/about">About Us</Link></li>
-            <li><Link href="/contact">Delivery terms</Link></li>
           </ul>
         </div>
 
@@ -71,13 +72,28 @@ export default function Footer() {
         <div className={`container ${styles.bottomInner}`}>
           <p>© {new Date().getFullYear()} Sriram &amp; Co. All rights reserved.</p>
           <div className={styles.bottomLinks}>
-            <span className={styles.devCredit}>Develop by Sriram and Silvest A. J</span>
+            <span className={styles.devCredit}>
+              Developed by{' '}
+              <a href="https://iamsriram.in" target="_blank" rel="noopener noreferrer" className={styles.devLink}>
+                Sriram S
+              </a>{' '}
+              and{' '}
+              <a href="https://iamsilvest.in" target="_blank" rel="noopener noreferrer" className={styles.devLink}>
+                Silvest AJ
+              </a>
+            </span>
             <span>•</span>
-            <span>Terms of Service</span>
+            <Link href="/terms" className={styles.bottomLink}>Terms of Service</Link>
             <span>•</span>
-            <span>Privacy Policy</span>
+            <Link href="/privacy" className={styles.bottomLink}>Privacy Policy</Link>
             <span>•</span>
-            <span>Verified Merchant</span>
+            <Link href="/refund-policy" className={styles.bottomLink}>Refund Policy</Link>
+            <span>•</span>
+            <Link href="/shipping-policy" className={styles.bottomLink}>Shipping Policy</Link>
+            <span>•</span>
+            <Link href="/warranty-policy" className={styles.bottomLink}>1-Year Warranty</Link>
+            <span>•</span>
+            <span>Verified GST Merchant</span>
           </div>
         </div>
       </div>

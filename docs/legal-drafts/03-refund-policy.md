@@ -1,8 +1,8 @@
 # SRI RAM & CO — RETURN, REPLACEMENT & REFUND POLICY
 
-**Effective Date:** 11 October 2026  
+**Effective Date:** 14 October 2026  
 **Governing Statute:** Consumer Protection Act, 2019 & Indian Contract Act, 1872  
-**Support Desk:** support@sriramandco.in | Phone: +91 93454 03136  
+**Support Desk:** support@sriramandco.com | Phone: +91 93454 03136  
 **Fulfillment Hubs:** Trichy Main Branch & Chennai Experience Store  
 
 ---
@@ -18,28 +18,28 @@ Sri Ram & Co is dedicated to complete customer satisfaction and full transparenc
 
 ---
 
-## 3. 7-DAY STORE REPLACEMENT GUARANTEE (DEAD-ON-ARRIVAL & TRANSIT DAMAGE)
-We offer a hassle-free **7-Day Store Replacement Window** for all physical appliances and power tools starting from the delivery timestamp.
+## 3. 5-DAY RETURN & REPLACEMENT NOTIFICATION WINDOW
+Customers must inspect their orders upon delivery. In the event of an issue, **customers should inform Sri Ram & Co within five (5) business days of delivery** to initiate a return or replacement request.
 
-### Eligible Replacement Conditions:
+### Eligible Return & Replacement Conditions:
 1. **Dead-On-Arrival (DOA):** The product fails to power on or operate upon unboxing.
 2. **Transit Damage:** Physical breakage, denting, or cracked housing incurred during transportation.
 3. **Mismatched SKU / Wrong Item:** The received item does not match the product ordered.
 4. **Missing Components:** Original factory accessories, cords, or attachments are absent from the sealed packaging.
 
-### How to Initiate a Replacement:
-1. Contact customer support via WhatsApp or email (`support@sriramandco.in` / +91 93454 03136) within 7 days of delivery.
-2. Provide your Order Number, photos/video of the defect or damage, and the serial number on the carton.
-3. Our store logistics team will schedule a pickup or swap at your doorstep at **zero additional charge**.
+### How to Initiate a Request (Within 5 Business Days):
+1. Contact customer support via WhatsApp or email (`support@sriramandco.com` / +91 93454 03136) **within 5 business days** of receiving your package.
+2. Provide your Order Number, photographs or a short video showing the defect/damage, and the serial number on the carton.
+3. Our store logistics team will coordinate doorstep pickup or a replacement exchange at **zero additional charge**.
 
 ---
 
-## 4. REFUND PROCESSING & TIMELINES (SLA)
-1. **Inspection:** Once the returned product arrives at our Trichy or Chennai branch, our technical team inspects the unit within 24–48 hours to confirm serial number match and defect authenticity.
-2. **Refund Initiation:** Upon approval, refunds are issued immediately back to the customer's original payment mode:
-   - **UPI Payments:** Credited within 24 to 48 hours.
-   - **Debit / Credit Cards & NetBanking:** Credited within 5 to 7 business days, depending on the issuing bank.
-3. **Cash / Doorstep UPI:** Refunded directly via verified UPI transfer to the customer’s designated Virtual Payment Address (VPA).
+## 4. REFUND PROCESSING & TIMELINES (5 TO 7 DAYS SLA)
+1. **Technical Inspection:** Once the returned unit arrives at our Trichy or Chennai branch, our technical team verifies the unit and serial number within 24–48 hours.
+2. **Refund Timeline:** Approved refunds are initiated immediately and **take 5 to 7 business days** to credit back to your account:
+   - **UPI / NetBanking:** Credited to the customer's linked account within **5 to 7 business days**.
+   - **Credit / Debit Cards:** Credited back to the issuing bank card within **5 to 7 business days**.
+   - **Doorstep Payment Orders:** Refunded via verified UPI or NEFT transfer directly to the customer’s designated bank account within **5 to 7 business days**.
 
 ---
 
@@ -51,5 +51,5 @@ The following items and conditions are not eligible for standard return:
 
 ---
 
-## 6. POST 7-DAY ISSUES: BRAND MANUFACTURER WARRANTY
-Products that encounter operational defects after the 7-day initial store window are covered under the comprehensive 1 to 3-year **Brand Manufacturer Warranty** (Bosch, Philips, Crompton, etc.). Sri Ram & Co assists all customers by providing duplicate tax invoices and connecting you directly with authorized local brand service technicians across Tamil Nadu.
+## 6. POST 5-DAY ISSUES: 1-YEAR COMPREHENSIVE WARRANTY
+Issues reported after the initial 5 business days return window are fully protected under Sri Ram & Co's **1-Year (12 Months) Comprehensive Warranty**. All products sold by Sri Ram & Co include 1 year of warranty coverage backed by your official GST tax invoice.

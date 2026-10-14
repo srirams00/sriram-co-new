@@ -1,69 +1,69 @@
 # SRI RAM & CO — WARRANTY, SERVICE & GRIEVANCE REDRESSAL POLICY
 
-**Effective Date:** 11 October 2026  
+**Effective Date:** 14 October 2026  
 **Governing Statute:** Consumer Protection (E-Commerce) Rules, 2020 & Bureau of Indian Standards (BIS)  
 **Registered Office:** No. 11, Vinola Complex, Trichy & Kothaval Chavadi Street, Chennai  
 **Grievance Officer:** S. Ramkumar (grievance@sriramandco.in)  
 
 ---
 
-## 1. DUAL PROTECTION WARRANTY ARCHITECTURE
-Sri Ram & Co retails 100% genuine, brand-new appliances and tools directly sourced from authorized brand distributors. We operate a two-tiered warranty protection structure:
+## 1. 1-YEAR COMPREHENSIVE WARRANTY ON ALL PRODUCTS
+At Sri Ram & Co, quality and reliability are our foundation. **Every single product sold across our catalog comes with an official 1-Year (12 Months) Comprehensive Warranty** starting from the date of customer delivery.
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  TIER 1: Sri Ram & Co Store Replacement Guarantee     │
-│  (Days 1 to 7 from Delivery)                           │
-│  • Instant 100% Free Store Replacement                 │
-│  • Covers DOA, Transit Damage & Manufacturing Defects   │
+│  TIER 1: 5-Day Initial Store Replacement Guarantee     │
+│  • Inform within 5 business days of delivery           │
+│  • Instant 100% Free Store Pickup & Replacement        │
+│  • Covers DOA, transit damage, or missing components   │
 └───────────────────────────┬────────────────────────────┘
                             │
                             ▼
 ┌────────────────────────────────────────────────────────┐
-│  TIER 2: Brand Authorized Manufacturer Warranty        │
-│  (Day 8 through Warranty Period: 1 to 3 Years)         │
-│  • Serviced by Authorized Brand Service Centers        │
-│  • Sri Ram & Co facilitates GST Invoices & Bookings    │
+│  TIER 2: 1-Year Comprehensive Warranty (All Products)  │
+│  • Active for full 12 months from delivery date        │
+│  • Free repair, genuine spare parts, and service       │
+│  • Sri Ram & Co provides GST invoices & technician help│
 └────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. TIER 1: SRI RAM & CO 7-DAY STORE REPLACEMENT
-- If any appliance, motor, or tool suffers from a manufacturing defect or fails upon arrival within 7 days of delivery, Sri Ram & Co replaces the entire unit free of cost.
-- Our team arranges doorstep collection and delivers a brand-new sealed replacement unit.
+## 2. TIER 1: INITIAL 5-BUSINESS-DAY STORE REPLACEMENT
+- If any appliance, motor, or tool fails to power on (DOA) or suffers from a manufacturing defect upon arrival, the customer should inform us **within five (5) business days of delivery**.
+- Sri Ram & Co will coordinate doorstep collection and exchange the product for a brand-new sealed unit with zero additional shipping or service fees.
 
 ---
 
-## 3. TIER 2: BRAND AUTHORIZED WARRANTY
-Following the initial 7-day period, products carry the comprehensive manufacturer warranty backed by the respective brand (Bosch, Philips, Crompton, Karcher, etc.):
-1. **Warranty Duration:** 6 months to 3 years, as specified on the manufacturer warranty card and carton.
-2. **Authorized Service Centers:** Service is rendered through authorized technician networks across Trichy, Chennai, Madurai, Coimbatore, and all major cities in Tamil Nadu.
-3. **Store Facilitation:** If you ever face difficulty scheduling a brand technician, Sri Ram & Co's customer service team will liaise with the regional service coordinator on your behalf.
-4. **Valid Documentation:** Your Sri Ram & Co GST Tax Invoice functions as official proof of purchase and warranty commencement date.
+## 3. TIER 2: FULL 1-YEAR (12 MONTHS) COMPREHENSIVE WARRANTY
+After the initial 5 business days, your product remains covered under the **1-Year Comprehensive Warranty**:
+1. **Universal 1-Year Coverage:** All products (home appliances, kitchen essentials, power tools, cleaning equipment, garden gear, and personal care appliances) carry **1 full year of warranty protection**.
+2. **Authorized Service & Genuine Parts:** Repairs are performed using 100% genuine manufacturer spare parts through authorized technician networks across Trichy, Chennai, and Tamil Nadu.
+3. **Store Facilitation:** If you ever experience issues booking a technician, our dedicated store customer service team handles coordination on your behalf.
+4. **GST Tax Invoice as Proof:** Your Sri Ram & Co GST tax invoice functions as legal proof of purchase and warranty commencement. No cumbersome paper registration is required.
 
 ---
 
-## 4. WHAT IS COVERED VS. NOT COVERED
+## 4. WHAT IS COVERED VS. WHAT IS NOT COVERED
 
-### Covered Under Warranty:
-- Internal motor failures, electrical wiring faults, component malfunction, and pump defects arising under normal domestic or commercial usage.
+### Covered Under the 1-Year Warranty:
+- Internal motor failures, mechanical breakdowns, and pump defects.
+- Electrical wiring faults, switches, circuit board malfunctions under normal use.
+- Latent manufacturing or material flaws that manifest during regular operation.
 
-### Not Covered Under Warranty:
-- Physical damage caused by drops, impacts, or external crushing.
-- Burnout or motor damage resulting from unstable electric voltages or improper phase connection.
-- Normal cosmetic wear and tear on consumable accessories (drill bits, blades, carbon brushes, filters).
-- Products dismantled or repaired by non-authorized third-party technicians.
+### Not Covered Under the 1-Year Warranty:
+- Physical cracks, denting, or casing breakage caused by accidental drops or external impacts.
+- Motor burnout or electrical shorts caused by severe voltage fluctuations, phase mismatches, or operating without proper earthing.
+- Normal cosmetic wear on consumable attachments (e.g., drill bits, blades, carbon brushes, filters).
+- Units tampered with, opened, or repaired by unauthorized third-party technicians.
 
 ---
 
 ## 5. STATUTORY GRIEVANCE REDRESSAL MECHANISM
-In compliance with Rule 4(4) and Rule 5(3) of the Consumer Protection (E-Commerce) Rules, 2020:
-
-- **Designated Grievance Officer:** S. Ramkumar
-- **Company:** Sri Ram & Co
-- **Email:** grievance@sriramandco.in / ramkumar@sriramandco.in
-- **Direct Phone:** +91 93454 03136 / +91 91713 14888
-- **Address:** Sri Ram & Co, No. 11, Vinola Complex, Trichy - 620002, Tamil Nadu, India
-- **Acknowledgement SLA:** Within forty-eight (48) hours of ticket receipt
-- **Redressal SLA:** Resolution of consumer complaints within thirty (30) days from receipt date
+In strict compliance with Rule 4(4) of the Consumer Protection (E-Commerce) Rules, 2020:
+- **Grievance Redressal Officer:** S. Ramkumar
+- **Official Address:** Sri Ram & Co, No. 11 Vinola Complex, Tiruchirappalli (Trichy) - 620018, Tamil Nadu
+- **Email:** `support@sriramandco.com` / `ramkumar@sriramandco.in`
+- **Customer Helpline:** +91 93454 03136
+- **Acknowledgment SLA:** All grievances are acknowledged within 48 hours with a unique tracking ticket.
+- **Resolution SLA:** Redressal and resolution are completed within one (1) month from ticket receipt.
