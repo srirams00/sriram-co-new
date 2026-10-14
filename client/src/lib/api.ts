@@ -390,6 +390,51 @@ export const api = {
     this.clearCache();
   },
 
+  // Razorpay Online Payments
+  async createRazorpayOrder(orderData: any, token?: string): Promise<{
+    orderId: string;
+    orderNumber: string;
+    razorpayOrderId: string;
+    amount: number;
+    currency: string;
+    keyId: string;
+    pricing: any;
+  }> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/orders/razorpay/create-order`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(orderData),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed to initialize payment gateway' }));
+      throw new Error(err.message || 'Failed to initialize payment gateway');
+    }
+    return res.json();
+  },
+
+  async verifyRazorpayPayment(verificationData: {
+    orderNumber: string;
+    razorpayOrderId: string;
+    razorpayPaymentId: string;
+    razorpaySignature: string;
+  }): Promise<{ success: boolean; message: string; order: Order }> {
+    const res = await fetch(`${API_BASE}/orders/razorpay/verify-payment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(verificationData),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Payment signature verification failed' }));
+      throw new Error(err.message || 'Payment signature verification failed');
+    }
+    return res.json();
+  },
+
   // Orders
   async createOrder(orderData: any, token?: string): Promise<Order> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };

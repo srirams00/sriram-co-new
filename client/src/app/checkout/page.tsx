@@ -25,6 +25,7 @@ import {
   cleanPhoneNumber,
   cleanPincode,
 } from '@/lib/validation';
+import { loadRazorpayScript, RazorpayOptions, RazorpaySuccessResponse } from '@/lib/razorpay';
 import styles from './checkout.module.css';
 
 export default function CheckoutPage() {
@@ -47,9 +48,9 @@ export default function CheckoutPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [deliveryMethod, setDeliveryMethod] = useState<'store_delivery' | 'express' | 'pickup'>('store_delivery');
-  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card'>('upi');
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
+  const [placedPaymentId, setPlacedPaymentId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Validate a single field on demand
@@ -143,9 +144,18 @@ export default function CheckoutPage() {
     }
 
     setIsSubmitting(true);
+    setSubmitError(null);
+
     try {
       const token = localStorage.getItem('src_auth_token') || undefined;
 
+      // 1. Ensure Razorpay Checkout SDK is dynamically loaded
+      const isRazorpayLoaded = await loadRazorpayScript();
+      if (!isRazorpayLoaded) {
+        throw new Error('Unable to connect to Razorpay secure checkout. Please check your internet connection.');
+      }
+
+      // 2. Prepare order payload for server-side anti-tamper recalculation
       const orderPayload = {
         customerInfo: {
           name: formData.fullName.trim(),
@@ -159,26 +169,72 @@ export default function CheckoutPage() {
         orderItems: items.map((item) => ({
           product: item.product.id,
           name: item.product.name,
-          price: item.product.price,
           quantity: item.quantity,
-          image: item.product.image,
         })),
-        paymentMethod: paymentMethod,
-        pricing: {
-          subtotal: summary.subtotal,
-          deliveryFee: summary.deliveryFee,
-          discount: summary.discount,
-          total: summary.total,
+        notes: `Delivery Method: ${deliveryMethod === 'pickup' ? 'Store Pickup' : 'Direct Store Delivery'}`,
+      };
+
+      // 3. Create Razorpay order on backend
+      const razorpayOrder = await api.createRazorpayOrder(orderPayload, token);
+
+      // 4. Open Razorpay Standard Checkout modal
+      const options: RazorpayOptions = {
+        key: razorpayOrder.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency || 'INR',
+        name: 'Sriram & Co',
+        description: `Order Ref #${razorpayOrder.orderNumber}`,
+        image: '/logo.webp',
+        order_id: razorpayOrder.razorpayOrderId,
+        prefill: {
+          name: formData.fullName.trim(),
+          email: formData.email.trim() || undefined,
+          contact: formData.phone.trim(),
+        },
+        theme: {
+          color: '#15803d',
+        },
+        modal: {
+          ondismiss: () => {
+            setIsSubmitting(false);
+            setSubmitError('Payment was cancelled. You can retry whenever you are ready.');
+          },
+        },
+        handler: async (response: RazorpaySuccessResponse) => {
+          try {
+            setIsSubmitting(true);
+            // 5. Verify cryptographic HMAC signature on backend
+            const verification = await api.verifyRazorpayPayment({
+              orderNumber: razorpayOrder.orderNumber,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+
+            if (verification.success) {
+              setPlacedOrderId(razorpayOrder.orderNumber);
+              setPlacedPaymentId(response.razorpay_payment_id);
+              setOrderPlaced(true);
+              clearCart();
+            } else {
+              setSubmitError(verification.message || 'Payment signature verification failed. Please contact support.');
+            }
+          } catch (verifyErr: any) {
+            setSubmitError(verifyErr.message || 'Payment verification failed on the server.');
+          } finally {
+            setIsSubmitting(false);
+          }
         },
       };
 
-      const savedOrder = await api.createOrder(orderPayload, token);
-      setPlacedOrderId(savedOrder.orderNumber);
-      setOrderPlaced(true);
-      clearCart();
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (failResp: any) {
+        setIsSubmitting(false);
+        setSubmitError(`Payment failed: ${failResp.error?.description || 'Transaction declined by bank.'}`);
+      });
+      rzp.open();
     } catch (err: any) {
-      alert(`Could not process order: ${err.message || 'Please check your information and try again.'}`);
-    } finally {
+      setSubmitError(err.message || 'Could not initiate online payment. Please check your network and try again.');
       setIsSubmitting(false);
     }
   };
@@ -191,22 +247,28 @@ export default function CheckoutPage() {
             <div className={styles.successIcon}>
               <CheckCircle2 size={54} color="#16a34a" />
             </div>
-            <span className={styles.successTag}>Order Confirmed</span>
+            <span className={styles.successTag}>Payment Verified &amp; Order Confirmed</span>
             <h1 className={styles.successTitle}>Thank you, {formData.fullName}!</h1>
             <p className={styles.orderIdText}>Order Reference ID: <strong>{placedOrderId}</strong></p>
+            {placedPaymentId && (
+              <p className={styles.orderIdText} style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginTop: '-8px' }}>
+                Razorpay Payment Ref: <code style={{ backgroundColor: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{placedPaymentId}</code>
+              </p>
+            )}
             <p className={styles.successDesc}>
-              We have received your order. A representative from our <strong>{formData.city}</strong> store team will call you at <strong>{formData.phone}</strong> within 30 minutes to confirm your delivery schedule.
+              Your payment has been verified successfully. A representative from our <strong>{formData.city}</strong> store team will contact you at <strong>{formData.phone}</strong> to coordinate your dispatch.
             </p>
 
             <div className={styles.orderSummaryBox}>
-              <h4>Delivery Details</h4>
+              <h4>Order &amp; Delivery Details</h4>
               <p><strong>Deliver to:</strong> {formData.address}, {formData.city} - {formData.pincode}</p>
-              <p><strong>Payment Choice:</strong> {paymentMethod === 'upi' ? 'UPI' : 'Card'}</p>
+              <p><strong>Payment Mode:</strong> 100% Online Payment (Razorpay Verified)</p>
+              <p><strong>Status:</strong> Paid &amp; Confirmed</p>
             </div>
 
             <div className={styles.successActions}>
-              <Link href="/" className="btn btn-primary btn-lg">
-                Return to Home
+              <Link href="/orders" className="btn btn-primary btn-lg">
+                View My Orders
               </Link>
               <Link href="/shop" className="btn btn-secondary btn-lg">
                 Continue Shopping
@@ -487,48 +549,36 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Step 4: Payment Option */}
+            {/* Step 4: 100% Online Payment via Razorpay */}
             <div className={styles.stepSection}>
               <div className={styles.stepHeader}>
                 <span className={styles.stepNumber}>4</span>
                 <h3>Payment Method</h3>
               </div>
               <div className={styles.optionsList}>
-                <label htmlFor="payment-upi" className={`${styles.optionLabel} ${paymentMethod === 'upi' ? styles.optionActive : ''}`}>
-                  <input
-                    id="payment-upi"
-                    type="radio"
-                    name="paymentMethod"
-                    value="upi"
-                    checked={paymentMethod === 'upi'}
-                    onChange={() => setPaymentMethod('upi')}
-                  />
+                <div className={`${styles.optionLabel} ${styles.optionActive} ${styles.razorpayOption}`}>
                   <div className={styles.optionContent}>
-                    <QrCode size={20} className={styles.optionIcon} />
-                    <div>
-                      <strong>UPI (GPay / PhonePe / Paytm)</strong>
-                      <span>Scan our driver's store QR code when the parcel arrives at your door</span>
+                    <ShieldCheck size={28} className={styles.razorpayBadgeIcon} />
+                    <div className={styles.paymentInfoText}>
+                      <div className={styles.paymentHeaderRow}>
+                        <strong>100% Secure Online Payment (Razorpay)</strong>
+                        <span className={styles.secureTag}>Instant Confirmation</span>
+                      </div>
+                      <p className={styles.paymentMethodsDesc}>
+                        Pay securely using UPI (Google Pay, PhonePe, Paytm, BHIM), Credit/Debit Cards (Visa, MasterCard, RuPay), NetBanking (50+ Banks) &amp; Wallets.
+                      </p>
+                      <div className={styles.trustBadgesRow}>
+                        <span className={styles.trustPill}>🔒 256-Bit SSL Encrypted</span>
+                        <span className={styles.trustPill}>⚡ Instant Order Confirmation</span>
+                        <span className={styles.trustPill}>🧾 Official GST Invoice</span>
+                      </div>
                     </div>
                   </div>
-                </label>
+                </div>
+              </div>
 
-                <label htmlFor="payment-card" className={`${styles.optionLabel} ${paymentMethod === 'card' ? styles.optionActive : ''}`}>
-                  <input
-                    id="payment-card"
-                    type="radio"
-                    name="paymentMethod"
-                    value="card"
-                    checked={paymentMethod === 'card'}
-                    onChange={() => setPaymentMethod('card')}
-                  />
-                  <div className={styles.optionContent}>
-                    <CreditCard size={20} className={styles.optionIcon} />
-                    <div>
-                      <strong>Debit or Credit Card</strong>
-                      <span>Pay by debit/credit card via our handheld POS terminal</span>
-                    </div>
-                  </div>
-                </label>
+              <div className={styles.noCodNotice}>
+                <strong>No Cash on Delivery (COD):</strong> All orders are fulfilled through our verified online payment gateway for immediate automated store dispatch.
               </div>
             </div>
           </div>
@@ -580,8 +630,8 @@ export default function CheckoutPage() {
                 className={`btn btn-primary btn-lg ${styles.placeOrderBtn}`}
               >
                 {isSubmitting
-                  ? 'Saving Order...'
-                  : `Place Order (${formatCurrency(summary.total)})`}
+                  ? 'Connecting to Razorpay...'
+                  : `Pay Online with Razorpay (${formatCurrency(summary.total)})`}
               </button>
 
               <div className={styles.securityNote}>

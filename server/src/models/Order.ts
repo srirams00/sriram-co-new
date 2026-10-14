@@ -22,9 +22,13 @@ export interface IOrder extends Document {
     notes?: string;
   };
   orderItems: IOrderItem[];
-  paymentMethod: 'upi' | 'card';
+  paymentMethod: 'razorpay' | 'upi' | 'card' | 'netbanking';
   paymentStatus: 'pending' | 'paid' | 'failed';
   orderStatus: 'placed' | 'confirmed' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+  paymentDetails?: Record<string, any>;
   pricing: {
     subtotal: number;
     deliveryFee: number;
@@ -78,13 +82,31 @@ const OrderSchema = new Schema<IOrder>(
     },
     paymentMethod: {
       type: String,
-      enum: ['upi', 'card'],
+      enum: ['razorpay', 'upi', 'card', 'netbanking'],
+      default: 'razorpay',
       required: true,
     },
     paymentStatus: {
       type: String,
       enum: ['pending', 'paid', 'failed'],
       default: 'pending',
+    },
+    razorpayOrderId: {
+      type: String,
+      index: true,
+      default: null,
+    },
+    razorpayPaymentId: {
+      type: String,
+      default: null,
+    },
+    razorpaySignature: {
+      type: String,
+      default: null,
+    },
+    paymentDetails: {
+      type: Schema.Types.Mixed,
+      default: null,
     },
     orderStatus: {
       type: String,

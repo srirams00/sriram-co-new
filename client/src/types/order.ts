@@ -25,7 +25,7 @@ export interface OrderPricing {
 
 export type OrderStatus = 'placed' | 'confirmed' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed';
-export type PaymentMethod = 'upi' | 'card';
+export type PaymentMethod = 'razorpay' | 'upi' | 'card' | 'netbanking';
 
 export interface Order {
   id: string;
@@ -35,6 +35,9 @@ export interface Order {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
   pricing: OrderPricing;
   createdAt: string;
   updatedAt: string;

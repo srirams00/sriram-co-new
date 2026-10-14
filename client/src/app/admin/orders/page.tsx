@@ -301,11 +301,16 @@ export default function AdminOrdersPage() {
                     <td>
                       <span
                         className={`${styles.paymentBadge} ${
-                          order.paymentMethod === 'upi' ? styles.paymentUpi : styles.paymentCard
+                          order.paymentMethod === 'card' ? styles.paymentCard : styles.paymentUpi
                         }`}
                       >
-                        {order.paymentMethod}
+                        {order.paymentMethod === 'razorpay' ? 'Razorpay Online' : order.paymentMethod}
                       </span>
+                      {order.razorpayPaymentId && (
+                        <span style={{ display: 'block', fontSize: '0.6875rem', color: '#64748b', marginTop: '3px' }}>
+                          Ref: <code>{order.razorpayPaymentId}</code>
+                        </span>
+                      )}
                     </td>
 
                     <td>
@@ -426,6 +431,16 @@ export default function AdminOrdersPage() {
                   <span>Delivery Fee:</span>
                   <span>{selectedOrder.pricing?.deliveryFee ? formatCurrency(selectedOrder.pricing.deliveryFee) : 'Free (Store Delivery)'}</span>
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                  <span>Payment Gateway:</span>
+                  <span>{selectedOrder.paymentMethod === 'razorpay' ? 'Razorpay (Online)' : selectedOrder.paymentMethod.toUpperCase()}</span>
+                </div>
+                {selectedOrder.razorpayPaymentId && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span>Razorpay Payment ID:</span>
+                    <code>{selectedOrder.razorpayPaymentId}</code>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', borderTop: '1px solid #E5EDE7', paddingTop: '8px', color: '#174A2B' }}>
                   <strong>Total Paid:</strong>
                   <strong style={{ color: '#18A957' }}>{formatCurrency(selectedOrder.pricing?.total || 0)}</strong>

@@ -62,8 +62,13 @@ function OrderCard({ order, highlighted = false }: { order: Order; highlighted?:
             Order Ref: <strong>{order.orderNumber}</strong>
           </span>
           <span className={styles.orderDate}>
-            Placed on {new Date(order.createdAt).toLocaleDateString('en-IN')} · Payment: {order.paymentMethod.toUpperCase()}
+            Placed on {new Date(order.createdAt).toLocaleDateString('en-IN')} · {order.paymentMethod === 'razorpay' ? 'Online (Razorpay)' : order.paymentMethod.toUpperCase()} · <strong style={{ color: order.paymentStatus === 'paid' ? '#16a34a' : '#d97706' }}>{order.paymentStatus === 'paid' ? '✓ Paid' : order.paymentStatus.toUpperCase()}</strong>
           </span>
+          {order.razorpayPaymentId && (
+            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+              Transaction Ref: <code>{order.razorpayPaymentId}</code>
+            </span>
+          )}
         </div>
         <div className={styles.statusBadge}>
           <span
