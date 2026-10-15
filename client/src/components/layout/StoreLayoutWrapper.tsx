@@ -29,9 +29,14 @@ export default function StoreLayoutWrapper({
 
   return (
     <>
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
       <AnnouncementBar />
       <Header />
-      <main>{children}</main>
+      <main id="main-content" tabIndex={-1}>
+        {children}
+      </main>
       <Footer />
       <CartDrawer />
     </>

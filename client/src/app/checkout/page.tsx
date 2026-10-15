@@ -373,7 +373,7 @@ export default function CheckoutPage() {
 
       <div className="container">
         {submitError && (
-          <div className={styles.submitErrorBanner}>
+          <div className={styles.submitErrorBanner} role="alert" aria-live="assertive">
             <AlertCircle size={20} />
             <span>{submitError}</span>
           </div>
@@ -396,6 +396,10 @@ export default function CheckoutPage() {
                     name="fullName"
                     type="text"
                     required
+                    autoComplete="name"
+                    aria-required="true"
+                    aria-invalid={Boolean(touched.fullName && fieldErrors.fullName)}
+                    aria-describedby={touched.fullName && fieldErrors.fullName ? "fullName-error" : undefined}
                     placeholder="e.g. Ramesh Kumar"
                     value={formData.fullName}
                     onChange={handleChange}
@@ -409,7 +413,7 @@ export default function CheckoutPage() {
                     }
                   />
                   {touched.fullName && fieldErrors.fullName && (
-                    <span className={styles.fieldError}>
+                    <span id="fullName-error" className={styles.fieldError} role="alert">
                       <AlertCircle size={14} />
                       {fieldErrors.fullName}
                     </span>
@@ -424,6 +428,10 @@ export default function CheckoutPage() {
                       name="phone"
                       type="tel"
                       required
+                      autoComplete="tel"
+                      aria-required="true"
+                      aria-invalid={Boolean(touched.phone && fieldErrors.phone)}
+                      aria-describedby={touched.phone && fieldErrors.phone ? "phone-error" : "phone-hint"}
                       placeholder="9876543210"
                       maxLength={10}
                       value={formData.phone}
@@ -439,12 +447,12 @@ export default function CheckoutPage() {
                     />
                   </div>
                   {touched.phone && fieldErrors.phone ? (
-                    <span className={styles.fieldError}>
+                    <span id="phone-error" className={styles.fieldError} role="alert">
                       <AlertCircle size={14} />
                       {fieldErrors.phone}
                     </span>
                   ) : (
-                    <span className={styles.fieldHint}>
+                    <span id="phone-hint" className={styles.fieldHint}>
                       Enter 10-digit mobile number starting with 6, 7, 8, or 9
                     </span>
                   )}
@@ -456,6 +464,9 @@ export default function CheckoutPage() {
                   id="email"
                   name="email"
                   type="email"
+                  autoComplete="email"
+                  aria-invalid={Boolean(touched.email && fieldErrors.email)}
+                  aria-describedby={touched.email && fieldErrors.email ? "email-error" : undefined}
                   placeholder="ramesh@example.com"
                   value={formData.email}
                   onChange={handleChange}
@@ -471,7 +482,7 @@ export default function CheckoutPage() {
                   }
                 />
                 {touched.email && fieldErrors.email && (
-                  <span className={styles.fieldError}>
+                  <span id="email-error" className={styles.fieldError} role="alert">
                     <AlertCircle size={14} />
                     {fieldErrors.email}
                   </span>
@@ -492,6 +503,10 @@ export default function CheckoutPage() {
                   name="address"
                   rows={3}
                   required
+                  autoComplete="street-address"
+                  aria-required="true"
+                  aria-invalid={Boolean(touched.address && fieldErrors.address)}
+                  aria-describedby={touched.address && fieldErrors.address ? "address-error" : "address-hint"}
                   placeholder="House/Door No, Street Name, Landmark..."
                   value={formData.address}
                   onChange={handleChange}
@@ -505,12 +520,12 @@ export default function CheckoutPage() {
                   }
                 />
                 {touched.address && fieldErrors.address ? (
-                  <span className={styles.fieldError}>
+                  <span id="address-error" className={styles.fieldError} role="alert">
                     <AlertCircle size={14} />
                     {fieldErrors.address}
                   </span>
                 ) : (
-                  <span className={styles.fieldHint}>
+                  <span id="address-hint" className={styles.fieldHint}>
                     Minimum 10 characters required for dispatch accuracy
                   </span>
                 )}
@@ -521,6 +536,7 @@ export default function CheckoutPage() {
                   <select
                     id="city"
                     name="city"
+                    autoComplete="address-level2"
                     value={formData.city}
                     onChange={handleChange}
                   >
@@ -540,6 +556,10 @@ export default function CheckoutPage() {
                     name="pincode"
                     type="text"
                     required
+                    autoComplete="postal-code"
+                    aria-required="true"
+                    aria-invalid={Boolean(touched.pincode && fieldErrors.pincode)}
+                    aria-describedby={touched.pincode && fieldErrors.pincode ? "pincode-error" : "pincode-hint"}
                     placeholder="620002"
                     maxLength={6}
                     value={formData.pincode}
@@ -554,12 +574,12 @@ export default function CheckoutPage() {
                     }
                   />
                   {touched.pincode && fieldErrors.pincode ? (
-                    <span className={styles.fieldError}>
+                    <span id="pincode-error" className={styles.fieldError} role="alert">
                       <AlertCircle size={14} />
                       {fieldErrors.pincode}
                     </span>
                   ) : (
-                    <span className={styles.fieldHint}>
+                    <span id="pincode-hint" className={styles.fieldHint}>
                       6-digit postal code
                     </span>
                   )}

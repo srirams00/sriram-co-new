@@ -107,6 +107,16 @@ export default function Header() {
     };
   }, []);
 
+  // Keyboard accessibility: Close mobile drawer on Escape key
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -151,6 +161,8 @@ export default function Header() {
             className={styles.mobileMenuToggle}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle navigation"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation-drawer"
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -170,12 +182,11 @@ export default function Header() {
         </div>
 
         {/* Center-Left: Desktop Navigation */}
-        <nav className={styles.desktopNav}>
+        <nav className={styles.desktopNav} aria-label="Main navigation">
           <Link href="/shop" className={styles.navLink}>Shop</Link>
           <Link href="/#categories" className={styles.navLink}>Categories</Link>
           <Link href="/about" className={styles.navLink}>About us</Link>
           <Link href="/contact" className={styles.navLink}>Contact</Link>
-          
         </nav>
 
         {/* Center-Right: Search Input */}
@@ -240,7 +251,12 @@ export default function Header() {
             )}
           </Link>
 
-          <Link href="/shop" className={styles.actionBtn} aria-label="Wishlist" title="Wishlist">
+          <Link
+            href="/shop"
+            className={styles.actionBtn}
+            aria-label={`Wishlist with ${wishlistIds.length} ${wishlistIds.length === 1 ? 'item' : 'items'}`}
+            title="Wishlist"
+          >
             <Heart size={20} />
             {wishlistIds.length > 0 && (
               <span className={styles.badgeCount}>{wishlistIds.length}</span>
@@ -251,7 +267,7 @@ export default function Header() {
             type="button"
             className={`${styles.actionBtn} ${styles.cartBtn}`}
             onClick={() => setIsCartDrawerOpen(true)}
-            aria-label="Open Shopping Cart"
+            aria-label={`Shopping cart with ${summary.itemCount} ${summary.itemCount === 1 ? 'item' : 'items'}`}
             title="Shopping Cart"
           >
             <ShoppingBag size={20} />
@@ -264,7 +280,7 @@ export default function Header() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className={styles.mobileDrawer}>
+        <div id="mobile-navigation-drawer" className={styles.mobileDrawer}>
           <form onSubmit={handleSearch} className={styles.mobileSearchForm}>
             <Search size={17} className={styles.searchIcon} />
             <input
@@ -300,7 +316,7 @@ export default function Header() {
             )}
           </form>
 
-          <nav className={styles.mobileNav}>
+          <nav className={styles.mobileNav} aria-label="Mobile navigation">
             <Link 
               href="/shop" 
               className={styles.mobileNavLink}

@@ -39,9 +39,9 @@ export default function ProductCard({ product }: ProductCardProps) {
             e.stopPropagation();
             toggleWishlist(product.id);
           }}
-          aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-label={inWishlist ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
         >
-          <Heart size={16} fill={inWishlist ? 'currentColor' : 'none'} />
+          <Heart size={16} fill={inWishlist ? 'currentColor' : 'none'} aria-hidden="true" />
         </button>
 
         <Link
@@ -66,9 +66,9 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className={styles.content}>
         <div className={styles.categoryRow}>
           <span className={styles.category}>{product.category}</span>
-          <div className={styles.rating}>
-            <Star size={12} fill="#E5A11A" color="#E5A11A" />
-            <span>{product.rating}</span>
+          <div className={styles.rating} aria-label={`Rating: ${product.rating} out of 5 stars`}>
+            <Star size={12} fill="#E5A11A" color="#E5A11A" aria-hidden="true" />
+            <span aria-hidden="true">{product.rating}</span>
           </div>
         </div>
 
@@ -85,12 +85,16 @@ export default function ProductCard({ product }: ProductCardProps) {
               <span className={styles.price}>{formatCurrency(product.price)}</span>
               {product.originalPrice && product.originalPrice > product.price && (
                 <span className={styles.originalPrice}>
+                  <span className="sr-only">Original price: </span>
                   {formatCurrency(product.originalPrice)}
                 </span>
               )}
             </div>
             {discountPercent && (
-              <span className={styles.discountText}>{discountPercent}% OFF</span>
+              <span className={styles.discountText}>
+                <span className="sr-only">Discount: </span>
+                {discountPercent}% OFF
+              </span>
             )}
           </div>
 
@@ -98,6 +102,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             type="button"
             className={styles.addBtn}
             onClick={() => addToCart(product, 1)}
+            aria-label={`Add ${product.name} to cart`}
           >
             Add to cart
           </button>

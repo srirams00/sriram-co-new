@@ -11,16 +11,34 @@ import styles from './CartDrawer.module.css';
 export default function CartDrawer() {
   const { items, removeFromCart, updateQuantity, summary, isCartDrawerOpen, setIsCartDrawerOpen } = useCart();
 
+  // Keyboard accessibility: Close drawer on Escape key press
+  React.useEffect(() => {
+    if (!isCartDrawerOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsCartDrawerOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCartDrawerOpen, setIsCartDrawerOpen]);
+
   if (!isCartDrawerOpen) return null;
+
+  const progressPercent = Math.min(100, Math.round((summary.subtotal / 1000) * 100));
 
   return (
     <div className={styles.overlay} onClick={() => setIsCartDrawerOpen(false)}>
-      <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
+      <div 
+        className={styles.drawer} 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="cart-drawer-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className={styles.drawerHeader}>
           <div className={styles.drawerTitle}>
             <ShoppingBag size={20} className={styles.bagIcon} />
-            <h3>Your Cart ({summary.itemCount})</h3>
+            <h3 id="cart-drawer-title">Your Cart ({summary.itemCount})</h3>
           </div>
           <button 
             type="button" 
@@ -41,10 +59,17 @@ export default function CartDrawer() {
               Add <strong>{formatCurrency(1000 - summary.subtotal)}</strong> more for <strong>FREE direct delivery</strong>
             </p>
           )}
-          <div className={styles.progressBar}>
+          <div 
+            className={styles.progressBar}
+            role="progressbar"
+            aria-valuenow={progressPercent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Free delivery progress"
+          >
             <div 
               className={styles.progressFill} 
-              style={{ width: `${Math.min(100, (summary.subtotal / 1000) * 100)}%` }} 
+              style={{ width: `${progressPercent}%` }} 
             />
           </div>
         </div>
@@ -86,7 +111,8 @@ export default function CartDrawer() {
                         type="button"
                         onClick={() => removeFromCart(product.id)}
                         className={styles.removeBtn}
-                        title="Remove item"
+                        aria-label={`Remove ${product.name} from cart`}
+                        title={`Remove ${product.name}`}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -100,16 +126,16 @@ export default function CartDrawer() {
                           type="button"
                           onClick={() => updateQuantity(product.id, quantity - 1)}
                           className={styles.qtyBtn}
-                          aria-label="Decrease quantity"
+                          aria-label={`Decrease quantity for ${product.name}`}
                         >
                           <Minus size={14} />
                         </button>
-                        <span className={styles.qtyCount}>{quantity}</span>
+                        <span className={styles.qtyCount} aria-label={`Quantity: ${quantity}`}>{quantity}</span>
                         <button
                           type="button"
                           onClick={() => updateQuantity(product.id, quantity + 1)}
                           className={styles.qtyBtn}
-                          aria-label="Increase quantity"
+                          aria-label={`Increase quantity for ${product.name}`}
                         >
                           <Plus size={14} />
                         </button>

@@ -234,7 +234,11 @@ export default function LoginPage() {
             <span className={styles.dividerText}>or</span>
           </div>
 
-          {serverError && <div className={styles.errorBanner}>{serverError}</div>}
+          {serverError && (
+            <div className={styles.errorBanner} role="alert" aria-live="assertive">
+              {serverError}
+            </div>
+          )}
 
           {/* Form with custom inline validation */}
           <form onSubmit={handleLogin} noValidate className={styles.authForm}>
@@ -243,6 +247,10 @@ export default function LoginPage() {
               <input
                 id="loginEmail"
                 type="email"
+                autoComplete="email"
+                aria-required="true"
+                aria-invalid={Boolean(touched.email && errors.email)}
+                aria-describedby={touched.email && errors.email ? "loginEmail-error" : undefined}
                 placeholder="you@example.com"
                 value={email}
                 className={touched.email && errors.email ? styles.inputError : ''}
@@ -250,7 +258,7 @@ export default function LoginPage() {
                 onBlur={() => handleBlur('email')}
               />
               {touched.email && errors.email && (
-                <div className={styles.fieldError}>
+                <div id="loginEmail-error" className={styles.fieldError} role="alert">
                   <AlertCircle size={14} />
                   <span>{errors.email}</span>
                 </div>
@@ -263,6 +271,10 @@ export default function LoginPage() {
                 <input
                   id="loginPassword"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  aria-required="true"
+                  aria-invalid={Boolean(touched.password && errors.password)}
+                  aria-describedby={touched.password && errors.password ? "loginPassword-error" : undefined}
                   placeholder="Enter your password"
                   value={password}
                   className={touched.password && errors.password ? styles.inputError : ''}
@@ -271,7 +283,6 @@ export default function LoginPage() {
                 />
                 <button
                   type="button"
-                  tabIndex={-1}
                   className={styles.eyeToggle}
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
@@ -280,7 +291,7 @@ export default function LoginPage() {
                 </button>
               </div>
               {touched.password && errors.password && (
-                <div className={styles.fieldError}>
+                <div id="loginPassword-error" className={styles.fieldError} role="alert">
                   <AlertCircle size={14} />
                   <span>{errors.password}</span>
                 </div>

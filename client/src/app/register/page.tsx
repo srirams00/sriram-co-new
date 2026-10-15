@@ -240,7 +240,7 @@ export default function RegisterPage() {
           </div>
 
           {serverError && (
-            <div className={styles.errorBanner} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className={styles.errorBanner} role="alert" aria-live="assertive" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <AlertCircle size={18} style={{ flexShrink: 0 }} />
               <span>
                 {serverError}{' '}
@@ -260,6 +260,10 @@ export default function RegisterPage() {
               <input
                 id="regName"
                 type="text"
+                autoComplete="name"
+                aria-required="true"
+                aria-invalid={Boolean(touched.name && errors.name)}
+                aria-describedby={touched.name && errors.name ? "regName-error" : undefined}
                 placeholder="Your name"
                 value={formData.name}
                 className={touched.name && errors.name ? styles.inputError : ''}
@@ -267,7 +271,7 @@ export default function RegisterPage() {
                 onBlur={() => handleBlur('name')}
               />
               {touched.name && errors.name && (
-                <div className={styles.fieldError}>
+                <div id="regName-error" className={styles.fieldError} role="alert">
                   <AlertCircle size={14} />
                   <span>{errors.name}</span>
                 </div>
@@ -279,6 +283,10 @@ export default function RegisterPage() {
               <input
                 id="regEmail"
                 type="email"
+                autoComplete="email"
+                aria-required="true"
+                aria-invalid={Boolean(touched.email && errors.email)}
+                aria-describedby={touched.email && errors.email ? "regEmail-error" : undefined}
                 placeholder="you@example.com"
                 value={formData.email}
                 className={touched.email && errors.email ? styles.inputError : ''}
@@ -286,7 +294,7 @@ export default function RegisterPage() {
                 onBlur={() => handleBlur('email')}
               />
               {touched.email && errors.email && (
-                <div className={styles.fieldError}>
+                <div id="regEmail-error" className={styles.fieldError} role="alert">
                   <AlertCircle size={14} />
                   <span>{errors.email}</span>
                 </div>
@@ -299,6 +307,10 @@ export default function RegisterPage() {
                 <input
                   id="regPassword"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  aria-required="true"
+                  aria-invalid={Boolean(touched.password && errors.password)}
+                  aria-describedby={touched.password && errors.password ? "regPassword-error" : undefined}
                   placeholder="Create a password (min. 6 characters)"
                   value={formData.password}
                   className={touched.password && errors.password ? styles.inputError : ''}
@@ -307,7 +319,6 @@ export default function RegisterPage() {
                 />
                 <button
                   type="button"
-                  tabIndex={-1}
                   className={styles.eyeToggle}
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
@@ -316,7 +327,7 @@ export default function RegisterPage() {
                 </button>
               </div>
               {touched.password && errors.password && (
-                <div className={styles.fieldError}>
+                <div id="regPassword-error" className={styles.fieldError} role="alert">
                   <AlertCircle size={14} />
                   <span>{errors.password}</span>
                 </div>
