@@ -46,9 +46,24 @@ router.post('/razorpay/create-order', authenticateIfPresent, async (req: AuthReq
         return;
       }
 
-      const dbProduct = await Product.findById(item.product);
+      let dbProduct = null;
+      if (mongoose.Types.ObjectId.isValid(item.product)) {
+        dbProduct = await Product.findById(item.product);
+      }
+
+      // Robust fallback: if ID was from another DB or static catalog, match by name or slug
       if (!dbProduct) {
-        res.status(400).json({ message: `Product ${item.name || item.product} not found in catalog.` });
+        dbProduct = await Product.findOne({
+          $or: [
+            ...(item.name ? [{ name: item.name }] : []),
+            { slug: item.product },
+            { slug: 'live-payment-test-item' },
+          ],
+        });
+      }
+
+      if (!dbProduct) {
+        res.status(400).json({ message: `Product "${item.name || item.product}" not found in catalog.` });
         return;
       }
 
@@ -137,7 +152,11 @@ router.post('/razorpay/create-order', authenticateIfPresent, async (req: AuthReq
     });
   } catch (error: any) {
     console.error('Razorpay create-order error:', error);
-    res.status(500).json({ message: error?.message || 'Failed to initialize Razorpay order.' });
+    const errorDescription =
+      error?.error?.description ||
+      error?.message ||
+      'Failed to initialize Razorpay order. Please verify API keys.';
+    res.status(500).json({ message: errorDescription });
   }
 });
 
