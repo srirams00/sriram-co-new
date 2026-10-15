@@ -85,8 +85,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   
-  // Free delivery for orders above ₹1,000 as stated in the announcement bar
-  const deliveryFee = subtotal >= 1000 || subtotal === 0 ? 0 : 99;
+  // Direct Store Delivery is 100% Free on all orders
+  const deliveryFee = 0;
   const discount = 0;
   const total = subtotal + deliveryFee - discount;
 
