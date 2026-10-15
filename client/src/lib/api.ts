@@ -124,7 +124,7 @@ export const api = {
         const allProducts = [
           ...list,
           ...remainingPages.flatMap((page) => Array.isArray(page) ? page : page.data || []),
-        ];
+        ].filter((p: Product) => p.slug !== 'live-payment-test-item');
 
         setCached(cacheKey, allProducts);
         return allProducts;
@@ -178,6 +178,8 @@ export const api = {
   },
 
   async getProductBySlug(slug: string): Promise<Product | null> {
+    if (slug === 'live-payment-test-item') return null;
+
     const cacheKey = `product_slug_${slug}`;
     const cached = getCached<Product>(cacheKey);
     if (cached) return cached;
@@ -189,6 +191,7 @@ export const api = {
         });
         if (res.ok) {
           const data = await res.json();
+          if (data?.slug === 'live-payment-test-item') return null;
           setCached(cacheKey, data);
           return data;
         }
@@ -213,9 +216,12 @@ export const api = {
           next: { revalidate: 60 },
         });
         if (res.ok) {
-          const data = await res.json();
-          setCached(cacheKey, data);
-          return data;
+          const data = (await res.json()) as Product[];
+          const sanitized = Array.isArray(data)
+            ? data.filter((p: Product) => p.slug !== 'live-payment-test-item')
+            : [];
+          setCached(cacheKey, sanitized);
+          return sanitized;
         }
       } catch {
         // Fall back to mock

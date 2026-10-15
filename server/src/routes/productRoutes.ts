@@ -200,10 +200,14 @@ router.get('/featured', async (_req: Request, res: Response, next: NextFunction)
 
     const products = await Product.find({
       isArchived: { $ne: true },
+      slug: { $ne: 'live-payment-test-item' },
       $or: [{ badge: 'Best Seller' }, { badge: 'Top Rated' }],
     }).limit(8);
 
-    const result = products.length > 0 ? products : await Product.find({ isArchived: { $ne: true } }).limit(8);
+    const result =
+      products.length > 0
+        ? products
+        : await Product.find({ isArchived: { $ne: true }, slug: { $ne: 'live-payment-test-item' } }).limit(8);
     cachedFeatured = result;
     featuredCacheTime = now;
     res.json(result);
@@ -218,7 +222,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
     const parsed = ProductQuerySchema.parse(req.query);
     const { page, limit, category, query, minPrice, maxPrice, sortBy } = parsed;
 
-    const filter: Record<string, any> = { isArchived: { $ne: true } };
+    const filter: Record<string, any> = {
+      isArchived: { $ne: true },
+      slug: { $ne: 'live-payment-test-item' },
+    };
 
     if (category) {
       const normalizedSlug = category.toLowerCase().trim();
@@ -463,6 +470,9 @@ router.delete('/:id', requireAdmin, async (req: AuthRequest, res: Response, next
 // GET /api/products/:slug - Single product lookup by slug (for public store)
 router.get('/:slug', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    if (req.params.slug === 'live-payment-test-item') {
+      throw new AppError(`Product with slug '${req.params.slug}' not found`, 404, 'PRODUCT_NOT_FOUND');
+    }
     const product = await Product.findOne({ slug: req.params.slug, isArchived: { $ne: true } });
     if (!product) {
       throw new AppError(`Product with slug '${req.params.slug}' not found`, 404, 'PRODUCT_NOT_FOUND');
