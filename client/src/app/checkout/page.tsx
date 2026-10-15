@@ -179,6 +179,36 @@ export default function CheckoutPage() {
       // 3. Create Razorpay order on backend
       const razorpayOrder = await api.createRazorpayOrder(orderPayload, token);
 
+      // Auto-dispatch 'Order Placed' email via Vercel serverless relay
+      if (orderPayload.customerInfo.email) {
+        fetch('/api/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order: {
+              orderNumber: razorpayOrder.orderNumber,
+              customerInfo: orderPayload.customerInfo,
+              orderItems: items.map((it) => ({
+                name: it.product.name,
+                price: it.product.price,
+                quantity: it.quantity,
+                image: it.product.image,
+              })),
+              pricing: razorpayOrder.pricing || {
+                subtotal: items.reduce((acc, it) => acc + it.product.price * it.quantity, 0),
+                deliveryFee: 0,
+                total: razorpayOrder.amount / 100,
+              },
+              paymentMethod: 'razorpay',
+              paymentStatus: 'pending',
+              orderStatus: 'placed',
+              createdAt: new Date(),
+            },
+            templateType: 'placed',
+          }),
+        }).catch((err) => console.warn('[Auto Email] Placed email dispatch error:', err));
+      }
+
       // 4. Open Razorpay Standard Checkout modal
       const options: RazorpayOptions = {
         key: razorpayOrder.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
@@ -218,6 +248,33 @@ export default function CheckoutPage() {
               setPlacedPaymentId(response.razorpay_payment_id);
               setOrderPlaced(true);
               clearCart();
+
+              // Auto-dispatch 'Order Confirmed' email via Vercel serverless relay
+              const confirmedOrder = verification.order || {
+                orderNumber: razorpayOrder.orderNumber,
+                customerInfo: orderPayload.customerInfo,
+                orderItems: items.map((it) => ({
+                  name: it.product.name,
+                  price: it.product.price,
+                  quantity: it.quantity,
+                  image: it.product.image,
+                })),
+                pricing: razorpayOrder.pricing || { total: razorpayOrder.amount / 100 },
+                paymentMethod: 'razorpay',
+                paymentStatus: 'paid',
+                orderStatus: 'confirmed',
+                razorpayPaymentId: response.razorpay_payment_id,
+                createdAt: new Date(),
+              };
+
+              fetch('/api/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  order: confirmedOrder,
+                  templateType: 'confirmed',
+                }),
+              }).catch((err) => console.warn('[Auto Email] Confirmed email dispatch error:', err));
             } else {
               setSubmitError(verification.message || 'Payment signature verification failed. Please contact support.');
             }

@@ -575,8 +575,33 @@ export const api = {
       cancellationReason?: string;
       cancelledBy?: 'store' | 'customer';
     },
-    token?: string
+    token?: string,
+    orderObj?: any
   ): Promise<{ success: boolean; message: string }> {
+    // 1. If we have the full order object, dispatch directly via Vercel serverless relay
+    // This runs on Vercel port 465 (open) and bypasses Render's free tier SMTP block
+    if (orderObj) {
+      try {
+        const relayRes = await fetch('/api/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order: orderObj,
+            templateType: templateId,
+            extraData,
+          }),
+        });
+
+        if (relayRes.ok) {
+          const data = await relayRes.json();
+          return { success: true, message: data.message || `Email sent successfully.` };
+        }
+      } catch (err) {
+        console.warn('[Email Relay] Vercel relay failed, falling back to backend:', err);
+      }
+    }
+
+    // 2. Fallback to Express backend endpoint
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 

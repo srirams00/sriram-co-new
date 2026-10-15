@@ -56,8 +56,11 @@ function getTransporter(): Transporter {
         user: SMTP_USER,
         pass: SMTP_PASS,
       },
+      connectionTimeout: 8000,
+      greetingTimeout: 8000,
+      socketTimeout: 8000,
       tls: {
-        rejectUnauthorized: process.env.NODE_ENV === 'production',
+        rejectUnauthorized: false,
       },
     });
   }

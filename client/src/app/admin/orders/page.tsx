@@ -124,8 +124,12 @@ export default function AdminOrdersPage() {
         prev.map((o) => (o.id === orderId ? { ...o, orderStatus: newStatus } : o))
       );
 
-      if (selectedOrder && selectedOrder.id === orderId) {
-        setSelectedOrder((prev) => (prev ? { ...prev, orderStatus: newStatus } : null));
+      // Trigger reliable Vercel relay email dispatch
+      const targetOrder = orders.find((o) => o.id === orderId);
+      if (targetOrder) {
+        api.sendOrderEmail(orderId, newStatus, extraData, token, { ...targetOrder, orderStatus: newStatus }).catch((e) =>
+          console.warn('[Vercel Relay] Background email dispatch error:', e)
+        );
       }
 
       showToast(`Status updated to "${newStatus.replace(/_/g, ' ')}" · Email notification dispatched via Zoho Mail!`);
@@ -150,7 +154,7 @@ export default function AdminOrdersPage() {
     setSendingEmailKey(`${order.id}-${templateId}`);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('src_auth_token') || undefined : undefined;
-      const res = await api.sendOrderEmail(order.id, templateId, extraData, token);
+      const res = await api.sendOrderEmail(order.id, templateId, extraData, token, order);
       const recipient = order.customerInfo?.email || 'customer mailbox';
       showToast(`Email (${templateId.replace(/_/g, ' ')}) dispatched to ${recipient}!`);
       if (quickEmailOrder) setQuickEmailOrder(null);

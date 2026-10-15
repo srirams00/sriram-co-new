@@ -77,16 +77,6 @@ export default function AdminSidebar() {
           </div>
         </Link>
 
-        <Link
-          href="/admin/emails"
-          className={`${styles.navItem} ${pathname.startsWith('/admin/emails') ? styles.navItemActive : ''}`}
-        >
-          <div className={styles.navItemLeft}>
-            <Mail size={18} />
-            <span>Email Studio</span>
-          </div>
-        </Link>
-
         <button
           type="button"
           onClick={handleLogout}
