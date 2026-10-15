@@ -6,11 +6,9 @@ import rateLimit from 'express-rate-limit';
 import { User, IUser } from '../models/User';
 import { Order } from '../models/Order';
 import { AppError } from '../middleware/errorHandler';
-import { requireAdmin } from '../middleware/authMiddleware';
+import { requireAdmin, JWT_SECRET } from '../middleware/authMiddleware';
 
 const router = Router();
-
-const JWT_SECRET = process.env.JWT_SECRET || 'sriram_and_co_jwt_secret_dev_key_2026_xyz';
 
 // Strict rate limiter for authentication routes (mitigates brute-force attacks)
 const authLimiter = rateLimit({
@@ -41,30 +39,73 @@ const LoginSchema = z.object({
   password: z.string().min(1, 'Password is required').max(100),
 });
 
+const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyCv81XKKvXB6xJg2jjrkXYJIy9BvvKsGLo';
+
 const GoogleAuthSchema = z.object({
-  email: z.string().trim().email('Invalid email address'),
-  name: z.string().trim().min(1, 'Name is required'),
+  idToken: z.string().min(10, 'Google ID token is required'),
+  name: z.string().trim().optional(),
   photoUrl: z.string().optional(),
 });
 
-// POST /api/auth/google (Google OAuth / Firebase Login)
+/**
+ * Validates a Firebase / Google OAuth ID token against Google Identity Toolkit.
+ * Ensures the email is cryptographically signed and verified by Google.
+ */
+async function verifyGoogleIdToken(idToken: string): Promise<{ email: string; name?: string; emailVerified: boolean }> {
+  try {
+    const url = `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    });
+
+    if (!response.ok) {
+      throw new AppError('Invalid or expired Google OAuth token. Authentication rejected.', 401, 'INVALID_OAUTH_TOKEN');
+    }
+
+    const data: any = await response.json();
+    const verifiedUser = data?.users?.[0];
+    if (!verifiedUser || !verifiedUser.email) {
+      throw new AppError('Unable to extract verified identity from Google.', 401, 'OAUTH_VERIFICATION_FAILED');
+    }
+
+    return {
+      email: verifiedUser.email.toLowerCase(),
+      name: verifiedUser.displayName,
+      emailVerified: Boolean(verifiedUser.emailVerified),
+    };
+  } catch (err: any) {
+    if (err instanceof AppError) throw err;
+    throw new AppError('Google authentication service error. Please try again.', 502, 'OAUTH_SERVICE_ERROR');
+  }
+}
+
+// POST /api/auth/google (Cryptographically verified Google OAuth / Firebase Login)
 router.post('/google', authLimiter, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { email, name } = GoogleAuthSchema.parse(req.body);
+    const { idToken, name: clientName } = GoogleAuthSchema.parse(req.body);
 
-    let user = await User.findOne({ email: email.toLowerCase() });
+    // Cryptographically verify token directly with Google Identity Toolkit
+    const verifiedOAuth = await verifyGoogleIdToken(idToken);
+    const verifiedEmail = verifiedOAuth.email;
+    const verifiedName = verifiedOAuth.name || clientName || verifiedEmail.split('@')[0];
+
+    let user = await User.findOne({ email: verifiedEmail });
 
     if (!user) {
-      // First-time Google user - create customer account
+      // First-time Google user - create strictly customer account (no privilege escalation)
       const randomPassword = `G_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
       user = new User({
-        name,
-        email: email.toLowerCase(),
+        name: verifiedName,
+        email: verifiedEmail,
         password: randomPassword,
         role: 'customer',
         phone: '',
       });
       await user.save();
+    } else if (user.role === 'admin' && !verifiedOAuth.emailVerified) {
+      throw new AppError('Admin accounts require an email verified by Google.', 403, 'FORBIDDEN');
     }
 
     const token = generateToken(user._id.toString());

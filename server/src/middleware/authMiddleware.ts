@@ -5,6 +5,10 @@ import { AppError } from './errorHandler';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'sriram_and_co_jwt_secret_dev_key_2026_xyz';
 
+if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET.includes('dev_key'))) {
+  console.error('[CRITICAL SECURITY WARNING] JWT_SECRET is unconfigured or using a default key in production! Set a secure JWT_SECRET environment variable.');
+}
+
 export interface AuthRequest extends Request {
   user?: IUser;
 }

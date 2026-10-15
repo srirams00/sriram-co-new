@@ -24,7 +24,7 @@ const SMTP_HOST = process.env.SMTP_HOST || 'smtppro.zoho.in';
 const SMTP_PORT = Number(process.env.SMTP_PORT) || 465;
 const SMTP_SECURE = process.env.SMTP_SECURE !== 'false';
 const SMTP_USER = process.env.SMTP_USER || 'ramkumar@sriramandco.in';
-const SMTP_PASS = process.env.SMTP_PASS || 'bJkg6TKzyNSb';
+const SMTP_PASS = process.env.SMTP_PASS || '';
 const EMAIL_FROM = process.env.EMAIL_FROM || '"Sri Ram & Co" <ramkumar@sriramandco.in>';
 
 let cachedTransporter: Transporter | null = null;
@@ -42,9 +42,6 @@ function getTransporter(): Transporter {
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 10000,
-      tls: {
-        rejectUnauthorized: false,
-      },
     });
   }
   return cachedTransporter;
@@ -55,6 +52,11 @@ export async function sendEmail(payload: SendEmailPayload): Promise<SendEmailRes
 
   if (!to || !to.includes('@')) {
     return { success: false, error: 'Invalid recipient email address' };
+  }
+
+  if (!SMTP_PASS) {
+    console.warn('[Zoho Mail] SMTP_PASS is not configured in environment variables.');
+    return { success: false, error: 'SMTP credentials not configured on server' };
   }
 
   try {

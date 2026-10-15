@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 import { Order, IOrderItem } from '../models/Order';
 import { Product } from '../models/Product';
 import {
@@ -94,7 +95,7 @@ router.post('/razorpay/create-order', authenticateIfPresent, async (req: AuthReq
       return;
     }
 
-    const orderNumber = `SRC-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+    const orderNumber = `SRC-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
     // Create Razorpay Order with verified total (amount in paise)
     const razorpayOrder = await razorpay.orders.create({
@@ -282,43 +283,12 @@ router.post('/razorpay/webhook', async (req: Request, res: Response): Promise<vo
   }
 });
 
-// POST /api/orders - Create a new order (Public storefront checkout, strictly disallowing COD)
-router.post('/', authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { customerInfo, orderItems, paymentMethod, pricing } = req.body;
-
-    if (!customerInfo || !orderItems || !pricing) {
-      res.status(400).json({ message: 'Missing required order fields' });
-      return;
-    }
-
-    if (paymentMethod === 'cod') {
-      res.status(400).json({ message: 'Cash on Delivery (COD) is not available. Please complete payment online via Razorpay.' });
-      return;
-    }
-
-    if (!['razorpay', 'upi', 'card', 'netbanking'].includes(paymentMethod)) {
-      res.status(400).json({ message: 'Payment method must be an online payment method (razorpay, upi, card, or netbanking).' });
-      return;
-    }
-
-    const orderNumber = `SRC-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
-
-    const newOrder = new Order({
-      user: req.user?._id,
-      orderNumber,
-      customerInfo,
-      orderItems,
-      paymentMethod,
-      pricing,
-    });
-
-    const savedOrder = await newOrder.save();
-    res.status(201).json(savedOrder);
-  } catch (_error: any) {
-    console.error('Order creation error:', _error);
-    res.status(500).json({ message: _error?.message || 'Failed to create order. Please try again.' });
-  }
+// POST /api/orders - Deprecated in favor of verified Razorpay payment flow (Prevents client-side price tampering)
+router.post('/', (_req: Request, res: Response): Promise<void> => {
+  res.status(405).json({
+    message: 'Direct order creation is disabled. All orders must be initiated via /api/orders/razorpay/create-order.',
+  });
+  return Promise.resolve();
 });
 
 // GET /api/orders/mine - List orders belonging to the authenticated customer
@@ -347,14 +317,18 @@ router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void>
       query.orderStatus = status;
     }
 
+    // ReDoS-safe search input escaping and length limitation
     if (search && typeof search === 'string') {
-      const searchRegex = new RegExp(search, 'i');
-      query.$or = [
-        { orderNumber: searchRegex },
-        { 'customerInfo.name': searchRegex },
-        { 'customerInfo.phone': searchRegex },
-        { 'customerInfo.city': searchRegex },
-      ];
+      const sanitized = search.trim().slice(0, 50).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (sanitized) {
+        const searchRegex = new RegExp(sanitized, 'i');
+        query.$or = [
+          { orderNumber: searchRegex },
+          { 'customerInfo.name': searchRegex },
+          { 'customerInfo.phone': searchRegex },
+          { 'customerInfo.city': searchRegex },
+        ];
+      }
     }
 
     const orders = await Order.find(query).sort({ createdAt: -1 });
@@ -380,15 +354,59 @@ router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void>
   }
 });
 
-// GET /api/orders/:orderNumber - Fetch order details by order number
-router.get('/:orderNumber', async (req: Request, res: Response): Promise<void> => {
+// GET /api/orders/:orderNumber - Fetch order details by order number (Protected / PII-sanitized for guests)
+router.get('/:orderNumber', authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const order = await Order.findOne({ orderNumber: req.params.orderNumber });
     if (!order) {
       res.status(404).json({ message: 'Order not found' });
       return;
     }
-    res.json(order);
+
+    // Authenticated order owner or store administrator receives full unredacted order details
+    const isOwner = Boolean(req.user && order.user && req.user._id.toString() === order.user.toString());
+    const isAdmin = Boolean(req.user && req.user.role === 'admin');
+
+    if (isOwner || isAdmin) {
+      res.json(order);
+      return;
+    }
+
+    // Public guest tracking: Redact sensitive customer PII and payment secrets (anti-IDOR & harvest prevention)
+    const orderObj = order.toObject();
+    const nameParts = (orderObj.customerInfo?.name || '').trim().split(' ');
+    const maskedName = nameParts.length > 1
+      ? `${nameParts[0]} ${nameParts[1].charAt(0)}.`
+      : nameParts[0] || 'Customer';
+
+    const phone = orderObj.customerInfo?.phone || '';
+    const maskedPhone = phone.length >= 4 ? `******${phone.slice(-4)}` : '******';
+
+    const email = orderObj.customerInfo?.email || '';
+    const maskedEmail = email.includes('@')
+      ? `${email.charAt(0)}***@${email.split('@')[1]}`
+      : undefined;
+
+    const sanitizedOrder = {
+      _id: orderObj._id,
+      id: orderObj._id,
+      orderNumber: orderObj.orderNumber,
+      orderStatus: orderObj.orderStatus,
+      paymentStatus: orderObj.paymentStatus,
+      paymentMethod: orderObj.paymentMethod,
+      orderItems: orderObj.orderItems,
+      pricing: orderObj.pricing,
+      createdAt: orderObj.createdAt,
+      customerInfo: {
+        name: maskedName,
+        city: orderObj.customerInfo?.city || '',
+        phone: maskedPhone,
+        address: 'Delivered to address on file (hidden for privacy)',
+        ...(maskedEmail ? { email: maskedEmail } : {}),
+      },
+    };
+
+    res.json(sanitizedOrder);
   } catch (_error) {
     res.status(500).json({ message: 'Error retrieving order' });
   }

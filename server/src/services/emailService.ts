@@ -59,9 +59,6 @@ function getTransporter(): Transporter {
       connectionTimeout: 8000,
       greetingTimeout: 8000,
       socketTimeout: 8000,
-      tls: {
-        rejectUnauthorized: false,
-      },
     });
   }
   return cachedTransporter;

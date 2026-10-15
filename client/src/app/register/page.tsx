@@ -38,11 +38,13 @@ export default function RegisterPage() {
         throw new Error('Google sign-up did not return an email address');
       }
 
+      const idToken = await firebaseUser.getIdToken();
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
       const res = await fetch(`${API_BASE}/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          idToken,
           email: firebaseUser.email,
           name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
           photoUrl: firebaseUser.photoURL || '',

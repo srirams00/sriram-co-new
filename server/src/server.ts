@@ -40,15 +40,21 @@ app.use(compression());
 app.use(
   cors({
     origin: (origin, callback) => {
-      const isLocal =
-        origin !== undefined &&
-        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+      // Allow server-to-server or curl/mobile requests without origin header
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
 
-      const isVercel =
-        origin !== undefined &&
-        (origin.endsWith('.vercel.app') || origin.includes('sriram'));
+      const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
-      if (!origin || allowedOrigins.includes(origin) || isLocal || isVercel) {
+      // Strict domain matching for production and preview environments
+      const isSriramDomain = /^https:\/\/(.*\.)?sriramandco\.(in|com)$/i.test(origin);
+
+      // Strict Vercel preview domain pattern for Sriram deployments
+      const isAllowedVercel = /^https:\/\/(sriram-and-co[a-z0-9-]*|sriram-co[a-z0-9-]*|review\.sriramandco)\.vercel\.app$/i.test(origin);
+
+      if (allowedOrigins.includes(origin) || isLocal || isSriramDomain || isAllowedVercel) {
         callback(null, true);
         return;
       }
@@ -56,6 +62,8 @@ app.use(
       callback(null, false);
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-razorpay-signature'],
   })
 );
 app.use(
