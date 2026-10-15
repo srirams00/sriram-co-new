@@ -12,11 +12,34 @@ import {
 import { AuthRequest, authenticate, authenticateIfPresent, requireAdmin } from '../middleware/authMiddleware';
 import { sendOrderLifecycleEmail, sendEmail } from '../services/emailService';
 import { compileOrderEmailHtml, EmailTemplateType } from '../services/emailTemplates';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
+// Rate limiter for order initiation (prevents automated ghost order flooding)
+const orderCreationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: 'Too many order initiation requests from this IP. Please wait a few minutes.',
+  },
+});
+
+// Rate limiter for payment verification (prevents signature brute-forcing & webhook hammering)
+const paymentVerificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: 'Too many payment verification requests. Please wait a few minutes.',
+  },
+});
+
 // POST /api/orders/razorpay/create-order - Create Razorpay order with server-side price recalculation (Anti-tamper)
-router.post('/razorpay/create-order', authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/razorpay/create-order', orderCreationLimiter, authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (mongoose.connection.readyState !== 1) {
       res.status(503).json({
@@ -162,7 +185,7 @@ router.post('/razorpay/create-order', authenticateIfPresent, async (req: AuthReq
 });
 
 // POST /api/orders/razorpay/verify-payment - Cryptographic HMAC SHA-256 payment verification
-router.post('/razorpay/verify-payment', async (req: Request, res: Response): Promise<void> => {
+router.post('/razorpay/verify-payment', paymentVerificationLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const { orderNumber, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
 
@@ -199,6 +222,9 @@ router.post('/razorpay/verify-payment', async (req: Request, res: Response): Pro
     // Validate cryptographic HMAC SHA-256 signature
     const isValidSignature = verifyPaymentSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
     if (!isValidSignature) {
+      console.warn(
+        `[Security Alert] Payment signature verification failed for order ${orderNumber} (IP: ${req.ip || 'unknown'})`
+      );
       order.paymentStatus = 'failed';
       await order.save();
       res.status(400).json({
@@ -271,7 +297,11 @@ router.post('/razorpay/webhook', async (req: Request, res: Response): Promise<vo
             wallet: paymentEntity?.wallet,
             verifiedAt: new Date().toISOString(),
           };
-          await order.save();
+          const savedOrder = await order.save();
+          // Asynchronously dispatch Order Confirmed email to customer via Zoho Mail if not already sent
+          sendOrderLifecycleEmail(savedOrder, 'confirmed').catch((err) =>
+            console.warn('[Zoho Mail Webhook] Could not dispatch confirmed email:', err.message)
+          );
         }
       }
     }

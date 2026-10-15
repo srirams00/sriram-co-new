@@ -51,7 +51,7 @@ const GoogleAuthSchema = z.object({
  * Validates a Firebase / Google OAuth ID token against Google Identity Toolkit.
  * Ensures the email is cryptographically signed and verified by Google.
  */
-async function verifyGoogleIdToken(idToken: string): Promise<{ email: string; name?: string; emailVerified: boolean }> {
+export async function verifyGoogleIdToken(idToken: string): Promise<{ email: string; name?: string; emailVerified: boolean }> {
   try {
     const url = `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`;
     const response = await fetch(url, {
@@ -195,9 +195,31 @@ router.post('/login', authLimiter, async (req: Request, res: Response, next: Nex
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }
 
+    // Check if account is temporarily locked due to brute-force attempts
+    if (user.isLocked()) {
+      const remainingMinutes = Math.max(1, Math.ceil((user.lockUntil!.getTime() - Date.now()) / (60 * 1000)));
+      throw new AppError(
+        `Account temporarily locked due to repeated failed login attempts. Please try again in ${remainingMinutes} minute(s).`,
+        423,
+        'ACCOUNT_LOCKED'
+      );
+    }
+
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      if (user.failedLoginAttempts >= 5) {
+        user.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15-minute lockout
+      }
+      await user.save();
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
+    }
+
+    // Reset failed attempts upon successful authentication
+    if (user.failedLoginAttempts || user.lockUntil) {
+      user.failedLoginAttempts = 0;
+      user.lockUntil = null;
+      await user.save();
     }
 
     const token = generateToken(user._id.toString());
@@ -230,9 +252,31 @@ router.post('/admin-login', authLimiter, async (req: Request, res: Response, nex
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }
 
+    // Check if admin account is temporarily locked
+    if (user.isLocked()) {
+      const remainingMinutes = Math.max(1, Math.ceil((user.lockUntil!.getTime() - Date.now()) / (60 * 1000)));
+      throw new AppError(
+        `Account temporarily locked due to repeated failed login attempts. Please try again in ${remainingMinutes} minute(s).`,
+        423,
+        'ACCOUNT_LOCKED'
+      );
+    }
+
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      if (user.failedLoginAttempts >= 5) {
+        user.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15-minute lockout
+      }
+      await user.save();
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
+    }
+
+    // Reset failed attempts upon successful authentication
+    if (user.failedLoginAttempts || user.lockUntil) {
+      user.failedLoginAttempts = 0;
+      user.lockUntil = null;
+      await user.save();
     }
 
     const token = generateToken(user._id.toString());

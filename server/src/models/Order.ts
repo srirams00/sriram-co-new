@@ -93,7 +93,6 @@ const OrderSchema = new Schema<IOrder>(
     },
     razorpayOrderId: {
       type: String,
-      index: true,
       default: null,
     },
     razorpayPaymentId: {
@@ -132,6 +131,16 @@ const OrderSchema = new Schema<IOrder>(
       },
     },
   }
+);
+
+// Anti-replay and idempotency indexes: ensure razorpayOrderId and razorpayPaymentId are globally unique once assigned
+OrderSchema.index(
+  { razorpayPaymentId: 1 },
+  { unique: true, partialFilterExpression: { razorpayPaymentId: { $type: 'string' } } }
+);
+OrderSchema.index(
+  { razorpayOrderId: 1 },
+  { unique: true, partialFilterExpression: { razorpayOrderId: { $type: 'string' } } }
 );
 
 export const Order = model<IOrder>('Order', OrderSchema);

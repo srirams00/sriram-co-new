@@ -15,6 +15,9 @@ export interface IUser extends Document {
     postalCode?: string;
     landmark?: string;
   };
+  failedLoginAttempts?: number;
+  lockUntil?: Date | null;
+  isLocked(): boolean;
   matchPassword(enteredPassword: string): Promise<boolean>;
   createdAt: Date;
   updatedAt: Date;
@@ -57,6 +60,14 @@ const UserSchema = new Schema<IUser>(
       postalCode: { type: String, default: '' },
       landmark: { type: String, default: '' },
     },
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -87,6 +98,11 @@ UserSchema.pre<IUser>('save', async function (next) {
 UserSchema.methods.matchPassword = async function (enteredPassword: string): Promise<boolean> {
   if (!this.password) return false;
   return bcrypt.compare(enteredPassword, this.password);
+};
+
+// Check if account is currently locked due to failed attempts
+UserSchema.methods.isLocked = function (): boolean {
+  return Boolean(this.lockUntil && this.lockUntil.getTime() > Date.now());
 };
 
 export const User = model<IUser>('User', UserSchema);
