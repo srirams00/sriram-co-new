@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { loginWithGooglePopup } from '@/lib/firebase';
+import { extractErrorMessage } from '@/lib/api';
 import styles from '../login/auth.module.css';
 
 interface FormErrors {
@@ -139,11 +140,12 @@ export default function RegisterPage() {
         }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error?.message || data.message || 'Registration failed');
+        const errorMsg = await extractErrorMessage(res, 'Unable to create account');
+        throw new Error(errorMsg);
       }
+
+      const data = await res.json();
 
       if (data.token) {
         localStorage.setItem('src_auth_token', data.token);
@@ -235,7 +237,19 @@ export default function RegisterPage() {
             <span className={styles.dividerText}>or</span>
           </div>
 
-          {serverError && <div className={styles.errorBanner}>{serverError}</div>}
+          {serverError && (
+            <div className={styles.errorBanner} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertCircle size={18} style={{ flexShrink: 0 }} />
+              <span>
+                {serverError}{' '}
+                {serverError.toLowerCase().includes('already exists') && (
+                  <Link href="/login" style={{ textDecoration: 'underline', fontWeight: 600, color: 'inherit' }}>
+                    Sign in here &rarr;
+                  </Link>
+                )}
+              </span>
+            </div>
+          )}
 
           {/* Registration Form with custom validation */}
           <form onSubmit={handleRegister} noValidate className={styles.authForm}>

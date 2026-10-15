@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { loginWithGooglePopup } from '@/lib/firebase';
+import { extractErrorMessage } from '@/lib/api';
 import styles from './auth.module.css';
 
 interface LoginErrors {
@@ -128,11 +129,12 @@ export default function LoginPage() {
         body: JSON.stringify({ email: email.trim(), password }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error?.message || data.message || 'Invalid email or password');
+        const errorMsg = await extractErrorMessage(res, 'Invalid email or password');
+        throw new Error(errorMsg);
       }
+
+      const data = await res.json();
 
       if (data.token) {
         localStorage.setItem('src_auth_token', data.token);
