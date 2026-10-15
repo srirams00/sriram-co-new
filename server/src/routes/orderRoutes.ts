@@ -61,8 +61,9 @@ router.post('/razorpay/create-order', authenticateIfPresent, async (req: AuthReq
       });
     }
 
-    // Free delivery on orders ₹999 and above; otherwise ₹99 delivery fee
-    const deliveryFee = calculatedSubtotal >= 999 ? 0 : 99;
+    // Free delivery on orders ₹999 and above, store pickup, or test verification orders (subtotal <= ₹10)
+    const isTestOrPickup = calculatedSubtotal <= 10 || notes?.toLowerCase().includes('pickup');
+    const deliveryFee = (calculatedSubtotal >= 999 || isTestOrPickup) ? 0 : 99;
     const discount = 0;
     const verifiedTotal = calculatedSubtotal + deliveryFee - discount;
 
