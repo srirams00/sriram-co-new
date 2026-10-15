@@ -81,7 +81,6 @@ router.post('/razorpay/create-order', orderCreationLimiter, authenticateIfPresen
           $or: [
             ...(item.name ? [{ name: item.name }] : []),
             { slug: item.product },
-            { slug: 'live-payment-test-item' },
           ],
         });
       }

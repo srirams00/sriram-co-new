@@ -377,15 +377,15 @@ describe('Priority Coverage Suite (Critical & High Priorities)', () => {
     });
 
     it('validates partialFilterExpression schema indexes for razorpayPaymentId and razorpayOrderId', async () => {
-      const { Order } = await import('../models/Order');
+      const { Order } = await import('../models/Order.js');
       const indexes = Order.schema.indexes();
 
       // Find indexes on razorpayPaymentId and razorpayOrderId
       const paymentIdIndex = indexes.find(
-        ([fields]) => (fields as any).razorpayPaymentId === 1
+        (entry: any) => entry?.[0]?.razorpayPaymentId === 1
       );
       const orderIdIndex = indexes.find(
-        ([fields]) => (fields as any).razorpayOrderId === 1
+        (entry: any) => entry?.[0]?.razorpayOrderId === 1
       );
 
       assert.ok(paymentIdIndex, 'Index on razorpayPaymentId must exist');
