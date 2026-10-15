@@ -1,5 +1,6 @@
 .section {
-  padding: var(--space-4xl) 0;
+  padding-top: var(--space-md);
+  padding-bottom: var(--space-4xl);
   background-color: var(--color-bg-page);
 }
 
@@ -39,6 +40,10 @@
 }
 
 @media (max-width: 600px) {
+  .section {
+    padding-top: var(--space-sm);
+    padding-bottom: var(--space-2xl);
+  }
   .grid {
     grid-template-columns: 1fr;
     gap: 18px;

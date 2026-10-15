@@ -1,8 +1,11 @@
-import React from 'react';
+'use client';
+
+import React, { useRef } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Category } from '@/types/product';
 import { getOptimizedImageUrl } from '@/lib/utils';
+import { gsap, useGSAP, isReducedMotion } from '@/lib/gsap';
 import styles from './CategoryGrid.module.css';
 
 interface CategoryGridProps {
@@ -10,8 +13,42 @@ interface CategoryGridProps {
 }
 
 export default function CategoryGrid({ categories }: CategoryGridProps) {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      if (isReducedMotion()) return;
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top 85%',
+          toggleActions: 'play none none none',
+        },
+      });
+
+      tl.from(`.${styles.header}`, {
+        opacity: 0,
+        y: 20,
+        duration: 0.5,
+        ease: 'power2.out',
+      }).from(
+        `.${styles.card}`,
+        {
+          opacity: 0,
+          y: 25,
+          stagger: 0.08,
+          duration: 0.6,
+          ease: 'power2.out',
+        },
+        '-=0.2'
+      );
+    },
+    { scope: sectionRef }
+  );
+
   return (
-    <section id="categories" className={styles.section}>
+    <section ref={sectionRef} id="categories" className={styles.section}>
       <div className="container">
         {/* Section Header */}
         <div className={styles.header}>

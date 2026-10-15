@@ -1,11 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useRef } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { gsap, useGSAP, isReducedMotion } from '@/lib/gsap';
 import styles from './PromoEditorialGrid.module.css';
 
 export default function PromoEditorialGrid() {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      if (isReducedMotion()) return;
+
+      gsap.from(`.${styles.bentoCell}`, {
+        opacity: 0,
+        y: 25,
+        stagger: 0.12,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top 85%',
+          toggleActions: 'play none none none',
+        },
+      });
+    },
+    { scope: sectionRef }
+  );
+
   return (
-    <section className={styles.section}>
+    <section ref={sectionRef} className={styles.section}>
       <div className="container">
         <div className={styles.bentoGrid}>
           {/* Cell 1: Text Block (Top-Left) */}

@@ -35,6 +35,50 @@ function setCached<T>(key: string, data: T, ttl: number = CACHE_TTL): void {
   memoryCache.set(key, { data, expiry: Date.now() + ttl });
 }
 
+export async function extractErrorMessage(res: Response, defaultMessage: string): Promise<string> {
+  try {
+    const data = await res.json();
+    if (data?.error) {
+      if (Array.isArray(data.error.details) && data.error.details.length > 0) {
+        const detailMessages = data.error.details
+          .map((item: any) => {
+            if (typeof item === 'string') return item;
+            if (item.message && item.path) return `${item.path}: ${item.message}`;
+            return item.message || '';
+          })
+          .filter(Boolean)
+          .join('; ');
+        if (detailMessages) return detailMessages;
+      }
+      if (data.error.message) {
+        return data.error.message;
+      }
+    }
+    if (data?.message) {
+      return data.message;
+    }
+  } catch {
+    // Response body was not JSON
+  }
+
+  if (res.status === 401) {
+    return 'Your session has expired or authentication is required. Please log in again.';
+  }
+  if (res.status === 403) {
+    return 'Permission denied. Administrator privileges are required for this action.';
+  }
+  if (res.status === 404) {
+    return 'The requested resource or endpoint was not found.';
+  }
+  if (res.status === 413) {
+    return 'The uploaded image or file is too large for the server. Please compress or resize it.';
+  }
+  if (res.status >= 500) {
+    return 'Server error occurred. Please try again shortly or contact support.';
+  }
+  return `${defaultMessage} (Status ${res.status})`;
+}
+
 export const api = {
   clearCache(): void {
     memoryCache.clear();
@@ -331,8 +375,8 @@ export const api = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Failed to create product' }));
-      throw new Error(err.message || 'Failed to create product');
+      const errorMsg = await extractErrorMessage(res, 'Failed to create product');
+      throw new Error(errorMsg);
     }
     this.clearCache();
     return res.json();
@@ -349,8 +393,8 @@ export const api = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Failed to update product' }));
-      throw new Error(err.message || 'Failed to update product');
+      const errorMsg = await extractErrorMessage(res, 'Failed to update product');
+      throw new Error(errorMsg);
     }
     this.clearCache();
     return res.json();
@@ -367,8 +411,8 @@ export const api = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Failed to update stock status' }));
-      throw new Error(err.message || 'Failed to update stock status');
+      const errorMsg = await extractErrorMessage(res, 'Failed to update stock status');
+      throw new Error(errorMsg);
     }
     this.clearCache();
     return res.json();
@@ -384,8 +428,8 @@ export const api = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Failed to delete product' }));
-      throw new Error(err.message || 'Failed to delete product');
+      const errorMsg = await extractErrorMessage(res, 'Failed to delete product');
+      throw new Error(errorMsg);
     }
     this.clearCache();
   },
@@ -410,8 +454,8 @@ export const api = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Failed to initialize payment gateway' }));
-      throw new Error(err.message || 'Failed to initialize payment gateway');
+      const errorMsg = await extractErrorMessage(res, 'Failed to initialize payment gateway');
+      throw new Error(errorMsg);
     }
     return res.json();
   },
@@ -429,8 +473,8 @@ export const api = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Payment signature verification failed' }));
-      throw new Error(err.message || 'Payment signature verification failed');
+      const errorMsg = await extractErrorMessage(res, 'Payment signature verification failed');
+      throw new Error(errorMsg);
     }
     return res.json();
   },
@@ -447,8 +491,8 @@ export const api = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Failed to create order' }));
-      throw new Error(err.message || 'Failed to create order');
+      const errorMsg = await extractErrorMessage(res, 'Failed to create order');
+      throw new Error(errorMsg);
     }
     return res.json();
   },
@@ -459,8 +503,8 @@ export const api = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Failed to fetch your orders' }));
-      throw new Error(err.message || 'Failed to fetch your orders');
+      const errorMsg = await extractErrorMessage(res, 'Failed to fetch your orders');
+      throw new Error(errorMsg);
     }
     return res.json();
   },
@@ -468,8 +512,8 @@ export const api = {
   async getOrderByNumber(orderNumber: string): Promise<Order> {
     const res = await fetch(`${API_BASE}/orders/${orderNumber}`);
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Order not found' }));
-      throw new Error(err.message || 'Order not found');
+      const errorMsg = await extractErrorMessage(res, 'Order not found');
+      throw new Error(errorMsg);
     }
     return res.json();
   },
@@ -486,8 +530,8 @@ export const api = {
     const res = await fetch(`${API_BASE}/orders${qs}`, { headers });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Failed to fetch orders' }));
-      throw new Error(err.message || 'Failed to fetch orders');
+      const errorMsg = await extractErrorMessage(res, 'Failed to fetch orders');
+      throw new Error(errorMsg);
     }
     return res.json();
   },
@@ -503,8 +547,8 @@ export const api = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Failed to update order' }));
-      throw new Error(err.message || 'Failed to update order');
+      const errorMsg = await extractErrorMessage(res, 'Failed to update order');
+      throw new Error(errorMsg);
     }
     return res.json();
   },
@@ -521,8 +565,8 @@ export const api = {
     const res = await fetch(`${API_BASE}/auth/customers${qs}`, { headers });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Failed to fetch customers' }));
-      throw new Error(err.message || 'Failed to fetch customers');
+      const errorMsg = await extractErrorMessage(res, 'Failed to fetch customers');
+      throw new Error(errorMsg);
     }
     return res.json();
   },

@@ -1,13 +1,36 @@
-import React from 'react';
-import { MessageCircle, Phone, Mail } from 'lucide-react';
+'use client';
+
+import React, { useRef } from 'react';
+import { MessageCircle, Phone } from 'lucide-react';
 import { getWhatsAppUrl } from '@/lib/utils';
+import { gsap, useGSAP, isReducedMotion } from '@/lib/gsap';
 import styles from './ContactCtaBar.module.css';
 
 export default function ContactCtaBar() {
+  const sectionRef = useRef<HTMLElement>(null);
   const whatsappUrl = getWhatsAppUrl('9345403136', 'Hello Sriram & Co! I have a question before placing an order.');
 
+  useGSAP(
+    () => {
+      if (isReducedMotion()) return;
+
+      gsap.from(`.${styles.bar}`, {
+        opacity: 0,
+        y: 20,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top 90%',
+          toggleActions: 'play none none none',
+        },
+      });
+    },
+    { scope: sectionRef }
+  );
+
   return (
-    <section className={styles.section}>
+    <section ref={sectionRef} className={styles.section}>
       <div className={`container ${styles.bar}`}>
         <div className={styles.content}>
           <h2 className={styles.title}>Have a question before you buy?</h2>
@@ -29,7 +52,6 @@ export default function ContactCtaBar() {
 
           <a href="tel:+919345403136" className={`btn btn-secondary ${styles.callBtn}`}>
             <Phone size={16} />
-
             <span>Call us</span>
           </a>
         </div>

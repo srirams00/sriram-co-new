@@ -112,6 +112,35 @@ describe('Security & Hardening Suite', () => {
     );
   });
 
+  it('validates product image allows HTTPS, relative assets, and base64 uploads while rejecting insecure schemes', () => {
+    const ProductImageSchema = z.string().trim().refine(
+      (val) =>
+        /^https:\/\/.+/i.test(val) ||
+        val.startsWith('/') ||
+        /^data:image\/(png|jpeg|jpg|webp|gif|svg\+xml);base64,/i.test(val),
+      { message: 'Image must use secure https://, local path, or valid image upload data' }
+    );
+
+    // Valid inputs
+    assert.equal(ProductImageSchema.safeParse('https://images.unsplash.com/photo-123.jpg').success, true);
+    assert.equal(ProductImageSchema.safeParse('/images/vacuum.webp').success, true);
+    assert.equal(
+      ProductImageSchema.safeParse('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==').success,
+      true,
+      'Base64 PNG data URL must pass'
+    );
+    assert.equal(
+      ProductImageSchema.safeParse('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=').success,
+      true,
+      'Base64 JPEG data URL must pass'
+    );
+
+    // Insecure inputs must be rejected
+    assert.equal(ProductImageSchema.safeParse('http://insecure-site.com/image.png').success, false, 'Insecure HTTP must be rejected');
+    assert.equal(ProductImageSchema.safeParse('javascript:alert(1)').success, false, 'XSS scheme must be rejected');
+    assert.equal(ProductImageSchema.safeParse('data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==').success, false, 'Non-image data URL must be rejected');
+  });
+
   it('enforces RBAC role guard against customer tokens accessing admin scope', () => {
     // Simulating role verification middleware
     const verifyRole = (requiredRole: string, user: { role: string }) => {

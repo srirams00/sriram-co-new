@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import mongoose from 'mongoose';
-import { Product } from '../models/Product';
+import { Product, IProduct } from '../models/Product';
 import { Order } from '../models/Order';
 import { AppError } from '../middleware/errorHandler';
 import { requireAdmin, AuthRequest } from '../middleware/authMiddleware';
@@ -56,10 +56,13 @@ function deriveCategorySlug(categoryName: string, explicitSlug?: string): string
 // 24-character hexadecimal MongoDB ObjectId validator
 const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid MongoDB ObjectId');
 
-// Secure Image URL validator (HTTPS protocol or relative site asset paths)
-const HttpsUrlSchema = z.string().trim().refine(
-  (val) => /^https:\/\/.+/i.test(val) || val.startsWith('/'),
-  { message: 'Image URL must use secure https:// protocol or local asset path' }
+// Secure Image URL validator (HTTPS protocol, relative site asset paths, or base64 data URLs)
+const ProductImageSchema = z.string().trim().refine(
+  (val) =>
+    /^https:\/\/.+/i.test(val) ||
+    val.startsWith('/') ||
+    /^data:image\/(png|jpeg|jpg|webp|gif|svg\+xml);base64,/i.test(val),
+  { message: 'Image must use secure https://, local path, or valid image upload data' }
 );
 
 // Validation schema for query parameters
@@ -82,10 +85,10 @@ const ProductInputSchema = z.object({
   shortDescription: z.string().trim().min(5, 'Short description is required').max(300),
   fullDescription: z.string().trim().min(10, 'Full description is required'),
   price: z.coerce.number().positive('Price must be greater than 0'),
-  originalPrice: z.coerce.number().positive().optional(),
-  image: HttpsUrlSchema,
-  additionalImages: z.array(HttpsUrlSchema).optional().default([]),
-  badge: z.enum(['Best Seller', 'New', 'Top Rated', 'Popular', 'Sale']).nullable().optional(),
+  originalPrice: z.coerce.number().positive().nullable().optional(),
+  image: ProductImageSchema,
+  additionalImages: z.array(ProductImageSchema).optional().default([]),
+  badge: z.enum(['Best Seller', 'New', 'Top Rated', 'Popular', 'Sale']).nullable().optional().or(z.literal('')),
   inStock: z.boolean().default(true),
   inventoryCount: z.coerce.number().int().nonnegative().default(15),
   specifications: z.record(z.string(), z.string()).optional().default({}),
@@ -318,6 +321,8 @@ router.post('/', requireAdmin, async (req: AuthRequest, res: Response, next: Nex
 
     const newProduct = new Product({
       ...validatedData,
+      originalPrice: validatedData.originalPrice || undefined,
+      badge: (validatedData.badge || undefined) as IProduct['badge'],
       slug: finalSlug,
       categorySlug,
       sku,
@@ -367,10 +372,10 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res: Response, next: N
     product.shortDescription = validatedData.shortDescription;
     product.fullDescription = validatedData.fullDescription;
     product.price = validatedData.price;
-    product.originalPrice = validatedData.originalPrice;
+    product.originalPrice = validatedData.originalPrice || undefined;
     product.image = validatedData.image;
     product.additionalImages = validatedData.additionalImages || [];
-    product.badge = validatedData.badge || undefined;
+    product.badge = (validatedData.badge || undefined) as IProduct['badge'];
     product.inStock = validatedData.inStock;
     product.inventoryCount = validatedData.inventoryCount;
     product.specifications = validatedData.specifications || {};

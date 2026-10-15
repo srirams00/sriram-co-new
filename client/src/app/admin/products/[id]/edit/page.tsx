@@ -139,6 +139,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
     try {
       const token = localStorage.getItem('src_auth_token') || undefined;
+      if (!token) {
+        setFormError('Authentication required: Admin session token not found. Please log in through the admin gateway first.');
+        setSubmitting(false);
+        return;
+      }
 
       const featuresArray = formData.features
         .split('\n')
@@ -172,7 +177,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
       router.push('/admin/products');
     } catch (err: any) {
-      setFormError(err.message || 'Failed to update product');
+      setFormError(err.message || 'Unable to update product. Please check your inputs and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -199,9 +204,12 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       </div>
 
       {formError && (
-        <div style={{ background: '#FEECEC', color: '#DC2626', padding: '12px 16px', borderRadius: '10px', fontSize: '0.86rem', border: '1px solid #FCD3D3', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <AlertCircle size={16} />
-          <span>{formError}</span>
+        <div style={{ background: '#FEECEC', color: '#DC2626', padding: '14px 18px', borderRadius: '10px', fontSize: '0.88rem', border: '1px solid #FCD3D3', display: 'flex', alignItems: 'flex-start', gap: '10px', lineHeight: 1.5, marginBottom: '20px' }}>
+          <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div>
+            <strong style={{ display: 'block', marginBottom: '2px' }}>Unable to save product</strong>
+            <span>{formError}</span>
+          </div>
         </div>
       )}
 

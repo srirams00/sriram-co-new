@@ -1,5 +1,8 @@
-import React from 'react';
+'use client';
+
+import React, { useRef } from 'react';
 import { ShieldCheck, Tag, Truck, Headphones } from 'lucide-react';
+import { gsap, useGSAP, isReducedMotion } from '@/lib/gsap';
 import styles from './TrustFeatures.module.css';
 
 const FEATURES = [
@@ -26,8 +29,30 @@ const FEATURES = [
 ];
 
 export default function TrustFeatures() {
+  const containerRef = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      if (isReducedMotion()) return;
+
+      gsap.from(`.${styles.featureItem}`, {
+        opacity: 0,
+        y: 20,
+        stagger: 0.1,
+        duration: 0.5,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: 'top 92%',
+          toggleActions: 'play none none none',
+        },
+      });
+    },
+    { scope: containerRef }
+  );
+
   return (
-    <section className={styles.section}>
+    <section ref={containerRef} className={styles.section}>
       <div className={`container ${styles.featuresGrid}`}>
         {FEATURES.map((item, idx) => {
           const Icon = item.icon;

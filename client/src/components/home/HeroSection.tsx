@@ -1,11 +1,88 @@
+'use client';
+
+import React, { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
+import { gsap, useGSAP, isReducedMotion } from '@/lib/gsap';
 import styles from './HeroSection.module.css';
 
 export default function HeroSection() {
+  const containerRef = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      if (isReducedMotion()) return;
+
+      const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+
+      tl.from(`.${styles.eyebrowBadge}`, {
+        opacity: 0,
+        y: 15,
+        duration: 0.5,
+      })
+        .from(
+          `.${styles.heroTitle}`,
+          {
+            opacity: 0,
+            y: 25,
+            duration: 0.7,
+          },
+          '-=0.3'
+        )
+        .from(
+          `.${styles.heroSubtitle}`,
+          {
+            opacity: 0,
+            y: 20,
+            duration: 0.6,
+          },
+          '-=0.4'
+        )
+        .from(
+          `.${styles.ctaWrapper}`,
+          {
+            opacity: 0,
+            y: 20,
+            duration: 0.5,
+          },
+          '-=0.3'
+        )
+        .from(
+          `.${styles.metricItem}`,
+          {
+            opacity: 0,
+            y: 15,
+            stagger: 0.1,
+            duration: 0.4,
+          },
+          '-=0.2'
+        )
+        .from(
+          `.${styles.imageBackdrop}`,
+          {
+            opacity: 0,
+            scale: 0.95,
+            duration: 0.8,
+            ease: 'power2.out',
+          },
+          '-=0.6'
+        )
+        .from(
+          `.${styles.floatingBadge}`,
+          {
+            opacity: 0,
+            y: 15,
+            duration: 0.5,
+          },
+          '-=0.3'
+        );
+    },
+    { scope: containerRef }
+  );
+
   return (
-    <section className={styles.heroSection}>
+    <section ref={containerRef} className={styles.heroSection}>
       <div className={`container ${styles.heroContainer}`}>
         {/* Left Column: Copy & Actions */}
         <div className={styles.heroContent}>

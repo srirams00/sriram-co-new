@@ -1,6 +1,9 @@
-import React from 'react';
+'use client';
+
+import React, { useRef } from 'react';
 import { Star } from 'lucide-react';
 import { Testimonial } from '@/types/testimonial';
+import { gsap, useGSAP, isReducedMotion } from '@/lib/gsap';
 import styles from './TestimonialsSection.module.css';
 
 interface TestimonialsSectionProps {
@@ -8,11 +11,55 @@ interface TestimonialsSectionProps {
 }
 
 export default function TestimonialsSection({ testimonials }: TestimonialsSectionProps) {
+  const sectionRef = useRef<HTMLElement>(null);
   const featured = testimonials[0];
   const others = testimonials.slice(1);
 
+  useGSAP(
+    () => {
+      if (isReducedMotion()) return;
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top 85%',
+          toggleActions: 'play none none none',
+        },
+      });
+
+      tl.from(`.${styles.header}`, {
+        opacity: 0,
+        y: 20,
+        duration: 0.5,
+        ease: 'power2.out',
+      })
+        .from(
+          `.${styles.featuredCard}`,
+          {
+            opacity: 0,
+            y: 25,
+            duration: 0.6,
+            ease: 'power2.out',
+          },
+          '-=0.2'
+        )
+        .from(
+          `.${styles.secondaryCard}`,
+          {
+            opacity: 0,
+            y: 20,
+            stagger: 0.1,
+            duration: 0.5,
+            ease: 'power2.out',
+          },
+          '-=0.3'
+        );
+    },
+    { scope: sectionRef }
+  );
+
   return (
-    <section className={styles.section}>
+    <section ref={sectionRef} className={styles.section}>
       <div className="container">
         <div className={styles.header}>
           <h2 className="heading-section">What our customers say</h2>
