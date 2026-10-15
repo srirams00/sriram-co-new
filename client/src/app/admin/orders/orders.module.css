@@ -503,6 +503,208 @@
   color: #174A2B;
 }
 
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.emailBtn {
+  background: #F4FAF6;
+  border: 1px solid #C3DACB;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: #174A2B;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.emailBtn:hover {
+  background: #174A2B;
+  border-color: #174A2B;
+  color: #FFFFFF;
+}
+
+.toastBanner {
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #065F46;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(6, 95, 70, 0.08);
+  animation: slideInDown 0.25s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.promptDialog {
+  background: #FFFFFF;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 480px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dialogTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #174A2B;
+  margin: 0;
+}
+
+.dialogDescription {
+  font-size: 0.82rem;
+  color: #68786D;
+  margin: -8px 0 0;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #4A584E;
+}
+
+.formInput {
+  background: #F7F8F5;
+  border: 1px solid #D5E2D8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.86rem;
+  color: #174A2B;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.formInput:focus {
+  border-color: #18A957;
+  background: #FFFFFF;
+}
+
+.dialogFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.primaryBtn {
+  background: #174A2B;
+  color: #FFFFFF;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.primaryBtn:hover {
+  background: #123B22;
+}
+
+.primaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondaryBtn {
+  background: transparent;
+  color: #68786D;
+  border: 1px solid #D5E2D8;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.secondaryBtn:hover {
+  background: #F7F8F5;
+  color: #174A2B;
+}
+
+.emailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.emailGridBtn {
+  background: #FFFFFF;
+  border: 1px solid #D5E2D8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: all 0.15s ease;
+}
+
+.emailGridBtn:hover {
+  border-color: #18A957;
+  background: #F4FAF6;
+}
+
+.emailGridBtnTitle {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #174A2B;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.emailGridBtnDesc {
+  font-size: 0.72rem;
+  color: #68786D;
+}
+
 .emptyState {
   padding: 60px 20px;
   text-align: center;

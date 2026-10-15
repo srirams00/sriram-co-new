@@ -536,18 +536,58 @@ export const api = {
     return res.json();
   },
 
-  async updateOrderStatus(id: string, orderStatus?: string, paymentStatus?: string, token?: string): Promise<any> {
+  async updateOrderStatus(
+    id: string,
+    orderStatus?: string,
+    paymentStatus?: string,
+    extraData?: {
+      driverName?: string;
+      driverPhone?: string;
+      deliveryWindow?: string;
+      cancellationReason?: string;
+      cancelledBy?: 'store' | 'customer';
+    },
+    token?: string
+  ): Promise<any> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const res = await fetch(`${API_BASE}/orders/${id}/status`, {
       method: 'PATCH',
       headers,
-      body: JSON.stringify({ orderStatus, paymentStatus }),
+      body: JSON.stringify({ orderStatus, paymentStatus, ...(extraData || {}) }),
     });
 
     if (!res.ok) {
       const errorMsg = await extractErrorMessage(res, 'Failed to update order');
+      throw new Error(errorMsg);
+    }
+    return res.json();
+  },
+
+  async sendOrderEmail(
+    id: string,
+    templateId: string,
+    extraData?: {
+      driverName?: string;
+      driverPhone?: string;
+      deliveryWindow?: string;
+      cancellationReason?: string;
+      cancelledBy?: 'store' | 'customer';
+    },
+    token?: string
+  ): Promise<{ success: boolean; message: string }> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/orders/${id}/send-email`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ templateId, ...(extraData || {}) }),
+    });
+
+    if (!res.ok) {
+      const errorMsg = await extractErrorMessage(res, 'Failed to send email');
       throw new Error(errorMsg);
     }
     return res.json();

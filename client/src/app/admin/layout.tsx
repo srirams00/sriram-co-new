@@ -124,6 +124,9 @@ export default function AdminLayout({
   if (pathname.startsWith('/admin/orders')) {
     breadcrumbTag = 'FULFILLMENT';
     pageHeaderTitle = 'Orders';
+  } else if (pathname.startsWith('/admin/emails')) {
+    breadcrumbTag = 'NOTIFICATIONS';
+    pageHeaderTitle = 'Email Studio';
   } else if (pathname.startsWith('/admin/customers')) {
     breadcrumbTag = 'RELATIONSHIPS';
     pageHeaderTitle = 'Customers';

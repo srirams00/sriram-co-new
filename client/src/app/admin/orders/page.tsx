@@ -16,6 +16,9 @@ import {
   CreditCard,
   Truck,
   AlertCircle,
+  Mail,
+  Send,
+  UserCheck,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
@@ -36,6 +39,29 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Driver Assignment Prompt State (Out for Delivery)
+  const [driverModal, setDriverModal] = useState<{ orderId: string; orderNumber: string } | null>(null);
+  const [driverName, setDriverName] = useState('Murugan K');
+  const [driverPhone, setDriverPhone] = useState('+91 98424 55123');
+  const [deliveryWindow, setDeliveryWindow] = useState('Today, 4:00 PM – 6:00 PM');
+
+  // Cancellation Prompt State
+  const [cancelModal, setCancelModal] = useState<{ orderId: string; orderNumber: string } | null>(null);
+  const [cancellationReason, setCancellationReason] = useState('Customer requested cancellation');
+  const [cancelledBy, setCancelledBy] = useState<'store' | 'customer'>('store');
+
+  // Quick Email Modal State (from row button)
+  const [quickEmailOrder, setQuickEmailOrder] = useState<Order | null>(null);
+  const [sendingEmailKey, setSendingEmailKey] = useState<string | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast((prev) => (prev?.message === message ? null : prev));
+    }, 5000);
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -63,13 +89,37 @@ export default function AdminOrdersPage() {
     fetchOrders();
   };
 
-  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+  const handleStatusChange = async (
+    orderId: string,
+    newStatus: OrderStatus,
+    extraData?: {
+      driverName?: string;
+      driverPhone?: string;
+      deliveryWindow?: string;
+      cancellationReason?: string;
+      cancelledBy?: 'store' | 'customer';
+    }
+  ) => {
+    // Intercept out_for_delivery to capture driver details
+    if (newStatus === 'out_for_delivery' && !extraData?.driverName) {
+      const order = orders.find((o) => o.id === orderId);
+      setDriverModal({ orderId, orderNumber: order?.orderNumber || orderId });
+      return;
+    }
+
+    // Intercept cancelled to capture reason
+    if (newStatus === 'cancelled' && !extraData?.cancellationReason) {
+      const order = orders.find((o) => o.id === orderId);
+      setCancelModal({ orderId, orderNumber: order?.orderNumber || orderId });
+      return;
+    }
+
     setUpdatingId(orderId);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('src_auth_token') || undefined : undefined;
-      const updated = await api.updateOrderStatus(orderId, newStatus, undefined, token);
+      await api.updateOrderStatus(orderId, newStatus, undefined, extraData, token);
       
-      // Update local state optimistically
+      // Update local state
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, orderStatus: newStatus } : o))
       );
@@ -77,10 +127,37 @@ export default function AdminOrdersPage() {
       if (selectedOrder && selectedOrder.id === orderId) {
         setSelectedOrder((prev) => (prev ? { ...prev, orderStatus: newStatus } : null));
       }
+
+      showToast(`Status updated to "${newStatus.replace(/_/g, ' ')}" · Email notification dispatched via Zoho Mail!`);
     } catch (err: any) {
       alert(`Failed to update status: ${err.message || 'Network error'}`);
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleSendManualEmail = async (
+    order: Order,
+    templateId: string,
+    extraData?: {
+      driverName?: string;
+      driverPhone?: string;
+      deliveryWindow?: string;
+      cancellationReason?: string;
+      cancelledBy?: 'store' | 'customer';
+    }
+  ) => {
+    setSendingEmailKey(`${order.id}-${templateId}`);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('src_auth_token') || undefined : undefined;
+      const res = await api.sendOrderEmail(order.id, templateId, extraData, token);
+      const recipient = order.customerInfo?.email || 'customer mailbox';
+      showToast(`Email (${templateId.replace(/_/g, ' ')}) dispatched to ${recipient}!`);
+      if (quickEmailOrder) setQuickEmailOrder(null);
+    } catch (err: any) {
+      showToast(`Failed to send email: ${err.message || 'Network error'}`, 'error');
+    } finally {
+      setSendingEmailKey(null);
     }
   };
 
@@ -120,6 +197,18 @@ export default function AdminOrdersPage() {
           </button>
         </div>
       </div>
+
+      {toast && (
+        <div className={styles.toastBanner} style={toast.type === 'error' ? { background: '#FEE2E2', borderColor: '#FECACA', color: '#B91C1C' } : {}}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {toast.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
+            <span>{toast.message}</span>
+          </div>
+          <button type="button" onClick={() => setToast(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {errorMsg && (
         <div style={{ background: '#FEECEC', color: '#DC2626', padding: '12px 16px', borderRadius: '10px', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -332,14 +421,26 @@ export default function AdminOrdersPage() {
                     </td>
 
                     <td>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedOrder(order)}
-                        className={styles.actionBtn}
-                      >
-                        <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} />
-                        <span>Details</span>
-                      </button>
+                      <div className={styles.actionGroup}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedOrder(order)}
+                          className={styles.actionBtn}
+                          title="View complete order breakdown"
+                        >
+                          <Eye size={13} style={{ display: 'inline', marginRight: '4px' }} />
+                          <span>Details</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuickEmailOrder(order)}
+                          className={styles.emailBtn}
+                          title="Send transactional email via Zoho Mail"
+                        >
+                          <Mail size={12} />
+                          <span>Email</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -446,6 +547,262 @@ export default function AdminOrdersPage() {
                   <strong style={{ color: '#18A957' }}>{formatCurrency(selectedOrder.pricing?.total || 0)}</strong>
                 </div>
               </div>
+
+              {/* Transactional Notifications (Zoho Mail) */}
+              <div className={styles.sectionBox}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span className={styles.sectionTitle}>Transactional Notifications (Zoho Mail)</span>
+                  <Link href="/admin/emails" style={{ fontSize: '0.76rem', color: '#18A957', fontWeight: 600, textDecoration: 'none' }}>
+                    Open Email Studio →
+                  </Link>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#4A584E' }}>
+                  Recipient:{' '}
+                  <strong style={{ color: '#174A2B' }}>
+                    {selectedOrder.customerInfo?.email || `${selectedOrder.customerInfo?.phone || 'customer'}@customer.sriramandco.in`}
+                  </strong>
+                </p>
+                <div className={styles.emailGrid}>
+                  {[
+                    { id: 'placed', label: '1. Order Placed', desc: 'Order received receipt' },
+                    { id: 'confirmed', label: '2. Confirmed', desc: 'Payment captured' },
+                    { id: 'processing', label: '3. Processing', desc: 'Packed at Vinola hub' },
+                    { id: 'out_for_delivery', label: '4. Out for Delivery', desc: 'Driver & window' },
+                    { id: 'delivered', label: '5. Delivered', desc: 'Completion receipt' },
+                    { id: 'cancelled', label: '6. Cancelled', desc: 'Cancellation notice' },
+                  ].map((tpl) => {
+                    const isSending = sendingEmailKey === `${selectedOrder.id}-${tpl.id}`;
+                    return (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        disabled={!!sendingEmailKey}
+                        onClick={() => handleSendManualEmail(selectedOrder, tpl.id, {
+                          driverName,
+                          driverPhone,
+                          deliveryWindow,
+                          cancellationReason,
+                          cancelledBy
+                        })}
+                        className={styles.emailGridBtn}
+                      >
+                        <span className={styles.emailGridBtnTitle}>
+                          {isSending ? <RefreshCw size={13} className="animate-spin" /> : <Send size={12} />}
+                          {tpl.label}
+                        </span>
+                        <span className={styles.emailGridBtnDesc}>{tpl.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Driver Assignment Prompt Modal (Out for Delivery) */}
+      {driverModal && (
+        <div className={styles.modalOverlay} onClick={() => setDriverModal(null)}>
+          <div className={styles.promptDialog} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.dialogHeader}>
+              <h3 className={styles.dialogTitle}>Assign Delivery Driver</h3>
+              <button type="button" onClick={() => setDriverModal(null)} className={styles.closeBtn}>
+                <X size={18} />
+              </button>
+            </div>
+            <p className={styles.dialogDescription}>
+              Order #{driverModal.orderNumber} will be marked as <strong>Out for Delivery</strong> and a tracking email will be sent to the customer with these driver details.
+            </p>
+
+            <div className={styles.formField}>
+              <label className={styles.formLabel}>Driver Name</label>
+              <input
+                type="text"
+                className={styles.formInput}
+                value={driverName}
+                onChange={(e) => setDriverName(e.target.value)}
+                placeholder="e.g. Murugan K"
+              />
+            </div>
+
+            <div className={styles.formField}>
+              <label className={styles.formLabel}>Driver Contact Phone</label>
+              <input
+                type="text"
+                className={styles.formInput}
+                value={driverPhone}
+                onChange={(e) => setDriverPhone(e.target.value)}
+                placeholder="e.g. +91 98424 55123"
+              />
+            </div>
+
+            <div className={styles.formField}>
+              <label className={styles.formLabel}>Estimated Delivery Window</label>
+              <input
+                type="text"
+                className={styles.formInput}
+                value={deliveryWindow}
+                onChange={(e) => setDeliveryWindow(e.target.value)}
+                placeholder="e.g. Today, 4:00 PM – 6:00 PM"
+              />
+            </div>
+
+            <div className={styles.dialogFooter}>
+              <button
+                type="button"
+                onClick={() => setDriverModal(null)}
+                className={styles.secondaryBtn}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={updatingId === driverModal.orderId}
+                onClick={async () => {
+                  const m = driverModal;
+                  setDriverModal(null);
+                  await handleStatusChange(m.orderId, 'out_for_delivery', {
+                    driverName,
+                    driverPhone,
+                    deliveryWindow,
+                  });
+                }}
+                className={styles.primaryBtn}
+              >
+                <Truck size={14} />
+                <span>Dispatch &amp; Send Email</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancellation Prompt Modal */}
+      {cancelModal && (
+        <div className={styles.modalOverlay} onClick={() => setCancelModal(null)}>
+          <div className={styles.promptDialog} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.dialogHeader}>
+              <h3 className={styles.dialogTitle}>Confirm Order Cancellation</h3>
+              <button type="button" onClick={() => setCancelModal(null)} className={styles.closeBtn}>
+                <X size={18} />
+              </button>
+            </div>
+            <p className={styles.dialogDescription}>
+              Order #{cancelModal.orderNumber} will be cancelled. A cancellation email with refund guidance will be sent to the customer.
+            </p>
+
+            <div className={styles.formField}>
+              <label className={styles.formLabel}>Cancelled By</label>
+              <select
+                className={styles.formInput}
+                value={cancelledBy}
+                onChange={(e) => setCancelledBy(e.target.value as 'store' | 'customer')}
+              >
+                <option value="store">Store (Stock / Delivery issue)</option>
+                <option value="customer">Customer Request</option>
+              </select>
+            </div>
+
+            <div className={styles.formField}>
+              <label className={styles.formLabel}>Reason for Cancellation</label>
+              <input
+                type="text"
+                className={styles.formInput}
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                placeholder="e.g. Customer requested cancellation before dispatch"
+              />
+            </div>
+
+            <div className={styles.dialogFooter}>
+              <button
+                type="button"
+                onClick={() => setCancelModal(null)}
+                className={styles.secondaryBtn}
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                disabled={updatingId === cancelModal.orderId}
+                onClick={async () => {
+                  const m = cancelModal;
+                  setCancelModal(null);
+                  await handleStatusChange(m.orderId, 'cancelled', {
+                    cancellationReason,
+                    cancelledBy,
+                  });
+                }}
+                className={styles.primaryBtn}
+                style={{ backgroundColor: '#DC2626' }}
+              >
+                <AlertCircle size={14} />
+                <span>Cancel Order &amp; Notify</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Email Template Modal */}
+      {quickEmailOrder && (
+        <div className={styles.modalOverlay} onClick={() => setQuickEmailOrder(null)}>
+          <div className={styles.promptDialog} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.dialogHeader}>
+              <div>
+                <h3 className={styles.dialogTitle}>Send Email · #{quickEmailOrder.orderNumber}</h3>
+                <span style={{ fontSize: '0.8rem', color: '#68786D' }}>
+                  To: {quickEmailOrder.customerInfo?.email || `${quickEmailOrder.customerInfo?.phone}@customer.sriramandco.in`}
+                </span>
+              </div>
+              <button type="button" onClick={() => setQuickEmailOrder(null)} className={styles.closeBtn}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className={styles.emailGrid}>
+              {[
+                { id: 'placed', label: '1. Order Placed', desc: 'Order received receipt' },
+                { id: 'confirmed', label: '2. Confirmed', desc: 'Payment captured' },
+                { id: 'processing', label: '3. Processing', desc: 'Packed at Vinola hub' },
+                { id: 'out_for_delivery', label: '4. Out for Delivery', desc: 'Driver & window' },
+                { id: 'delivered', label: '5. Delivered', desc: 'Completion receipt' },
+                { id: 'cancelled', label: '6. Cancelled', desc: 'Cancellation notice' },
+              ].map((tpl) => {
+                const isSending = sendingEmailKey === `${quickEmailOrder.id}-${tpl.id}`;
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    disabled={!!sendingEmailKey}
+                    onClick={() => handleSendManualEmail(quickEmailOrder, tpl.id, {
+                      driverName,
+                      driverPhone,
+                      deliveryWindow,
+                      cancellationReason,
+                      cancelledBy
+                    })}
+                    className={styles.emailGridBtn}
+                  >
+                    <span className={styles.emailGridBtnTitle}>
+                      {isSending ? <RefreshCw size={13} className="animate-spin" /> : <Send size={12} />}
+                      {tpl.label}
+                    </span>
+                    <span className={styles.emailGridBtnDesc}>{tpl.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className={styles.dialogFooter}>
+              <button
+                type="button"
+                onClick={() => setQuickEmailOrder(null)}
+                className={styles.secondaryBtn}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

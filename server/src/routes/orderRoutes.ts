@@ -8,6 +8,8 @@ import {
   verifyWebhookSignature,
 } from '../config/razorpay';
 import { AuthRequest, authenticate, authenticateIfPresent, requireAdmin } from '../middleware/authMiddleware';
+import { sendOrderLifecycleEmail, sendEmail } from '../services/emailService';
+import { compileOrderEmailHtml, EmailTemplateType } from '../services/emailTemplates';
 
 const router = Router();
 
@@ -111,6 +113,11 @@ router.post('/razorpay/create-order', authenticateIfPresent, async (req: AuthReq
 
     const savedOrder = await newOrder.save();
 
+    // Asynchronously dispatch Order Placed email to customer via Zoho Mail
+    sendOrderLifecycleEmail(savedOrder, 'placed').catch((err) =>
+      console.warn('[Zoho Mail] Could not dispatch placed email:', err.message)
+    );
+
     res.status(201).json({
       orderId: savedOrder._id,
       orderNumber: savedOrder.orderNumber,
@@ -185,6 +192,11 @@ router.post('/razorpay/verify-payment', async (req: Request, res: Response): Pro
     };
 
     const updatedOrder = await order.save();
+
+    // Asynchronously dispatch Order Confirmed email to customer via Zoho Mail
+    sendOrderLifecycleEmail(updatedOrder, 'confirmed').catch((err) =>
+      console.warn('[Zoho Mail] Could not dispatch confirmed email:', err.message)
+    );
 
     res.json({
       success: true,
@@ -382,9 +394,193 @@ router.patch('/:id/status', requireAdmin, async (req: Request, res: Response): P
       return;
     }
 
+    // Trigger Zoho Mail transactional notification on status transition
+    if (orderStatus) {
+      const emailTypeMap: Record<string, EmailTemplateType> = {
+        placed: 'placed',
+        confirmed: 'confirmed',
+        processing: 'processing',
+        out_for_delivery: 'out_for_delivery',
+        delivered: 'delivered',
+        cancelled: 'cancelled',
+      };
+      const emailType = emailTypeMap[orderStatus];
+      if (emailType) {
+        sendOrderLifecycleEmail(updatedOrder, emailType, {
+          driverName: req.body.driverName,
+          driverPhone: req.body.driverPhone,
+          deliveryWindow: req.body.deliveryWindow,
+          cancellationReason: req.body.cancellationReason,
+          cancelledBy: req.body.cancelledBy || 'store',
+        }).catch((err) =>
+          console.warn(`[Zoho Mail] Could not dispatch ${emailType} email:`, err.message)
+        );
+      }
+    }
+
     res.json(updatedOrder);
   } catch (error: any) {
     res.status(500).json({ message: error.message || 'Failed to update order status' });
+  }
+});
+
+// POST /api/orders/:id/send-email - Admin manual email dispatch / resend
+router.post('/:id/send-email', requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { templateId, driverName, driverPhone, deliveryWindow, cancellationReason, cancelledBy } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+
+    const validTemplates: EmailTemplateType[] = ['placed', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'];
+    const chosenTemplate: EmailTemplateType = validTemplates.includes(templateId) ? templateId : (order.orderStatus as EmailTemplateType) || 'placed';
+
+    const dispatchResult = await sendOrderLifecycleEmail(order, chosenTemplate, {
+      driverName,
+      driverPhone,
+      deliveryWindow,
+      cancellationReason,
+      cancelledBy: cancelledBy || 'store',
+    });
+
+    res.json({
+      success: dispatchResult.success,
+      message: dispatchResult.success ? `Email (${chosenTemplate}) sent successfully via Zoho Mail.` : 'Failed to send email.',
+      result: dispatchResult,
+    });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Error dispatching order email' });
+  }
+});
+
+// POST /api/orders/admin/test-email - Test Zoho Mail connection
+router.post('/admin/test-email', requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, templateType } = req.body;
+    const recipient = email || 'ramkumar@sriramandco.in';
+
+    const sampleOrderForTest: any = {
+      orderNumber: 'SRC-TEST-001',
+      customerInfo: {
+        name: 'Ramkumar S',
+        email: recipient,
+        phone: '+91 93454 03136',
+        address: 'No. 11, Vinola Complex, Thanjai Main Road',
+        city: 'Trichy',
+        postalCode: '620001',
+      },
+      orderItems: [
+        {
+          name: 'Milton Thermosteel 1000ml Flask',
+          price: 999,
+          quantity: 1,
+          image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=300',
+        },
+      ],
+      pricing: {
+        subtotal: 999,
+        deliveryFee: 0,
+        total: 999,
+      },
+      paymentMethod: 'razorpay',
+      paymentStatus: 'paid',
+      orderStatus: 'confirmed',
+      createdAt: new Date(),
+    };
+
+    const targetType: EmailTemplateType = templateType || 'confirmed';
+    const compiled = compileOrderEmailHtml(sampleOrderForTest, targetType, {
+      driverName: 'Murugan',
+      driverPhone: '+91 94431 27658',
+      deliveryWindow: 'today between 2 PM and 5 PM',
+    });
+
+    const result = await sendEmail({
+      to: recipient,
+      subject: `[TEST] ${compiled.subject}`,
+      html: compiled.html,
+      text: compiled.text,
+    });
+
+    res.json({
+      success: result.success,
+      recipient,
+      templateType: targetType,
+      message: result.success ? `Test email sent to ${recipient}` : `Failed: ${result.error}`,
+      result,
+    });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to send test email' });
+  }
+});
+
+// POST /api/orders/admin/preview-email - Compile and return HTML for live preview
+router.post('/admin/preview-email', requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { templateType, orderId, driverName, driverPhone, deliveryWindow, cancellationReason, cancelledBy } = req.body;
+
+    let targetOrder: any = null;
+    if (orderId) {
+      targetOrder = await Order.findById(orderId);
+    }
+
+    if (!targetOrder) {
+      // Fallback sample order
+      targetOrder = {
+        orderNumber: 'SRC-PREVIEW-101',
+        customerInfo: {
+          name: 'Priya Ramanathan',
+          email: 'customer@example.com',
+          phone: '+91 94431 27658',
+          address: '12, Gandhi Nagar, Thillai Nagar',
+          city: 'Trichy',
+          postalCode: '620018',
+        },
+        orderItems: [
+          {
+            name: 'Milton Thermosteel 1000ml Flask',
+            price: 999,
+            quantity: 2,
+            image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=300',
+          },
+          {
+            name: 'Preethi Zodiac Mixer Grinder 750W',
+            price: 7490,
+            quantity: 1,
+            image: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=300',
+          },
+        ],
+        pricing: {
+          subtotal: 9488,
+          deliveryFee: 0,
+          total: 9488,
+        },
+        paymentMethod: 'razorpay',
+        paymentStatus: 'paid',
+        orderStatus: templateType || 'placed',
+        createdAt: new Date(),
+      };
+    }
+
+    const compiled = compileOrderEmailHtml(targetOrder, templateType || 'placed', {
+      driverName: driverName || 'Murugan',
+      driverPhone: driverPhone || '+91 94431 27658',
+      deliveryWindow: deliveryWindow || 'today between 2 PM and 5 PM',
+      cancellationReason: cancellationReason || 'Requested by customer',
+      cancelledBy: cancelledBy || 'store',
+    });
+
+    res.json({
+      subject: compiled.subject,
+      html: compiled.html,
+      text: compiled.text,
+    });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Error generating email preview' });
   }
 });
 

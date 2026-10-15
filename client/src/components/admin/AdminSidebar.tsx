@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingBag, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Users, LogOut, Mail } from 'lucide-react';
 import styles from './AdminSidebar.module.css';
 
 const DASHBOARD_ROUTE = '/48191d90cc476d1c72aaec9997cc977c';
@@ -74,6 +74,16 @@ export default function AdminSidebar() {
           <div className={styles.navItemLeft}>
             <Users size={18} />
             <span>Customers</span>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/emails"
+          className={`${styles.navItem} ${pathname.startsWith('/admin/emails') ? styles.navItemActive : ''}`}
+        >
+          <div className={styles.navItemLeft}>
+            <Mail size={18} />
+            <span>Email Studio</span>
           </div>
         </Link>
 
