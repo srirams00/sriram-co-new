@@ -6,8 +6,8 @@ export const isDbConnected = (): boolean => mongoose.connection.readyState === 1
 export const connectDB = async (): Promise<void> => {
   const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/sriram_and_co';
 
-  // Fix for Node.js SRV resolution issue on Windows networks
-  if (uri.startsWith('mongodb+srv://')) {
+  // Fix for Node.js SRV resolution issue on Windows networks only
+  if (process.platform === 'win32' && uri.startsWith('mongodb+srv://')) {
     try {
       dns.setServers(['8.8.8.8', '1.1.1.1']);
     } catch (e) {
