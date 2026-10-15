@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
@@ -87,6 +88,14 @@ router.post('/google', authLimiter, async (req: Request, res: Response, next: Ne
 // POST /api/auth/register
 router.post('/register', authLimiter, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      throw new AppError(
+        'Database service is temporarily unavailable. Please verify MongoDB Atlas IP access rules (0.0.0.0/0 required for cloud hosting).',
+        503,
+        'DATABASE_UNAVAILABLE'
+      );
+    }
+
     const { name, email, password, phone } = RegisterSchema.parse(req.body);
 
     const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -123,6 +132,14 @@ router.post('/register', authLimiter, async (req: Request, res: Response, next: 
 // POST /api/auth/login (Customer-only storefront authentication)
 router.post('/login', authLimiter, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      throw new AppError(
+        'Database service is temporarily unavailable. Please verify MongoDB Atlas IP access rules (0.0.0.0/0 required for cloud hosting).',
+        503,
+        'DATABASE_UNAVAILABLE'
+      );
+    }
+
     const { email, password } = LoginSchema.parse(req.body);
 
     // Support login via email or mobile phone

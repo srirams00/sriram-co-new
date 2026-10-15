@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Order, IOrderItem } from '../models/Order';
 import { Product } from '../models/Product';
 import {
@@ -16,6 +17,13 @@ const router = Router();
 // POST /api/orders/razorpay/create-order - Create Razorpay order with server-side price recalculation (Anti-tamper)
 router.post('/razorpay/create-order', authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      res.status(503).json({
+        message: 'Database service is temporarily unavailable. Please verify MongoDB Atlas IP access rules (0.0.0.0/0 required for cloud hosting).',
+      });
+      return;
+    }
+
     const { customerInfo, orderItems, notes } = req.body;
 
     if (!customerInfo || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {

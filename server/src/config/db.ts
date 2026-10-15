@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import dns from 'dns';
 
+export const isDbConnected = (): boolean => mongoose.connection.readyState === 1;
+
 export const connectDB = async (): Promise<void> => {
   const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/sriram_and_co';
 
@@ -13,13 +15,23 @@ export const connectDB = async (): Promise<void> => {
     }
   }
 
+  mongoose.connection.on('disconnected', () => {
+    console.warn('⚠️  MongoDB disconnected. Waiting for reconnection...');
+  });
+
+  mongoose.connection.on('reconnected', () => {
+    console.log('✅ MongoDB reconnected successfully.');
+  });
+
   try {
-    const conn = await mongoose.connect(uri);
+    const conn = await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000,
+    });
     console.log(`✅ MongoDB Connected: ${conn.connection.host}/${conn.connection.name}`);
   } catch (error: any) {
     console.error('❌ MongoDB Connection Error:', error.message || error);
-    if (uri.includes('mongodb+srv://') && error.message?.includes('auth')) {
-      console.warn('⚠️  Atlas Authentication Failed. Please verify your Atlas credentials in server/.env, or switch to local MongoDB at mongodb://127.0.0.1:27017/sriram_and_co');
+    if (uri.includes('mongodb+srv://')) {
+      console.warn('⚠️  Atlas Access Check: If deploying to cloud (Render/Vercel), ensure 0.0.0.0/0 is added to MongoDB Atlas Network Access.');
     }
   }
 };

@@ -9,7 +9,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import compression from 'compression';
-import { connectDB } from './config/db';
+import { connectDB, isDbConnected } from './config/db';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 // Route imports
@@ -71,8 +71,10 @@ app.use(morgan('dev'));
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
-  res.json({
-    status: 'ok',
+  const dbConnected = isDbConnected();
+  res.status(dbConnected ? 200 : 503).json({
+    status: dbConnected ? 'ok' : 'degraded',
+    database: dbConnected ? 'connected' : 'disconnected',
     service: 'Sriram & Co Backend API',
     timestamp: new Date().toISOString(),
   });
