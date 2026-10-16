@@ -17,8 +17,14 @@ export const requestCorrelation = (
   res: Response,
   next: NextFunction
 ): void => {
-  const requestId = (req.headers['x-request-id'] as string) || crypto.randomUUID();
+  const clientReqId = req.headers['x-request-id'];
+  const requestId =
+    typeof clientReqId === 'string' && clientReqId.trim().length > 0
+      ? clientReqId.trim()
+      : crypto.randomUUID();
+
   req.id = requestId;
+  req.requestId = requestId;
   res.setHeader('X-Request-ID', requestId);
 
   const start = performance.now();

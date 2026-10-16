@@ -1,12 +1,12 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import mongoose from 'mongoose';
+import mongoose, { FilterQuery } from 'mongoose';
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
-import { User, IUser } from '../models/User';
-import { Order } from '../models/Order';
-import { AppError } from '../middleware/errorHandler';
-import { requireAdmin, JWT_SECRET } from '../middleware/authMiddleware';
+import { User, IUser } from '../models/User.js';
+import { Order } from '../models/Order.js';
+import { AppError } from '../middleware/errorHandler.js';
+import { requireAdmin, JWT_SECRET } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
@@ -64,7 +64,17 @@ export async function verifyGoogleIdToken(idToken: string): Promise<{ email: str
       throw new AppError('Invalid or expired Google OAuth token. Authentication rejected.', 401, 'INVALID_OAUTH_TOKEN');
     }
 
-    const data: any = await response.json();
+    interface GoogleIdentityUser {
+      email?: string;
+      displayName?: string;
+      emailVerified?: boolean;
+    }
+
+    interface GoogleVerifyResponse {
+      users?: GoogleIdentityUser[];
+    }
+
+    const data = (await response.json()) as GoogleVerifyResponse;
     const verifiedUser = data?.users?.[0];
     if (!verifiedUser || !verifiedUser.email) {
       throw new AppError('Unable to extract verified identity from Google.', 401, 'OAUTH_VERIFICATION_FAILED');
@@ -75,7 +85,7 @@ export async function verifyGoogleIdToken(idToken: string): Promise<{ email: str
       name: verifiedUser.displayName,
       emailVerified: Boolean(verifiedUser.emailVerified),
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof AppError) throw err;
     throw new AppError('Google authentication service error. Please try again.', 502, 'OAUTH_SERVICE_ERROR');
   }
@@ -375,7 +385,7 @@ router.put('/profile', async (req: Request, res: Response, next: NextFunction): 
 router.get('/customers', requireAdmin, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { search } = req.query;
-    const query: any = { role: 'customer' };
+    const query: FilterQuery<IUser> = { role: 'customer' };
 
     if (search && typeof search === 'string') {
       const searchRegex = new RegExp(search, 'i');

@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { User, IUser } from '../models/User';
-import { AppError } from './errorHandler';
+import { User, IUser } from '../models/User.js';
+import { AppError } from './errorHandler.js';
+import { isRecord } from '../utils/typeGuards.js';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'sriram_and_co_jwt_secret_dev_key_2026_xyz';
 
@@ -37,8 +38,11 @@ export const authenticate = async (req: AuthRequest, _res: Response, next: NextF
 
     req.user = user;
     next();
-  } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+  } catch (error: unknown) {
+    if (
+      isRecord(error) &&
+      (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError')
+    ) {
       next(new AppError('Token invalid or expired', 401, 'TOKEN_EXPIRED'));
       return;
     }
@@ -59,7 +63,7 @@ export const authenticateIfPresent = (req: AuthRequest, res: Response, next: Nex
  * Middleware to restrict access strictly to Admin role
  */
 export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  await authenticate(req, res, (err?: any) => {
+  await authenticate(req, res, (err?: unknown) => {
     if (err) return next(err);
 
     if (!req.user || req.user.role !== 'admin') {

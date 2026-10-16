@@ -28,8 +28,9 @@ export const connectDB = async (): Promise<void> => {
       serverSelectionTimeoutMS: 5000,
     });
     console.log(`✅ MongoDB Connected: ${conn.connection.host}/${conn.connection.name}`);
-  } catch (error: any) {
-    console.error('❌ MongoDB Connection Error:', error.message || error);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('❌ MongoDB Connection Error:', errorMsg);
     if (uri.includes('mongodb+srv://')) {
       console.warn('⚠️  Atlas Access Check: If deploying to cloud (Render/Vercel), ensure 0.0.0.0/0 is added to MongoDB Atlas Network Access.');
     }

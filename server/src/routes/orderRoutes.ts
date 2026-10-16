@@ -1,17 +1,18 @@
 import { Router, Request, Response } from 'express';
-import mongoose from 'mongoose';
+import mongoose, { FilterQuery, Types } from 'mongoose';
 import crypto from 'crypto';
-import { Order, IOrderItem } from '../models/Order';
-import { Product } from '../models/Product';
+import { Order, IOrder, IOrderItem } from '../models/Order.js';
+import { Product } from '../models/Product.js';
 import {
   razorpay,
   RAZORPAY_KEY_ID,
   verifyPaymentSignature,
   verifyWebhookSignature,
-} from '../config/razorpay';
-import { AuthRequest, authenticate, authenticateIfPresent, requireAdmin } from '../middleware/authMiddleware';
-import { sendOrderLifecycleEmail, sendEmail } from '../services/emailService';
-import { compileOrderEmailHtml, EmailTemplateType } from '../services/emailTemplates';
+} from '../config/razorpay.js';
+import { AuthRequest, authenticate, authenticateIfPresent, requireAdmin } from '../middleware/authMiddleware.js';
+import { sendOrderLifecycleEmail, sendEmail } from '../services/emailService.js';
+import { compileOrderEmailHtml, EmailTemplateType, OrderEmailData } from '../services/emailTemplates.js';
+import { getErrorMessage, isNativeError, isRecord } from '../utils/typeGuards.js';
 import rateLimit from 'express-rate-limit';
 
 const router = Router();
@@ -100,7 +101,7 @@ router.post('/razorpay/create-order', orderCreationLimiter, authenticateIfPresen
       calculatedSubtotal += itemTotal;
 
       verifiedOrderItems.push({
-        product: dbProduct._id as any,
+        product: dbProduct._id as Types.ObjectId,
         name: dbProduct.name,
         price: dbProduct.price,
         quantity: item.quantity,
@@ -174,11 +175,11 @@ router.post('/razorpay/create-order', orderCreationLimiter, authenticateIfPresen
       keyId: RAZORPAY_KEY_ID,
       pricing: savedOrder.pricing,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Razorpay create-order error:', error);
     const errorDescription =
-      error?.error?.description ||
-      error?.message ||
+      (isRecord(error) && isRecord(error.error) && typeof error.error.description === 'string' && error.error.description) ||
+      getErrorMessage(error) ||
       'Failed to initialize Razorpay order. Please verify API keys.';
     res.status(500).json({ message: errorDescription });
   }
@@ -257,9 +258,9 @@ router.post('/razorpay/verify-payment', paymentVerificationLimiter, async (req: 
       message: 'Payment verified successfully.',
       order: updatedOrder,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Razorpay payment verification error:', error);
-    res.status(500).json({ message: error?.message || 'Payment verification failed.' });
+    res.status(500).json({ message: getErrorMessage(error) || 'Payment verification failed.' });
   }
 });
 
@@ -267,7 +268,7 @@ router.post('/razorpay/verify-payment', paymentVerificationLimiter, async (req: 
 router.post('/razorpay/webhook', async (req: Request, res: Response): Promise<void> => {
   try {
     const signature = req.headers['x-razorpay-signature'] as string;
-    const rawBody = (req as any).rawBody || JSON.stringify(req.body);
+    const rawBody = req.rawBody ? String(req.rawBody) : JSON.stringify(req.body);
 
     if (!signature || !verifyWebhookSignature(rawBody, signature)) {
       res.status(400).json({ message: 'Invalid webhook signature.' });
@@ -307,7 +308,7 @@ router.post('/razorpay/webhook', async (req: Request, res: Response): Promise<vo
     }
 
     res.status(200).json({ status: 'ok' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Razorpay webhook processing error:', error);
     res.status(500).json({ message: 'Webhook processing failed.' });
   }
@@ -341,7 +342,7 @@ router.get('/mine', authenticate, async (req: AuthRequest, res: Response): Promi
 router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
     const { status, search } = req.query;
-    const query: any = {};
+    const query: FilterQuery<IOrder> = {};
 
     if (status && status !== 'all') {
       query.orderStatus = status;
@@ -454,7 +455,7 @@ router.patch('/:id/status', requireAdmin, async (req: Request, res: Response): P
       return;
     }
 
-    const updateFields: any = {};
+    const updateFields: Partial<Pick<IOrder, 'orderStatus' | 'paymentStatus'>> = {};
     if (orderStatus) updateFields.orderStatus = orderStatus;
     if (paymentStatus) updateFields.paymentStatus = paymentStatus;
 
@@ -488,14 +489,14 @@ router.patch('/:id/status', requireAdmin, async (req: Request, res: Response): P
           cancellationReason: req.body.cancellationReason,
           cancelledBy: req.body.cancelledBy || 'store',
         }).catch((err) =>
-          console.warn(`[Zoho Mail] Could not dispatch ${emailType} email:`, err.message)
+          console.warn(`[Zoho Mail] Could not dispatch ${emailType} email:`, getErrorMessage(err))
         );
       }
     }
 
     res.json(updatedOrder);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Failed to update order status' });
+  } catch (error: unknown) {
+    res.status(500).json({ message: getErrorMessage(error) || 'Failed to update order status' });
   }
 });
 
@@ -527,8 +528,8 @@ router.post('/:id/send-email', requireAdmin, async (req: Request, res: Response)
       message: dispatchResult.success ? `Email (${chosenTemplate}) sent successfully via Zoho Mail.` : 'Failed to send email.',
       result: dispatchResult,
     });
-  } catch (err: any) {
-    res.status(500).json({ message: err.message || 'Error dispatching order email' });
+  } catch (err: unknown) {
+    res.status(500).json({ message: getErrorMessage(err) || 'Error dispatching order email' });
   }
 });
 
@@ -538,7 +539,7 @@ router.post('/admin/test-email', requireAdmin, async (req: Request, res: Respons
     const { email, templateType } = req.body;
     const recipient = email || 'ramkumar@sriramandco.in';
 
-    const sampleOrderForTest: any = {
+    const sampleOrderForTest: Record<string, unknown> = {
       orderNumber: 'SRC-TEST-001',
       customerInfo: {
         name: 'Ramkumar S',
@@ -588,8 +589,8 @@ router.post('/admin/test-email', requireAdmin, async (req: Request, res: Respons
       message: result.success ? `Test email sent to ${recipient}` : `Failed: ${result.error}`,
       result,
     });
-  } catch (err: any) {
-    res.status(500).json({ message: err.message || 'Failed to send test email' });
+  } catch (err: unknown) {
+    res.status(500).json({ message: getErrorMessage(err) || 'Failed to send test email' });
   }
 });
 
@@ -598,7 +599,7 @@ router.post('/admin/preview-email', requireAdmin, async (req: Request, res: Resp
   try {
     const { templateType, orderId, driverName, driverPhone, deliveryWindow, cancellationReason, cancelledBy } = req.body;
 
-    let targetOrder: any = null;
+    let targetOrder: OrderEmailData | null = null;
     if (orderId) {
       targetOrder = await Order.findById(orderId);
     }
@@ -654,8 +655,8 @@ router.post('/admin/preview-email', requireAdmin, async (req: Request, res: Resp
       html: compiled.html,
       text: compiled.text,
     });
-  } catch (err: any) {
-    res.status(500).json({ message: err.message || 'Error generating email preview' });
+  } catch (err: unknown) {
+    res.status(500).json({ message: getErrorMessage(err) || 'Error generating email preview' });
   }
 });
 

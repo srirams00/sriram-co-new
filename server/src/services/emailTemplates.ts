@@ -78,11 +78,40 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#039;');
 }
 
+export interface OrderEmailData {
+  orderNumber?: string;
+  customerInfo?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+  };
+  orderItems?: Array<{
+    name?: string;
+    price?: number;
+    quantity?: number;
+    image?: string;
+  }>;
+  pricing?: {
+    subtotal?: number;
+    deliveryFee?: number;
+    discount?: number;
+    total?: number;
+  };
+  orderStatus?: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  razorpayPaymentId?: string;
+  createdAt?: string | Date;
+}
+
 /**
  * Compiles a full HTML email for an order and a given lifecycle stage.
  */
 export function compileOrderEmailHtml(
-  order: any,
+  order: OrderEmailData,
   type: EmailTemplateType,
   options: EmailMetadataOptions = {}
 ): CompiledEmail {
@@ -90,10 +119,14 @@ export function compileOrderEmailHtml(
   const firstName = customerName.split(' ')[0] || customerName;
   const orderNumber = order.orderNumber || 'SR-000000';
   const items = order.orderItems || [];
-  const pricing = order.pricing || {
-    subtotal: order.pricing?.subtotal || items.reduce((s: number, i: any) => s + (i.price * i.quantity), 0),
-    deliveryFee: order.pricing?.deliveryFee || 0,
-    total: order.pricing?.total || 0,
+  const defaultSubtotal = items.reduce(
+    (s: number, i: { price?: number; quantity?: number }) => s + ((i.price || 0) * (i.quantity || 1)),
+    0
+  );
+  const pricing = {
+    subtotal: order.pricing?.subtotal ?? defaultSubtotal,
+    deliveryFee: order.pricing?.deliveryFee ?? 0,
+    total: order.pricing?.total ?? defaultSubtotal,
   };
   const storeBranch = options.storeBranch || order.customerInfo?.city || 'Trichy';
   const expectedDelivery = options.expectedDelivery || 'in 1–2 business days';
@@ -171,19 +204,25 @@ export function compileOrderEmailHtml(
   // Compile Items HTML
   const itemsRowsHtml = items
     .map(
-      (item: any, idx: number) => `
+      (item: { image?: string; name?: string; quantity?: number; price?: number }, idx: number) => {
+        const itemImg = item.image || 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=100';
+        const itemName = item.name || 'Item';
+        const itemQty = item.quantity || 1;
+        const itemPrice = item.price || 0;
+        return `
       <tr>
         <td style="width: 52px; padding: 12px 0; border-top: ${idx === 0 ? 'none' : `1px solid ${THEME.border}`}; vertical-align: middle;">
-          <img src="${escapeHtml(item.image || 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=100')}" alt="${escapeHtml(item.name)}" width="52" height="52" style="display: block; border-radius: 8px; border: 1px solid ${THEME.border}; object-fit: cover;" />
+          <img src="${escapeHtml(itemImg)}" alt="${escapeHtml(itemName)}" width="52" height="52" style="display: block; border-radius: 8px; border: 1px solid ${THEME.border}; object-fit: cover;" />
         </td>
         <td style="padding: 12px 14px; border-top: ${idx === 0 ? 'none' : `1px solid ${THEME.border}`}; vertical-align: middle; font-family: ${THEME.font};">
-          <p style="margin: 0; font-size: 14px; line-height: 1.4; font-weight: 600; color: ${isCancelled ? THEME.muted : THEME.text};">${escapeHtml(item.name)}</p>
-          <p style="margin: 2px 0 0; font-size: 13px; color: ${THEME.muted};">Qty ${item.quantity || 1}${item.quantity > 1 ? ` · ${formatCurrency(item.price)} each` : ''}</p>
+          <p style="margin: 0; font-size: 14px; line-height: 1.4; font-weight: 600; color: ${isCancelled ? THEME.muted : THEME.text};">${escapeHtml(itemName)}</p>
+          <p style="margin: 2px 0 0; font-size: 13px; color: ${THEME.muted};">Qty ${itemQty}${itemQty > 1 ? ` · ${formatCurrency(itemPrice)} each` : ''}</p>
         </td>
         <td style="padding: 12px 0; border-top: ${idx === 0 ? 'none' : `1px solid ${THEME.border}`}; vertical-align: middle; text-align: right; font-family: ${THEME.font}; font-size: 14px; font-weight: 600; color: ${isCancelled ? THEME.muted : THEME.text}; white-space: nowrap;">
-          ${formatCurrency((item.price || 0) * (item.quantity || 1))}
+          ${formatCurrency(itemPrice * itemQty)}
         </td>
-      </tr>`
+      </tr>`;
+      }
     )
     .join('');
 

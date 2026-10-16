@@ -1,10 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import mongoose from 'mongoose';
-import { Product, IProduct } from '../models/Product';
-import { Order } from '../models/Order';
-import { AppError } from '../middleware/errorHandler';
-import { requireAdmin, AuthRequest } from '../middleware/authMiddleware';
+import { Product, IProduct } from '../models/Product.js';
+import { Order } from '../models/Order.js';
+import { AppError } from '../middleware/errorHandler.js';
+import { requireAdmin, AuthRequest } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
@@ -184,7 +184,7 @@ router.get('/id/:id', async (req: Request, res: Response, next: NextFunction): P
   }
 });
 
-let cachedFeatured: any = null;
+let cachedFeatured: IProduct[] | null = null;
 let featuredCacheTime = 0;
 const FEATURED_CACHE_TTL = 60 * 1000;
 
