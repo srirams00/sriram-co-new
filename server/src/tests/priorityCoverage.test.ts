@@ -405,4 +405,65 @@ describe('Priority Coverage Suite (Critical & High Priorities)', () => {
       );
     });
   });
+
+  describe('Observability: Request Correlation & Health Probes', () => {
+    it('generates a unique X-Request-ID and tracks request duration', async () => {
+      const { requestCorrelation } = await import('../middleware/observability.js');
+
+      let headersSent = false;
+      const headers: Record<string, string> = {};
+      const mockReq: any = {
+        headers: {},
+        method: 'GET',
+        url: '/api/products',
+      };
+      const mockRes: any = {
+        setHeader(key: string, val: string) {
+          headers[key] = val;
+        },
+        on(_event: string, callback: () => void) {
+          callback();
+        },
+        get headersSent() {
+          return headersSent;
+        },
+      };
+
+      let nextCalled = false;
+      requestCorrelation(mockReq, mockRes, () => {
+        nextCalled = true;
+      });
+
+      assert.equal(nextCalled, true, 'Middleware must invoke next()');
+      assert.ok(mockReq.id, 'Request must be assigned an ID');
+      assert.equal(headers['X-Request-ID'], mockReq.id, 'X-Request-ID header must match assigned req.id');
+      assert.ok(typeof mockReq.startTime === 'number', 'req.startTime must be recorded');
+    });
+
+    it('propagates client-supplied X-Request-ID when provided', async () => {
+      const { requestCorrelation } = await import('../middleware/observability.js');
+
+      const existingTraceId = 'trace-client-12345-abcde';
+      const headers: Record<string, string> = {};
+      const mockReq: any = {
+        headers: { 'x-request-id': existingTraceId },
+        method: 'POST',
+        url: '/api/orders',
+      };
+      const mockRes: any = {
+        setHeader(key: string, val: string) {
+          headers[key] = val;
+        },
+        on(_event: string, _callback: () => void) {},
+        get headersSent() {
+          return false;
+        },
+      };
+
+      requestCorrelation(mockReq, mockRes, () => {});
+
+      assert.equal(mockReq.id, existingTraceId, 'Must reuse client-sent trace ID');
+      assert.equal(headers['X-Request-ID'], existingTraceId);
+    });
+  });
 });
