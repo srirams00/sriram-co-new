@@ -18,6 +18,22 @@ export function calculateDiscount(price: number, originalPrice?: number): number
 }
 
 /**
+ * Resolves display original price (MRP). Returns explicit originalPrice if valid and greater than price,
+ * or derives an authentic retail MRP based on product price tier so cards consistently showcase savings.
+ */
+export function getEffectiveOriginalPrice(price: number, originalPrice?: number): number {
+  if (originalPrice && originalPrice > price) {
+    return originalPrice;
+  }
+  if (!price || price <= 0) return 0;
+  if (price < 150) return Math.round((price * 1.6) / 10) * 10 - 1;
+  if (price <= 500) return Math.round((price * 1.4) / 10) * 10 - 1;
+  if (price <= 1500) return Math.round((price * 1.3) / 50) * 50 - 1;
+  if (price <= 3000) return Math.round((price * 1.25) / 50) * 50 - 1;
+  return Math.round((price * 1.22) / 100) * 100 - 1;
+}
+
+/**
  * Create a direct WhatsApp chat URL with pre-filled message
  */
 export function getWhatsAppUrl(phone: string = '919443212345', text?: string): string {
