@@ -6,7 +6,7 @@ import { Heart, Star } from 'lucide-react';
 import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
+import { formatCurrency, getOptimizedImageUrl, getEffectiveOriginalPrice } from '@/lib/utils';
 import styles from './ProductCard.module.css';
 
 interface ProductCardProps {
@@ -18,9 +18,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { isInWishlist, toggleWishlist } = useWishlist();
   const inWishlist = isInWishlist(product.id);
 
+  const effectiveOriginalPrice = getEffectiveOriginalPrice(product.price, product.originalPrice);
   const discountPercent =
-    product.originalPrice && product.originalPrice > product.price
-      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    effectiveOriginalPrice > product.price
+      ? Math.round(((effectiveOriginalPrice - product.price) / effectiveOriginalPrice) * 100)
       : null;
 
   return (
@@ -83,10 +84,10 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className={styles.priceContainer}>
             <div className={styles.priceRow}>
               <span className={styles.price}>{formatCurrency(product.price)}</span>
-              {product.originalPrice && product.originalPrice > product.price && (
+              {effectiveOriginalPrice > product.price && (
                 <span className={styles.originalPrice}>
                   <span className="sr-only">Original price: </span>
-                  {formatCurrency(product.originalPrice)}
+                  {formatCurrency(effectiveOriginalPrice)}
                 </span>
               )}
             </div>

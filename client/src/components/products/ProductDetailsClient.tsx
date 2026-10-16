@@ -18,7 +18,7 @@ import {
 import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { formatCurrency, calculateDiscount, getWhatsAppUrl, getOptimizedImageUrl } from '@/lib/utils';
+import { formatCurrency, calculateDiscount, getWhatsAppUrl, getOptimizedImageUrl, getEffectiveOriginalPrice } from '@/lib/utils';
 import styles from './ProductDetailsClient.module.css';
 
 interface ProductDetailsClientProps {
@@ -36,7 +36,8 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
   const inWishlist = isInWishlist(product.id);
 
   const images = [product.image, ...(product.additionalImages || [])];
-  const discount = calculateDiscount(product.price, product.originalPrice);
+  const effectiveOriginalPrice = getEffectiveOriginalPrice(product.price, product.originalPrice);
+  const discount = calculateDiscount(product.price, effectiveOriginalPrice);
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
@@ -135,9 +136,9 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
             <div className={styles.priceSection}>
               <div className={styles.priceRow}>
                 <span className={styles.currentPrice}>{formatCurrency(product.price)}</span>
-                {product.originalPrice && (
+                {effectiveOriginalPrice > product.price && (
                   <span className={styles.originalPrice}>
-                    {formatCurrency(product.originalPrice)}
+                    {formatCurrency(effectiveOriginalPrice)}
                   </span>
                 )}
                 {discount > 0 && (

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   formatCurrency,
   calculateDiscount,
+  getEffectiveOriginalPrice,
   getWhatsAppUrl,
   getOptimizedImageUrl,
 } from './utils.ts';
@@ -43,6 +44,24 @@ describe('Client Utility Suite (Low Priority Coverage)', () => {
     it('returns 0 when original price is equal to or less than current price', () => {
       assert.equal(calculateDiscount(500, 500), 0);
       assert.equal(calculateDiscount(600, 500), 0);
+    });
+  });
+
+  describe('getEffectiveOriginalPrice', () => {
+    it('preserves existing explicit originalPrice when greater than price', () => {
+      assert.equal(getEffectiveOriginalPrice(14499, 18999), 18999);
+      assert.equal(getEffectiveOriginalPrice(2700, 3499), 3499);
+    });
+
+    it('derives authentic retail MRP when originalPrice is missing or equal to price', () => {
+      const derivedUnder150 = getEffectiveOriginalPrice(99, 99);
+      assert.ok(derivedUnder150 > 99, `Expected MRP > 99, got ${derivedUnder150}`);
+
+      const derivedMid = getEffectiveOriginalPrice(2700, 2700);
+      assert.ok(derivedMid > 2700, `Expected MRP > 2700, got ${derivedMid}`);
+
+      const derivedHigh = getEffectiveOriginalPrice(6000);
+      assert.ok(derivedHigh > 6000, `Expected MRP > 6000, got ${derivedHigh}`);
     });
   });
 
