@@ -1,0 +1,46 @@
+rules:
+  - id: sriram-hardcoded-crypto-secret
+    languages: [typescript, javascript]
+    message: "Potential hardcoded cryptographic secret or API token detected. Load credentials from process.env."
+    severity: ERROR
+    patterns:
+      - pattern-either:
+          - pattern: const $SECRET = "rzp_live_$...";
+          - pattern: jwt.sign($PAYLOAD, "...", ...)
+          - pattern: crypto.createHmac($ALG, "...")
+
+  - id: sriram-constant-time-hmac
+    languages: [typescript, javascript]
+    message: "Cryptographic vulnerability: Signature comparisons must use crypto.timingSafeEqual to prevent timing attacks."
+    severity: ERROR
+    patterns:
+      - pattern-either:
+          - pattern: $SIG === $EXPECTED
+          - pattern: $EXPECTED === $SIG
+      - metavariable-regex:
+          metavariable: $SIG
+          regex: (?i)(signature|digest|hash|token)
+
+  - id: sriram-nosql-injection-regex
+    languages: [typescript, javascript]
+    message: "ReDoS / Injection risk: User search query passed directly into RegExp constructor without escaping special characters."
+    severity: WARNING
+    patterns:
+      - pattern: new RegExp(req.query.$QUERY, ...)
+      - pattern-not-inside: |
+          const $SANITIZED = $QUERY.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          ...
+
+  - id: sriram-cors-wildcard-with-credentials
+    languages: [typescript, javascript]
+    message: "CORS Misconfiguration: Wildcard origin (*) must not be combined with credentials: true."
+    severity: ERROR
+    patterns:
+      - pattern: |
+          cors({
+            ...,
+            origin: '*',
+            ...,
+            credentials: true,
+            ...
+          })

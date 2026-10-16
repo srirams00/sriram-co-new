@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build artifacts
+client/.next/
+client/out/
+server/dist/
+
+# Test logs & coverage
+*.log
+coverage/
+.playwright-mcp/
+.superpowers/
+
+# Environment files
+.env*

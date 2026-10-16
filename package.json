@@ -2,6 +2,7 @@
   "name": "sriram-and-co-workspace",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Sriram & Co - Full Stack E-commerce Application",
   "scripts": {
     "dev": "npm run dev --prefix client",
@@ -13,7 +14,8 @@
     "build:client": "npm run build --prefix client",
     "build:server": "npm run build --prefix server",
     "seed": "npm run seed --prefix server",
-    "test": "npm run test --prefix server"
+    "test": "npm run test --prefix server",
+    "sast": "node scripts/run-sast.js"
   },
   "keywords": [],
   "author": "",

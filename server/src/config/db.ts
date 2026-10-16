@@ -26,6 +26,9 @@ export const connectDB = async (): Promise<void> => {
   try {
     const conn = await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 5000,
+      maxPoolSize: 20,
+      minPoolSize: 5,
+      socketTimeoutMS: 45000,
     });
     console.log(`✅ MongoDB Connected: ${conn.connection.host}/${conn.connection.name}`);
   } catch (error: unknown) {
@@ -36,3 +39,23 @@ export const connectDB = async (): Promise<void> => {
     }
   }
 };
+
+/**
+ * Executes a callback inside a MongoDB multi-document transaction with atomic rollback.
+ */
+export async function runInTransaction<T>(
+  fn: (session: mongoose.ClientSession) => Promise<T>
+): Promise<T> {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const result = await fn(session);
+    await session.commitTransaction();
+    return result;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+}
