@@ -28,7 +28,7 @@ export interface IOrder extends Document {
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   razorpaySignature?: string;
-  paymentDetails?: Record<string, any>;
+  paymentDetails?: Record<string, unknown>;
   pricing: {
     subtotal: number;
     deliveryFee: number;
@@ -39,7 +39,7 @@ export interface IOrder extends Document {
   updatedAt: Date;
 }
 
-const OrderItemSchema = new Schema<any>(
+const OrderItemSchema = new Schema<IOrderItem>(
   {
     product: {
       type: Schema.Types.Mixed,

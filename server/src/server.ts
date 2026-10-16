@@ -71,7 +71,7 @@ app.use(
 app.use(
   express.json({
     limit: '25mb',
-    verify: (req: any, _res, buf) => {
+    verify: (req: Request, _res, buf) => {
       req.rawBody = buf;
     },
   })

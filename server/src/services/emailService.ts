@@ -6,7 +6,9 @@ import {
   EmailTemplateType,
   EmailMetadataOptions,
   CompiledEmail,
-} from './emailTemplates';
+  OrderEmailData,
+} from './emailTemplates.js';
+import { getErrorMessage } from '../utils/typeGuards.js';
 
 // Ensure server environment variables are loaded
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -111,11 +113,11 @@ export async function sendEmail(payload: SendEmailPayload): Promise<SendEmailRes
       messageId: info.messageId,
       simulated: false,
     };
-  } catch (error: any) {
-    console.error(`[Zoho Mail Error] Failed to send email to ${to}:`, error.message);
+  } catch (error: unknown) {
+    console.error(`[Zoho Mail Error] Failed to send email to ${to}:`, getErrorMessage(error));
     return {
       success: false,
-      error: error.message || 'SMTP transmission failure',
+      error: getErrorMessage(error) || 'SMTP transmission failure',
     };
   }
 }
@@ -125,7 +127,7 @@ export async function sendEmail(payload: SendEmailPayload): Promise<SendEmailRes
  * and dispatches to the customer's order email address.
  */
 export async function sendOrderLifecycleEmail(
-  order: any,
+  order: OrderEmailData,
   type: EmailTemplateType,
   options: EmailMetadataOptions = {}
 ): Promise<SendEmailResult> {
@@ -145,8 +147,8 @@ export async function sendOrderLifecycleEmail(
       html: compiled.html,
       text: compiled.text,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(`[Zoho Mail] Error compiling or dispatching lifecycle email for #${order?.orderNumber}:`, err);
-    return { success: false, error: err.message };
+    return { success: false, error: getErrorMessage(err) };
   }
 }

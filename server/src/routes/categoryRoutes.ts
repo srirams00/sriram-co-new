@@ -1,15 +1,25 @@
 import { Router, Request, Response } from 'express';
-import { Category } from '../models/Category';
-import { Product } from '../models/Product';
+import { Category, ICategory } from '../models/Category.js';
+import { Product } from '../models/Product.js';
 
 const router = Router();
 
+export interface CategoryResponse {
+  id?: string;
+  name: string;
+  slug: string;
+  description: string;
+  image: string;
+  itemCount: number;
+  [key: string]: unknown;
+}
+
 // In-memory cache for ultra-fast category lookups
-let cachedCategories: any = null;
+let cachedCategories: CategoryResponse[] | null = null;
 let categoriesCacheTime = 0;
 const CACHE_TTL_MS = 60 * 1000; // 1 minute
 
-const slugCache = new Map<string, { data: any; expiry: number }>();
+const slugCache = new Map<string, { data: CategoryResponse; expiry: number }>();
 
 const CATEGORY_SLUG_ALIAS: Record<string, string> = {
   'cleaning': 'cleaning-appliances',

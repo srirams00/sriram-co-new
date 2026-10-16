@@ -1,5 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import {
+  isAppError,
+  isMongoDuplicateKeyError,
+  isMongooseValidationError,
+  isNativeError,
+  isRecord,
+} from '../utils/typeGuards.js';
 
 export class AppError extends Error {
   statusCode: number;
@@ -16,7 +23,7 @@ export class AppError extends Error {
 }
 
 export const errorHandler = (
-  err: any,
+  err: unknown,
   _req: Request,
   res: Response,
   _next: NextFunction
@@ -34,7 +41,7 @@ export const errorHandler = (
   }
 
   // 2. Handle known AppError (or duck-typed error with statusCode and code)
-  if (err instanceof AppError || (err && typeof err.statusCode === 'number' && typeof err.code === 'string')) {
+  if (err instanceof AppError || isAppError(err)) {
     res.status(err.statusCode).json({
       error: {
         code: err.code,
@@ -46,8 +53,10 @@ export const errorHandler = (
   }
 
   // 3. Handle MongoDB Duplicate Key Error (E11000)
-  if (err && (err.code === 11000 || err.name === 'MongoServerError' && err.code === 11000)) {
-    const isEmail = err.keyPattern?.email || (err.message && err.message.includes('email'));
+  if (isMongoDuplicateKeyError(err)) {
+    const isEmail =
+      err.keyPattern?.email ||
+      (typeof err.message === 'string' && err.message.includes('email'));
     const message = isEmail
       ? 'An account with this email address already exists. Please sign in instead.'
       : 'A record with this information already exists.';
@@ -62,9 +71,9 @@ export const errorHandler = (
   }
 
   // 4. Handle Mongoose Validation Errors
-  if (err && err.name === 'ValidationError' && err.errors) {
+  if (isMongooseValidationError(err)) {
     const messages = Object.values(err.errors)
-      .map((e: any) => e.message)
+      .map((e) => (typeof e?.message === 'string' ? e.message : ''))
       .filter(Boolean)
       .join('; ');
 
@@ -78,26 +87,31 @@ export const errorHandler = (
   }
 
   // 5. Handle Mongoose / MongoDB Connection & Timeout Errors
-  if (
-    err &&
-    (err.name === 'MongooseServerSelectionError' ||
-      (err.name === 'MongooseError' && typeof err.message === 'string' && err.message.includes('buffering timed out')))
-  ) {
-    console.error('Database unreachable or connection timeout:', err.message);
-    res.status(503).json({
-      error: {
-        code: 'DATABASE_UNAVAILABLE',
-        message: 'Database service is temporarily unavailable. Please verify MongoDB Atlas IP access rules.',
-      },
-    });
-    return;
+  if (isRecord(err)) {
+    const errName = typeof err.name === 'string' ? err.name : '';
+    const errMessage = typeof err.message === 'string' ? err.message : '';
+
+    if (
+      errName === 'MongooseServerSelectionError' ||
+      (errName === 'MongooseError' && errMessage.includes('buffering timed out'))
+    ) {
+      console.error('Database unreachable or connection timeout:', errMessage);
+      res.status(503).json({
+        error: {
+          code: 'DATABASE_UNAVAILABLE',
+          message: 'Database service is temporarily unavailable. Please verify MongoDB Atlas IP access rules.',
+        },
+      });
+      return;
+    }
   }
 
   // 6. Handle unhandled server errors (hide stack trace from clients)
+  const nativeErr = isNativeError(err) ? err : null;
   console.error('Unhandled Server Error:', {
-    name: err?.name,
-    message: err?.message,
-    stack: err?.stack,
+    name: nativeErr?.name || (isRecord(err) ? err.name : 'UnknownError'),
+    message: nativeErr?.message || (isRecord(err) ? err.message : String(err)),
+    stack: nativeErr?.stack,
   });
   res.status(500).json({
     error: {
