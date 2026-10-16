@@ -4,7 +4,7 @@ import path from 'path';
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-import express, { Application, Request, Response } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
@@ -65,7 +65,7 @@ app.use(
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-razorpay-signature'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-razorpay-signature', 'x-from-cloudflare'],
   })
 );
 app.use(
@@ -79,6 +79,22 @@ app.use(
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(requestCorrelation);
 app.use(morgan('dev'));
+
+// Origin shielding: reject direct requests that bypass Cloudflare in production
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (process.env.NODE_ENV === 'production' && process.env.CF_SECRET_TOKEN) {
+    // Allow Razorpay direct webhooks, root status, or health checks to bypass
+    if (req.path === '/api/payment/webhook' || req.path === '/api/health' || req.path === '/') {
+      return next();
+    }
+
+    const incomingSecret = req.headers['x-from-cloudflare'];
+    if (incomingSecret !== process.env.CF_SECRET_TOKEN) {
+      return res.status(403).json({ error: 'Direct origin access forbidden.' });
+    }
+  }
+  next();
+});
 
 // Health check endpoint with live database readiness and memory metrics
 app.get('/api/health', (_req: Request, res: Response) => {

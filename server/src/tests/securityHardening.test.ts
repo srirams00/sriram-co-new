@@ -216,4 +216,59 @@ describe('Security & Hardening Suite', () => {
     assert.equal(filterByCategory('Power Tools').length, 1);
     assert.equal(filterByCategory('non-existent').length, 0);
   });
+
+  describe('Cloudflare Origin Shielding & Direct Origin Access Protection', () => {
+    function verifyOriginShield(
+      headers: Record<string, string | undefined>,
+      path: string,
+      nodeEnv: string = 'production',
+      secretToken?: string
+    ): { allowed: boolean; status?: number; error?: string } {
+      if (nodeEnv === 'production' && secretToken) {
+        if (path === '/api/payment/webhook' || path === '/api/health' || path === '/') {
+          return { allowed: true };
+        }
+        const incomingSecret = headers['x-from-cloudflare'];
+        if (incomingSecret !== secretToken) {
+          return { allowed: false, status: 403, error: 'Direct origin access forbidden.' };
+        }
+      }
+      return { allowed: true };
+    }
+
+    it('rejects direct requests missing the Cloudflare secret header in production', () => {
+      const result = verifyOriginShield({}, '/api/orders', 'production', 'secret-cf-token-123');
+      assert.equal(result.allowed, false);
+      assert.equal(result.status, 403);
+    });
+
+    it('rejects requests with incorrect Cloudflare secret header in production', () => {
+      const result = verifyOriginShield({ 'x-from-cloudflare': 'wrong-token' }, '/api/orders', 'production', 'secret-cf-token-123');
+      assert.equal(result.allowed, false);
+      assert.equal(result.status, 403);
+    });
+
+    it('allows requests with valid matching Cloudflare secret header in production', () => {
+      const result = verifyOriginShield({ 'x-from-cloudflare': 'secret-cf-token-123' }, '/api/orders', 'production', 'secret-cf-token-123');
+      assert.equal(result.allowed, true);
+    });
+
+    it('exempts health check and Razorpay webhook endpoints from origin shield in production', () => {
+      const healthCheck = verifyOriginShield({}, '/api/health', 'production', 'secret-cf-token-123');
+      const webhook = verifyOriginShield({}, '/api/payment/webhook', 'production', 'secret-cf-token-123');
+      const root = verifyOriginShield({}, '/', 'production', 'secret-cf-token-123');
+
+      assert.equal(healthCheck.allowed, true);
+      assert.equal(webhook.allowed, true);
+      assert.equal(root.allowed, true);
+    });
+
+    it('allows all requests in development/test or when CF_SECRET_TOKEN is unconfigured', () => {
+      const devRequest = verifyOriginShield({}, '/api/orders', 'development', undefined);
+      const testRequest = verifyOriginShield({}, '/api/orders', 'test', 'secret-cf-token-123');
+
+      assert.equal(devRequest.allowed, true);
+      assert.equal(testRequest.allowed, true);
+    });
+  });
 });
