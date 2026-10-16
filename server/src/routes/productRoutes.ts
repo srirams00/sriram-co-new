@@ -5,6 +5,7 @@ import { Product, IProduct } from '../models/Product.js';
 import { Order } from '../models/Order.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { requireAdmin, AuthRequest } from '../middleware/authMiddleware.js';
+import { cacheService } from '../utils/cacheService.js';
 
 const router = Router();
 
@@ -184,17 +185,13 @@ router.get('/id/:id', async (req: Request, res: Response, next: NextFunction): P
   }
 });
 
-let cachedFeatured: IProduct[] | null = null;
-let featuredCacheTime = 0;
-const FEATURED_CACHE_TTL = 60 * 1000;
-
 // GET /api/products/featured - Featured products for storefront
 router.get('/featured', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
-    const now = Date.now();
-    if (cachedFeatured && now - featuredCacheTime < FEATURED_CACHE_TTL) {
-      res.json(cachedFeatured);
+    const cached = cacheService.get<IProduct[]>('products:featured');
+    if (cached) {
+      res.json(cached);
       return;
     }
 
@@ -208,8 +205,7 @@ router.get('/featured', async (_req: Request, res: Response, next: NextFunction)
       products.length > 0
         ? products
         : await Product.find({ isArchived: { $ne: true }, slug: { $ne: 'live-payment-test-item' } }).limit(8);
-    cachedFeatured = result;
-    featuredCacheTime = now;
+    cacheService.set('products:featured', result, 60);
     res.json(result);
   } catch (error) {
     next(error);
@@ -338,6 +334,8 @@ router.post('/', requireAdmin, async (req: AuthRequest, res: Response, next: Nex
     });
 
     await newProduct.save();
+    cacheService.invalidatePattern('products:');
+    cacheService.invalidatePattern('categories:');
 
     res.status(201).json(newProduct);
   } catch (error) {
@@ -389,6 +387,8 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res: Response, next: N
     product.features = validatedData.features || [];
 
     await product.save();
+    cacheService.invalidatePattern('products:');
+    cacheService.invalidatePattern('categories:');
 
     res.json(product);
   } catch (error) {
@@ -423,6 +423,8 @@ router.patch('/:id/stock', requireAdmin, async (req: AuthRequest, res: Response,
     }
 
     await product.save();
+    cacheService.invalidatePattern('products:');
+    cacheService.invalidatePattern('categories:');
     res.json(product);
   } catch (error) {
     next(error);
@@ -460,6 +462,8 @@ router.delete('/:id', requireAdmin, async (req: AuthRequest, res: Response, next
     product.isArchived = true;
     product.inStock = false;
     await product.save();
+    cacheService.invalidatePattern('products:');
+    cacheService.invalidatePattern('categories:');
 
     res.json({ message: 'Product successfully removed from catalog', id: req.params.id });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { Category, ICategory } from '../models/Category.js';
 import { Product } from '../models/Product.js';
+import { cacheService } from '../utils/cacheService.js';
 
 const router = Router();
 
@@ -13,13 +14,6 @@ export interface CategoryResponse {
   itemCount: number;
   [key: string]: unknown;
 }
-
-// In-memory cache for ultra-fast category lookups
-let cachedCategories: CategoryResponse[] | null = null;
-let categoriesCacheTime = 0;
-const CACHE_TTL_MS = 60 * 1000; // 1 minute
-
-const slugCache = new Map<string, { data: CategoryResponse; expiry: number }>();
 
 const CATEGORY_SLUG_ALIAS: Record<string, string> = {
   'cleaning': 'cleaning-appliances',
@@ -34,9 +28,9 @@ const CATEGORY_SLUG_ALIAS: Record<string, string> = {
 router.get('/', async (_req: Request, res: Response): Promise<void> => {
   try {
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
-    const now = Date.now();
-    if (cachedCategories && now - categoriesCacheTime < CACHE_TTL_MS) {
-      res.json(cachedCategories);
+    const cached = cacheService.get<CategoryResponse[]>('categories:all');
+    if (cached) {
+      res.json(cached);
       return;
     }
 
@@ -56,8 +50,7 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
       })
     );
 
-    cachedCategories = categoriesWithCount;
-    categoriesCacheTime = now;
+    cacheService.set('categories:all', categoriesWithCount, 60);
     res.json(categoriesWithCount);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving categories', error });
@@ -71,9 +64,10 @@ router.get('/:slug', async (req: Request, res: Response): Promise<void> => {
     const resolvedSlug = CATEGORY_SLUG_ALIAS[rawSlug] || rawSlug;
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
 
-    const cached = slugCache.get(resolvedSlug);
-    if (cached && Date.now() < cached.expiry) {
-      res.json(cached.data);
+    const cacheKey = `categories:slug:${resolvedSlug}`;
+    const cached = cacheService.get<CategoryResponse>(cacheKey);
+    if (cached) {
+      res.json(cached);
       return;
     }
 
@@ -98,7 +92,7 @@ router.get('/:slug', async (req: Request, res: Response): Promise<void> => {
     const categoryObj = category.toJSON();
     categoryObj.itemCount = count;
 
-    slugCache.set(resolvedSlug, { data: categoryObj, expiry: Date.now() + CACHE_TTL_MS });
+    cacheService.set(cacheKey, categoryObj, 60);
     res.json(categoryObj);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving category', error });
