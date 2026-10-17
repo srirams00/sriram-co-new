@@ -80,7 +80,7 @@ app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(requestCorrelation);
 app.use(morgan('dev'));
 
-// Origin shielding: reject direct requests that bypass Cloudflare in production
+// Origin shielding: reject direct unverified requests in production
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (process.env.NODE_ENV === 'production' && process.env.CF_SECRET_TOKEN) {
     // Allow Razorpay direct webhooks, root status, or health checks to bypass
@@ -88,6 +88,18 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       return next();
     }
 
+    // Allow legitimate browser cross-origin requests from verified storefront domains
+    const origin = req.headers.origin;
+    if (origin) {
+      const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+      const isSriramDomain = /^https:\/\/(.*\.)?sriramandco\.(in|com)$/i.test(origin);
+      const isAllowedVercel = /^https:\/\/(sriram-and-co[a-z0-9-]*|sriram-co[a-z0-9-]*|review\.sriramandco)\.vercel\.app$/i.test(origin);
+      if (allowedOrigins.includes(origin) || isLocal || isSriramDomain || isAllowedVercel) {
+        return next();
+      }
+    }
+
+    // Enforce Cloudflare secret header for direct non-browser / server-to-server calls
     const incomingSecret = req.headers['x-from-cloudflare'];
     if (incomingSecret !== process.env.CF_SECRET_TOKEN) {
       return res.status(403).json({ error: 'Direct origin access forbidden.' });
