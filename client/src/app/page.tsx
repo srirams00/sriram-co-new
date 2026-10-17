@@ -10,7 +10,6 @@ export default function HomePage() {
       <TrustFeatures />
       <LazyHomeSection section="categories" />
       <LazyHomeSection section="bestSellers" />
-      <LazyHomeSection section="promo" />
       <LazyHomeSection section="testimonials" />
       <LazyHomeSection section="howItWorks" />
       <LazyHomeSection section="stores" />

@@ -8,7 +8,6 @@ import styles from './LazyHomeSection.module.css';
 type HomeSection =
   | 'categories'
   | 'bestSellers'
-  | 'promo'
   | 'testimonials'
   | 'howItWorks'
   | 'stores'
@@ -17,7 +16,6 @@ type HomeSection =
 const sectionLabels: Record<HomeSection, string> = {
   categories: 'Shop by category',
   bestSellers: 'Best sellers',
-  promo: 'Everyday appliances',
   testimonials: 'Customer testimonials',
   howItWorks: 'How ordering works',
   stores: 'Store locations',
@@ -39,10 +37,6 @@ async function loadSection(section: HomeSection): Promise<ReactNode> {
         import('./BestSellersGrid'),
       ]);
       return <BestSellersGrid products={await api.getBestSellers()} />;
-    }
-    case 'promo': {
-      const { default: PromoEditorialGrid } = await import('./PromoEditorialGrid');
-      return <PromoEditorialGrid />;
     }
     case 'testimonials': {
       const [{ api }, { default: TestimonialsSection }] = await Promise.all([

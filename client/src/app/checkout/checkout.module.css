@@ -409,9 +409,54 @@
   font-size: 1.25rem;
 }
 
+.termsAcceptance {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 20px 0 16px;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.termsAcceptance input {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--color-primary);
+}
+
+.termsAcceptance a {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 .placeOrderBtn {
   width: 100%;
   margin-bottom: 16px;
+}
+
+.placeOrderBtn:disabled {
+  background-color: #9ca3af;
+  color: #f9fafb;
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+  transform: none;
+}
+
+.placeOrderBtn:not(:disabled) {
+  background-color: var(--color-commerce-green);
+  color: #ffffff;
+  opacity: 1;
+}
+
+.placeOrderBtn:not(:disabled):hover {
+  background-color: var(--color-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 169, 87, 0.22);
 }
 
 .securityNote {

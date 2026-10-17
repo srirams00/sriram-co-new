@@ -44,6 +44,7 @@ export default function CheckoutPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
@@ -115,6 +116,11 @@ export default function CheckoutPage() {
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!termsAccepted) {
+      setSubmitError('Please agree to the Terms and Conditions before proceeding to payment.');
+      return;
+    }
 
     // Mark all fields as touched
     setTouched({
@@ -662,9 +668,29 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              <label className={styles.termsAcceptance}>
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(event) => {
+                    setTermsAccepted(event.target.checked);
+                    if (event.target.checked) setSubmitError(null);
+                  }}
+                  required
+                  aria-required="true"
+                />
+                <span>
+                  I agree to the{' '}
+                  <Link href="/terms" target="_blank" rel="noopener noreferrer">
+                    Terms and Conditions
+                  </Link>
+                  .
+                </span>
+              </label>
+
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !termsAccepted}
                 className={`btn btn-primary btn-lg ${styles.placeOrderBtn}`}
               >
                 {isSubmitting

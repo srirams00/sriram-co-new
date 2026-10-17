@@ -209,25 +209,6 @@ export default function RegisterPage() {
             <p className={styles.formSubtitle}>
               Start building a home you love, one useful thing at a time.
             </p>
-            <label className={styles.termsAcceptance}>
-              <input
-                type="checkbox"
-                checked={termsAccepted}
-                onChange={(event) => {
-                  setTermsAccepted(event.target.checked);
-                  if (event.target.checked) setServerError(null);
-                }}
-                required
-                aria-required="true"
-              />
-              <span>
-                I agree to the{' '}
-                <Link href="/terms" target="_blank" rel="noopener noreferrer">
-                  Terms and Conditions
-                </Link>
-                .
-              </span>
-            </label>
           </div>
 
           {/* Google Sign Up */}
@@ -364,9 +345,28 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <button type="submit" disabled={loading} className={styles.submitBtn}>
+            <button type="submit" disabled={loading || !termsAccepted} className={styles.submitBtn}>
               {loading ? 'Creating account...' : 'Create account'}
             </button>
+            <label className={styles.termsAcceptance}>
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(event) => {
+                  setTermsAccepted(event.target.checked);
+                  if (event.target.checked) setServerError(null);
+                }}
+                required
+                aria-required="true"
+              />
+              <span>
+                I agree to the{' '}
+                <Link href="/terms" target="_blank" rel="noopener noreferrer">
+                  Terms and Conditions
+                </Link>
+                .
+              </span>
+            </label>
           </form>
 
           {/* Footer switch prompt */}
