@@ -4,10 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   CheckCircle2, 
-  Truck, 
-  Store, 
-  CreditCard, 
-  QrCode, 
   ArrowLeft, 
   ShieldCheck,
   AlertCircle,
@@ -49,7 +45,6 @@ export default function CheckoutPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const [deliveryMethod, setDeliveryMethod] = useState<'store_delivery' | 'express' | 'pickup'>('store_delivery');
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
   const [placedPaymentId, setPlacedPaymentId] = useState('');
@@ -173,7 +168,6 @@ export default function CheckoutPage() {
           name: item.product.name,
           quantity: item.quantity,
         })),
-        notes: `Delivery Method: ${deliveryMethod === 'pickup' ? 'Store Pickup' : 'Direct Store Delivery'}`,
       };
 
       // 3. Create Razorpay order on backend
@@ -587,57 +581,10 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Step 3: Delivery Method */}
+            {/* Step 3: 100% Online Payment via Razorpay */}
             <div className={styles.stepSection}>
               <div className={styles.stepHeader}>
                 <span className={styles.stepNumber}>3</span>
-                <h3>Delivery Method</h3>
-              </div>
-              <div className={styles.optionsList}>
-                <label htmlFor="delivery-store" className={`${styles.optionLabel} ${deliveryMethod === 'store_delivery' ? styles.optionActive : ''}`}>
-                  <input
-                    id="delivery-store"
-                    type="radio"
-                    name="deliveryMethod"
-                    value="store_delivery"
-                    checked={deliveryMethod === 'store_delivery'}
-                    onChange={() => setDeliveryMethod('store_delivery')}
-                  />
-                  <div className={styles.optionContent}>
-                    <Truck size={20} className={styles.optionIcon} />
-                    <div>
-                      <strong>Standard Direct Store Delivery</strong>
-                      <span>Dispatched directly by Sriram &amp; Co delivery team within 24–48 hours</span>
-                    </div>
-                  </div>
-                  <strong className={styles.freeText}>FREE</strong>
-                </label>
-
-                <label htmlFor="delivery-pickup" className={`${styles.optionLabel} ${deliveryMethod === 'pickup' ? styles.optionActive : ''}`}>
-                  <input
-                    id="delivery-pickup"
-                    type="radio"
-                    name="deliveryMethod"
-                    value="pickup"
-                    checked={deliveryMethod === 'pickup'}
-                    onChange={() => setDeliveryMethod('pickup')}
-                  />
-                  <div className={styles.optionContent}>
-                    <Store size={20} className={styles.optionIcon} />
-                    <div>
-                      <strong>Store Counter Pickup</strong>
-                      <span>Pick up from our Trichy Main Branch or Chennai Experience Store</span>
-                    </div>
-                  </div>
-                  <strong className={styles.freeText}>FREE</strong>
-                </label>
-              </div>
-            </div>
-
-            {/* Step 4: 100% Online Payment via Razorpay */}
-            <div className={styles.stepSection}>
-              <div className={styles.stepHeader}>
-                <span className={styles.stepNumber}>4</span>
                 <h3>Payment Method</h3>
               </div>
               <div className={styles.optionsList}>

@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  Star, 
   Check, 
   Plus, 
   Minus, 
@@ -19,6 +18,7 @@ import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { formatCurrency, calculateDiscount, getWhatsAppUrl, getOptimizedImageUrl, getEffectiveOriginalPrice } from '@/lib/utils';
+import RatingStars from './RatingStars';
 import styles from './ProductDetailsClient.module.css';
 
 interface ProductDetailsClientProps {
@@ -118,17 +118,8 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
 
             {/* Rating & Reviews */}
             <div className={styles.ratingBar}>
-              <div className={styles.stars}>
-                {[...Array(5)].map((_, i) => (
-                  <Star 
-                    key={i} 
-                    size={16} 
-                    fill={i < Math.floor(product.rating) ? '#f59e0b' : 'none'} 
-                    color="#f59e0b" 
-                  />
-                ))}
-              </div>
-              <span className={styles.ratingScore}>{product.rating}</span>
+              <RatingStars rating={product.rating} />
+              <span className={styles.ratingScore}>{product.rating.toFixed(1)}</span>
               <span className={styles.reviewCount}>({product.reviewCount} customer reviews)</span>
             </div>
 

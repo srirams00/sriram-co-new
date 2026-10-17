@@ -57,7 +57,11 @@ function deriveCategorySlug(categoryName: string, explicitSlug?: string): string
 // 24-character hexadecimal MongoDB ObjectId validator
 const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid MongoDB ObjectId');
 
-// Secure Image URL validator (HTTPS protocol, relative site asset paths, or base64 data URLs)
+function isHalfStarRating(rating: number): boolean {
+  return Number.isInteger(rating * 2);
+}
+
+// Secure image URL validator (HTTPS protocol, relative site asset paths, or base64 data URLs)
 const ProductImageSchema = z.string().trim().refine(
   (val) =>
     /^https:\/\/.+/i.test(val) ||
@@ -87,6 +91,7 @@ const ProductInputSchema = z.object({
   fullDescription: z.string().trim().min(10, 'Full description is required'),
   price: z.coerce.number().positive('Price must be greater than 0'),
   originalPrice: z.coerce.number().positive().nullable().optional(),
+  rating: z.coerce.number().min(0).max(5).optional(),
   image: ProductImageSchema,
   additionalImages: z.array(ProductImageSchema).optional().default([]),
   badge: z.enum(['Best Seller', 'New', 'Top Rated', 'Popular', 'Sale']).nullable().optional().or(z.literal('')),
@@ -306,6 +311,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
 router.post('/', requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const validatedData = ProductInputSchema.parse(req.body);
+    if (validatedData.rating !== undefined && !isHalfStarRating(validatedData.rating)) {
+      throw new AppError('Product rating must use half-star increments', 400, 'INVALID_PRODUCT_RATING');
+    }
 
     // Auto-generate clean slug
     let baseSlug = slugify(validatedData.name);
@@ -329,7 +337,7 @@ router.post('/', requireAdmin, async (req: AuthRequest, res: Response, next: Nex
       slug: finalSlug,
       categorySlug,
       sku,
-      rating: 0,
+      rating: validatedData.rating ?? 0,
       reviewCount: 0,
     });
 
@@ -357,6 +365,13 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res: Response, next: N
     if (!product || product.isArchived) {
       throw new AppError('Product not found', 404, 'PRODUCT_NOT_FOUND');
     }
+    if (
+      validatedData.rating !== undefined
+      && !isHalfStarRating(validatedData.rating)
+      && validatedData.rating !== product.rating
+    ) {
+      throw new AppError('Product rating must use half-star increments', 400, 'INVALID_PRODUCT_RATING');
+    }
 
     // If name changed, optionally regenerate slug if needed
     if (product.name !== validatedData.name) {
@@ -378,6 +393,9 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res: Response, next: N
     product.fullDescription = validatedData.fullDescription;
     product.price = validatedData.price;
     product.originalPrice = validatedData.originalPrice || undefined;
+    if (validatedData.rating !== undefined) {
+      product.rating = validatedData.rating;
+    }
     product.image = validatedData.image;
     product.additionalImages = validatedData.additionalImages || [];
     product.badge = (validatedData.badge || undefined) as IProduct['badge'];

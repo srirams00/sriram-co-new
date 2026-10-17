@@ -63,11 +63,11 @@ const seedDatabase = async () => {
       role: 'admin',
       phone: '+91 93454 03136',
       address: {
-        street: 'No. 11, vinola Complex, Thanjai Main Road',
-        city: 'Trichy',
+        street: 'Bus Stop, 11, Vinola Complex, Thanjai Main Road, Oil Mill Rd',
+        city: 'Tiruchirappalli',
         state: 'Tamil Nadu',
-        postalCode: '620014',
-        landmark: 'Near oil Mill Bus stop',
+        postalCode: '620019',
+        landmark: 'Near Oil Mill Bus Stop',
       },
     });
     await adminUser.save();

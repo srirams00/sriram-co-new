@@ -62,7 +62,7 @@ export default function ContactPage() {
             <Mail size={22} className={styles.quickIcon} />
             <div>
               <strong>Email Inquiries</strong>
-              <span>support@sriramandco.com</span>
+              <span>ramkumar@sriramandco.in</span>
             </div>
           </div>
         </div>

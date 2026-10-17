@@ -82,7 +82,7 @@ export default function TermsPage() {
         <ul>
           <li><strong>Doorstep UPI Payment:</strong> Scan the verified store UPI QR code presented by our store delivery driver upon package handover.</li>
           <li><strong>Doorstep Handheld Card POS:</strong> Pay securely using Debit or Credit cards via our portable store payment terminal.</li>
-          <li><strong>Store Counter Pickup (Click &amp; Collect):</strong> Reserve items online and complete verification and payment in person at our Trichy Main Branch or Chennai Experience Store.</li>
+          <li><strong>Store Counter Pickup:</strong> Contact our Trichy Main Branch or Chennai Experience Store to ask about arranging an in-person pickup.</li>
         </ul>
       </section>
 

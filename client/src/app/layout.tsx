@@ -91,10 +91,10 @@ const organizationJsonLd = {
   priceRange: '₹₹',
   address: {
     '@type': 'PostalAddress',
-    streetAddress: 'No. 11, Vinola Complex, Thanjai Main Road',
-    addressLocality: 'Trichy',
+    streetAddress: 'Bus Stop, 11, Vinola Complex, Thanjai Main Road, Oil Mill Rd',
+    addressLocality: 'Tiruchirappalli',
     addressRegion: 'Tamil Nadu',
-    postalCode: '620014',
+    postalCode: '620019',
     addressCountry: 'IN',
   },
   department: [
@@ -104,10 +104,10 @@ const organizationJsonLd = {
       telephone: '+919345403136',
       address: {
         '@type': 'PostalAddress',
-        streetAddress: 'No. 11, Vinola Complex, Thanjai Main Road',
-        addressLocality: 'Trichy',
+        streetAddress: 'Bus Stop, 11, Vinola Complex, Thanjai Main Road, Oil Mill Rd',
+        addressLocality: 'Tiruchirappalli',
         addressRegion: 'Tamil Nadu',
-        postalCode: '620014',
+        postalCode: '620019',
         addressCountry: 'IN',
       },
     },

@@ -223,7 +223,7 @@ export default function AdminSecretLoginPage() {
                 <span>Remember me</span>
               </label>
               <a
-                href="mailto:support@sriramandco.com?subject=Admin%20Password%20Reset%20Request"
+                href="mailto:ramkumar@sriramandco.in?subject=Admin%20Password%20Reset%20Request"
                 className={styles.forgotLink}
               >
                 Forgot password?

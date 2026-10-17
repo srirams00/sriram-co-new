@@ -6,6 +6,7 @@ import { Product } from '../models/Product.js';
 import {
   razorpay,
   RAZORPAY_KEY_ID,
+  isRazorpayConfigured,
   verifyPaymentSignature,
   verifyWebhookSignature,
 } from '../config/razorpay.js';
@@ -42,6 +43,13 @@ const paymentVerificationLimiter = rateLimit({
 // POST /api/orders/razorpay/create-order - Create Razorpay order with server-side price recalculation (Anti-tamper)
 router.post('/razorpay/create-order', orderCreationLimiter, authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!isRazorpayConfigured()) {
+      res.status(503).json({
+        message: 'Online payments are not configured. Set a valid Razorpay Key ID and Key Secret in the server environment.',
+      });
+      return;
+    }
+
     if (mongoose.connection.readyState !== 1) {
       res.status(503).json({
         message: 'Database service is temporarily unavailable. Please verify MongoDB Atlas IP access rules (0.0.0.0/0 required for cloud hosting).',
@@ -180,6 +188,17 @@ router.post('/razorpay/create-order', orderCreationLimiter, authenticateIfPresen
       (isRecord(error) && isRecord(error.error) && typeof error.error.description === 'string' && error.error.description) ||
       getErrorMessage(error) ||
       'Failed to initialize Razorpay order. Please verify API keys.';
+    const isAuthenticationFailure =
+      (isRecord(error) && error.statusCode === 401) ||
+      /authentication failed|invalid api key/i.test(errorDescription);
+
+    if (isAuthenticationFailure) {
+      res.status(502).json({
+        message: 'Razorpay rejected the server API credentials. Set a valid matching Key ID and Key Secret from the same Razorpay mode (test or live) in the server environment, then restart the server.',
+      });
+      return;
+    }
+
     res.status(500).json({ message: errorDescription });
   }
 });

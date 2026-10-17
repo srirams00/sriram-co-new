@@ -57,7 +57,7 @@ export default function Footer() {
             </li>
             <li className={styles.contactItem}>
               <Mail size={16} className={styles.contactIcon} />
-              <span>support@sriramandco.com</span>
+              <span>ramkumar@sriramandco.in</span>
             </li>
             <li className={styles.contactItem}>
               <MapPin size={16} className={styles.contactIcon} />

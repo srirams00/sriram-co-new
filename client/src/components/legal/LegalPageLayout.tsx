@@ -111,8 +111,8 @@ export default function LegalPageLayout({
                 <div className={styles.grievanceLabel}>Contact Email</div>
                 <div className={styles.grievanceValue}>
                   <Mail size={14} style={{ display: 'inline', marginRight: 4 }} />
-                  <a href="mailto:support@sriramandco.com" style={{ color: 'inherit' }}>
-                    support@sriramandco.com
+                  <a href="mailto:ramkumar@sriramandco.in" style={{ color: 'inherit' }}>
+                    ramkumar@sriramandco.in
                   </a>
                 </div>
               </div>

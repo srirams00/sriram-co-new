@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import ImageDropzone from '@/components/admin/ImageDropzone';
+import ProductRatingField from '@/components/admin/ProductRatingField';
 import styles from '../form.module.css';
 
 const DEFAULT_CATEGORIES = [
@@ -35,6 +36,7 @@ export default function NewProductPage() {
     shortDescription: '',
     fullDescription: '',
     features: '',
+    rating: '',
   });
 
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -44,6 +46,16 @@ export default function NewProductPage() {
     if (!formData.name.trim()) errors.name = 'Product name is required';
     if (!formData.category.trim()) errors.category = 'Category is required';
     if (!formData.price || Number(formData.price) <= 0) errors.price = 'Valid price is required';
+    const rating = Number(formData.rating);
+    if (
+      formData.rating === ''
+      || !Number.isFinite(rating)
+      || rating < 0
+      || rating > 5
+      || !Number.isInteger(rating * 2)
+    ) {
+      errors.rating = 'Choose a rating from 0 to 5 in half-star increments';
+    }
     if (!formData.image.trim()) {
       errors.image = 'Primary image URL is required';
     } else if (!formData.image.startsWith('https://') && !formData.image.startsWith('/') && !formData.image.startsWith('data:image/')) {
@@ -83,6 +95,7 @@ export default function NewProductPage() {
       name: true,
       category: true,
       price: true,
+      rating: true,
       image: true,
       additionalImages: true,
       shortDescription: true,
@@ -124,6 +137,7 @@ export default function NewProductPage() {
           category: formData.category.trim(),
           sku: formData.sku.trim() || undefined,
           price: Number(formData.price),
+          rating: Number(formData.rating),
           originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
           inventoryCount: Number(formData.inventoryCount) || 0,
           inStock: formData.inStock,
@@ -289,6 +303,13 @@ export default function NewProductPage() {
             />
           </div>
         </div>
+
+        <ProductRatingField
+          value={formData.rating}
+          onChange={(rating) => setFormData((prev) => ({ ...prev, rating }))}
+          error={errors.rating}
+          showError={touched.rating}
+        />
 
         {/* Primary Image Drag and Drop */}
         <ImageDropzone

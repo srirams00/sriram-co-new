@@ -102,12 +102,12 @@ export default function ShippingPolicyPage() {
       </section>
 
       <section>
-        <h2>4. Store Counter Pickup (Click &amp; Collect)</h2>
+        <h2>4. Store Counter Pickup</h2>
         <p>
-          Prefer collecting your equipment personally? Choose <strong>&quot;Store Counter Pickup&quot;</strong> during checkout at no extra charge.
+          Prefer collecting your equipment personally? Contact our Trichy Main Branch or Chennai Experience Store to ask about arranging an in-person pickup.
         </p>
         <ol>
-          <li>Complete your order online and select your preferred pickup branch (Trichy or Chennai).</li>
+          <li>Our team will confirm pickup availability and the order process for your selected product.</li>
           <li>Our staff prepares, tests, and packs the product within 2–4 hours.</li>
           <li>You will receive an SMS and email notification with a pickup code when your package is ready at the counter.</li>
           <li>Packages are reserved at the counter for up to <strong>7 calendar days</strong>.</li>

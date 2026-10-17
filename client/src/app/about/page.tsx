@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck, Award, HeartHandshake, MapPin } from 'lucide-react';
+import AchievementsGallery from './AchievementsGallery';
 import styles from './about.module.css';
 
 export const metadata: Metadata = {
@@ -100,6 +101,21 @@ export default function AboutPage() {
               <p>Direct packing and doorstep delivery by our dedicated staff across Trichy, Chennai, and Tamil Nadu.</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Achievements */}
+      <section className={styles.achievementsSection}>
+        <div className="container">
+          <div className={styles.achievementsHeader}>
+            <span className="text-eyebrow">Milestones &amp; Recognition</span>
+            <h2 className="heading-section">Proud moments along the way</h2>
+            <p className={styles.achievementsLead}>
+              We are grateful for the recognition and relationships built with our customers, partners, and community.
+            </p>
+          </div>
+
+          <AchievementsGallery />
         </div>
       </section>
 

@@ -2,11 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Heart, Star } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { formatCurrency, getOptimizedImageUrl, getEffectiveOriginalPrice } from '@/lib/utils';
+import RatingStars from './RatingStars';
 import styles from './ProductCard.module.css';
 
 interface ProductCardProps {
@@ -67,9 +68,9 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className={styles.content}>
         <div className={styles.categoryRow}>
           <span className={styles.category}>{product.category}</span>
-          <div className={styles.rating} aria-label={`Rating: ${product.rating} out of 5 stars`}>
-            <Star size={12} fill="#E5A11A" color="#E5A11A" aria-hidden="true" />
-            <span aria-hidden="true">{product.rating}</span>
+          <div className={styles.rating}>
+            <RatingStars rating={product.rating} size={12} />
+            <span>{product.rating.toFixed(1)}</span>
           </div>
         </div>
 

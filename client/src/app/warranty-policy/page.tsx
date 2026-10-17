@@ -151,7 +151,7 @@ export default function WarrantyPolicyPage() {
         <p>If you experience an issue with any product during your 1-year warranty period:</p>
         <ol>
           <li>Locate your Sri Ram &amp; Co GST Tax Invoice or Order Number (from your account or email).</li>
-          <li>Email our support team at <strong>support@sriramandco.com</strong> or call/WhatsApp <strong>+91 93454 03136</strong>.</li>
+          <li>Email our support team at <strong>ramkumar@sriramandco.in</strong> or call/WhatsApp <strong>+91 93454 03136</strong>.</li>
           <li>Describe the issue; our technician will diagnose the fault and either arrange an in-home technician visit, a store service drop-off, or replacement parts.</li>
         </ol>
       </section>
