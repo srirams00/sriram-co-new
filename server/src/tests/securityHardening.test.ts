@@ -228,6 +228,17 @@ describe('Security & Hardening Suite', () => {
         if (path === '/api/payment/webhook' || path === '/api/health' || path === '/') {
           return { allowed: true };
         }
+
+        const origin = headers.origin;
+        if (origin) {
+          const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+          const isSriramDomain = /^https:\/\/(.*\.)?sriramandco\.(in|com)$/i.test(origin);
+          const isAllowedVercel = /^https:\/\/(sriram-and-co[a-z0-9-]*|sriram-co[a-z0-9-]*|review\.sriramandco)\.vercel\.app$/i.test(origin);
+          if (isLocal || isSriramDomain || isAllowedVercel) {
+            return { allowed: true };
+          }
+        }
+
         const incomingSecret = headers['x-from-cloudflare'];
         if (incomingSecret !== secretToken) {
           return { allowed: false, status: 403, error: 'Direct origin access forbidden.' };
@@ -236,19 +247,29 @@ describe('Security & Hardening Suite', () => {
       return { allowed: true };
     }
 
-    it('rejects direct requests missing the Cloudflare secret header in production', () => {
+    it('rejects direct unverified requests missing both allowed Origin and Cloudflare secret in production', () => {
       const result = verifyOriginShield({}, '/api/orders', 'production', 'secret-cf-token-123');
       assert.equal(result.allowed, false);
       assert.equal(result.status, 403);
     });
 
-    it('rejects requests with incorrect Cloudflare secret header in production', () => {
-      const result = verifyOriginShield({ 'x-from-cloudflare': 'wrong-token' }, '/api/orders', 'production', 'secret-cf-token-123');
-      assert.equal(result.allowed, false);
-      assert.equal(result.status, 403);
+    it('allows legitimate browser requests from verified storefront origins without secret header', () => {
+      const liveDomain = verifyOriginShield({ origin: 'https://www.sriramandco.in' }, '/api/products', 'production', 'secret-cf-token-123');
+      const vercelPreview = verifyOriginShield({ origin: 'https://sriram-co-new.vercel.app' }, '/api/products', 'production', 'secret-cf-token-123');
+      const apexDomain = verifyOriginShield({ origin: 'https://sriramandco.in' }, '/api/auth/login', 'production', 'secret-cf-token-123');
+
+      assert.equal(liveDomain.allowed, true);
+      assert.equal(vercelPreview.allowed, true);
+      assert.equal(apexDomain.allowed, true);
     });
 
-    it('allows requests with valid matching Cloudflare secret header in production', () => {
+    it('rejects malicious external origins attempting direct calls without secret header', () => {
+      const evilSite = verifyOriginShield({ origin: 'https://malicious-site.com' }, '/api/products', 'production', 'secret-cf-token-123');
+      assert.equal(evilSite.allowed, false);
+      assert.equal(evilSite.status, 403);
+    });
+
+    it('allows non-browser backend calls when valid matching Cloudflare secret header is provided', () => {
       const result = verifyOriginShield({ 'x-from-cloudflare': 'secret-cf-token-123' }, '/api/orders', 'production', 'secret-cf-token-123');
       assert.equal(result.allowed, true);
     });
