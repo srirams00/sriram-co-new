@@ -6,9 +6,17 @@ import { Product, Category } from '@/types/product';
 import { StoreLocation } from '@/types/store';
 import { Testimonial } from '@/types/testimonial';
 import { Order } from '@/types/order';
+import type { ProductReview, ProductReviewSummary } from '@/types/review';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+
+function getStorefrontRequestHeaders(): Record<string, string> {
+  if (typeof window !== 'undefined') return {};
+
+  const storefrontUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.sriramandco.in';
+  return { Origin: new URL(storefrontUrl).origin };
+}
 
 export interface FilterParams {
   category?: string;
@@ -103,6 +111,7 @@ export const api = {
         const fetchPage = async (page: number) => {
           const qs = new URLSearchParams({ ...queryObj, page: String(page) }).toString();
           const res = await fetch(`${API_BASE}/products?${qs}`, {
+            headers: getStorefrontRequestHeaders(),
             next: { revalidate: 60 },
           });
 
@@ -178,31 +187,93 @@ export const api = {
   },
 
   async getProductBySlug(slug: string): Promise<Product | null> {
-    if (slug === 'live-payment-test-item') return null;
+    const normalizedSlug = slug.trim().toLowerCase();
+    if (normalizedSlug === 'live-payment-test-item') return null;
 
-    const cacheKey = `product_slug_${slug}`;
+    const cacheKey = `product_slug_${normalizedSlug}`;
     const cached = getCached<Product>(cacheKey);
     if (cached) return cached;
 
     if (!USE_MOCK) {
       try {
-        const res = await fetch(`${API_BASE}/products/${slug}`, {
+        const res = await fetch(`${API_BASE}/products/${encodeURIComponent(normalizedSlug)}`, {
+          headers: getStorefrontRequestHeaders(),
           next: { revalidate: 60 },
         });
         if (res.ok) {
-          const data = await res.json();
-          if (data?.slug === 'live-payment-test-item') return null;
-          setCached(cacheKey, data);
-          return data;
+          const data = await res.json() as Product;
+          if (data?.slug?.toLowerCase() === normalizedSlug) {
+            setCached(cacheKey, data);
+            return data;
+          }
         }
       } catch {
-        // Fall back to mock
+        // Try the product catalog if the direct lookup is unavailable.
+      }
+
+      if (/^[0-9a-f]{24}$/i.test(normalizedSlug)) {
+        try {
+          const res = await fetch(`${API_BASE}/products/id/${encodeURIComponent(normalizedSlug)}`, {
+            headers: getStorefrontRequestHeaders(),
+            next: { revalidate: 60 },
+          });
+          if (res.ok) {
+            const data = await res.json() as Product;
+            setCached(cacheKey, data);
+            return data;
+          }
+        } catch {
+          // Try the product catalog if the ID lookup is unavailable.
+        }
       }
     }
 
-    const found = PRODUCTS.find(p => p.slug === slug) || null;
+    const catalog = await this.getProducts();
+    const found =
+      catalog.find((product) => product.slug?.trim().toLowerCase() === normalizedSlug) ??
+      catalog.find((product) => product.id?.trim().toLowerCase() === normalizedSlug) ??
+      PRODUCTS.find((product) => product.slug.trim().toLowerCase() === normalizedSlug) ??
+      PRODUCTS.find((product) => product.id.trim().toLowerCase() === normalizedSlug) ??
+      null;
     if (found) setCached(cacheKey, found);
     return found;
+  },
+
+  async getProductReviews(productId: string, token?: string): Promise<ProductReviewSummary> {
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = 'Bearer ' + token;
+
+    const res = await fetch(`${API_BASE}/reviews/${encodeURIComponent(productId)}`, {
+      headers,
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      throw new Error(await extractErrorMessage(res, 'Failed to load product reviews'));
+    }
+
+    return res.json() as Promise<ProductReviewSummary>;
+  },
+
+  async createProductReview(
+    productId: string,
+    review: Pick<ProductReview, 'rating' | 'comment'>,
+    token: string
+  ): Promise<{ review: ProductReview } & Omit<ProductReviewSummary, 'reviews'>> {
+    const res = await fetch(`${API_BASE}/reviews/${encodeURIComponent(productId)}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token,
+      },
+      body: JSON.stringify(review),
+    });
+
+    if (!res.ok) {
+      throw new Error(await extractErrorMessage(res, 'Failed to submit your review'));
+    }
+
+    return res.json();
   },
 
   async getBestSellers(): Promise<Product[]> {

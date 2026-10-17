@@ -18,7 +18,7 @@ import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { formatCurrency, calculateDiscount, getWhatsAppUrl, getOptimizedImageUrl, getEffectiveOriginalPrice } from '@/lib/utils';
-import RatingStars from './RatingStars';
+import ProductReviews from './ProductReviews';
 import styles from './ProductDetailsClient.module.css';
 
 interface ProductDetailsClientProps {
@@ -115,13 +115,6 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
           <div className={styles.infoColumn}>
             <div className={styles.categoryBadge}>{product.category}</div>
             <h1 className={styles.productTitle}>{product.name}</h1>
-
-            {/* Rating & Reviews */}
-            <div className={styles.ratingBar}>
-              <RatingStars rating={product.rating} />
-              <span className={styles.ratingScore}>{product.rating.toFixed(1)}</span>
-              <span className={styles.reviewCount}>({product.reviewCount} customer reviews)</span>
-            </div>
 
             {/* Price Box */}
             <div className={styles.priceSection}>
@@ -281,13 +274,15 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
           </div>
         </div>
 
+        <ProductReviews productId={product.id} />
+
         {/* Related Products */}
         {relatedProducts.length > 0 && (
           <div className={styles.relatedSection}>
             <h2 className="heading-section">Related Products</h2>
             <div className={styles.relatedGrid}>
               {relatedProducts.slice(0, 4).map((rel) => (
-                <Link key={rel.id} href={`/product/${rel.slug}`} className={styles.relatedCard}>
+                <Link key={rel.id} href={`/product/${encodeURIComponent(rel.slug || rel.id)}`} className={styles.relatedCard}>
                   <div className={styles.relatedImgWrapper}>
                     <img
                       src={getOptimizedImageUrl(rel.image, 400)}

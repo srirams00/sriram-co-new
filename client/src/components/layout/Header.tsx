@@ -52,7 +52,7 @@ function ProductSearchSuggestions({
           {suggestions.map(product => (
             <li key={product.id}>
               <Link
-                href={`/product/${product.slug}`}
+                href={`/product/${encodeURIComponent(product.slug || product.id)}`}
                 className={styles.searchSuggestion}
                 onClick={onSelect}
               >

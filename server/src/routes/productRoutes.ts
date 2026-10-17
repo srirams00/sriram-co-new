@@ -1,13 +1,51 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { Product, IProduct } from '../models/Product.js';
 import { Order } from '../models/Order.js';
+import { Review } from '../models/Review.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { requireAdmin, AuthRequest } from '../middleware/authMiddleware.js';
 import { cacheService } from '../utils/cacheService.js';
 
 const router = Router();
+
+async function attachReviewStats(products: IProduct[]) {
+  if (products.length === 0) return [];
+
+  const summaries = await Review.aggregate<{
+    _id: Types.ObjectId;
+    averageRating: number;
+    reviewCount: number;
+  }>([
+    { $match: { product: { $in: products.map((product) => product._id) } } },
+    {
+      $group: {
+        _id: '$product',
+        averageRating: { $avg: '$rating' },
+        reviewCount: { $sum: 1 },
+      },
+    },
+  ]);
+  const summaryByProduct = new Map(
+    summaries.map((summary) => [
+      String(summary._id),
+      {
+        rating: Math.round(summary.averageRating * 10) / 10,
+        reviewCount: summary.reviewCount,
+      },
+    ])
+  );
+
+  return products.map((product) => {
+    const summary = summaryByProduct.get(String(product._id));
+    return {
+      ...product.toJSON(),
+      rating: summary?.rating ?? 0,
+      reviewCount: summary?.reviewCount ?? 0,
+    };
+  });
+}
 
 // Helper to convert strings to clean URL slugs
 function slugify(text: string): string {
@@ -184,7 +222,7 @@ router.get('/id/:id', async (req: Request, res: Response, next: NextFunction): P
       throw new AppError(`Product not found`, 404, 'PRODUCT_NOT_FOUND');
     }
 
-    res.json(product);
+    res.json((await attachReviewStats([product]))[0]);
   } catch (error) {
     next(error);
   }
@@ -210,8 +248,9 @@ router.get('/featured', async (_req: Request, res: Response, next: NextFunction)
       products.length > 0
         ? products
         : await Product.find({ isArchived: { $ne: true }, slug: { $ne: 'live-payment-test-item' } }).limit(8);
-    cacheService.set('products:featured', result, 60);
-    res.json(result);
+    const productsWithReviewStats = await attachReviewStats(result);
+    cacheService.set('products:featured', productsWithReviewStats, 60);
+    res.json(productsWithReviewStats);
   } catch (error) {
     next(error);
   }
@@ -292,7 +331,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
     const totalPages = Math.ceil(total / limit) || 1;
 
     res.json({
-      data: products,
+      data: await attachReviewStats(products),
       pagination: {
         page,
         limit,
@@ -408,7 +447,7 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res: Response, next: N
     cacheService.invalidatePattern('products:');
     cacheService.invalidatePattern('categories:');
 
-    res.json(product);
+    res.json((await attachReviewStats([product]))[0]);
   } catch (error) {
     next(error);
   }

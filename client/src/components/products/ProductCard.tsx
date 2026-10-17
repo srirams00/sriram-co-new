@@ -47,7 +47,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </button>
 
         <Link
-          href={`/product/${product.slug}`}
+          href={`/product/${encodeURIComponent(product.slug || product.id)}`}
           className={styles.imageLink}
           aria-hidden="true"
           tabIndex={-1}
@@ -68,13 +68,15 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className={styles.content}>
         <div className={styles.categoryRow}>
           <span className={styles.category}>{product.category}</span>
-          <div className={styles.rating}>
-            <RatingStars rating={product.rating} size={12} />
-            <span>{product.rating.toFixed(1)}</span>
-          </div>
+          {product.reviewCount > 0 && (
+            <div className={styles.rating}>
+              <RatingStars rating={product.rating} size={12} />
+              <span>{product.rating.toFixed(1)}</span>
+            </div>
+          )}
         </div>
 
-        <Link href={`/product/${product.slug}`} className={styles.titleLink}>
+        <Link href={`/product/${encodeURIComponent(product.slug || product.id)}`} className={styles.titleLink}>
           <h3 className={styles.title}>{product.name}</h3>
         </Link>
 
