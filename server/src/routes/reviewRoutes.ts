@@ -5,7 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { Product } from '../models/Product.js';
 import { Review } from '../models/Review.js';
 import { AppError } from '../middleware/errorHandler.js';
-import { AuthRequest, authenticate, authenticateIfPresent } from '../middleware/authMiddleware.js';
+import { AuthRequest, authenticate, authenticateIfPresent, requireAdmin } from '../middleware/authMiddleware.js';
 import { isRecord } from '../utils/typeGuards.js';
 import { cacheService } from '../utils/cacheService.js';
 
@@ -20,6 +20,7 @@ const reviewLimiter = rateLimit({
 });
 
 const ProductIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid product ID');
+const ReviewIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid review ID');
 const ReviewInputSchema = z.object({
   rating: z.number().int().min(1).max(5),
   comment: z.string().trim().min(10).max(1000),
@@ -45,6 +46,45 @@ async function getReviewSummary(productId: Types.ObjectId) {
     reviewCount: summary?.reviewCount ?? 0,
   };
 }
+
+router.get('/admin/all', requireAdmin, async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const reviews = await Review.find()
+      .populate('product', 'name slug')
+      .sort({ createdAt: -1 })
+      .limit(500)
+      .lean();
+
+    res.json(reviews);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/:reviewId', requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const parsedId = ReviewIdSchema.safeParse(req.params.reviewId);
+    if (!parsedId.success) {
+      throw new AppError('Invalid review ID', 400, 'INVALID_REVIEW_ID');
+    }
+
+    const review = await Review.findByIdAndDelete(parsedId.data);
+    if (!review) {
+      throw new AppError('Review not found', 404, 'REVIEW_NOT_FOUND');
+    }
+
+    const summary = await getReviewSummary(review.product);
+    await Product.findByIdAndUpdate(review.product, {
+      rating: summary.averageRating,
+      reviewCount: summary.reviewCount,
+    });
+    cacheService.invalidatePattern('products:');
+
+    res.json({ message: 'Review deleted', ...summary });
+  } catch (error) {
+    next(error);
+  }
+});
 
 router.get('/:productId', authenticateIfPresent, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {

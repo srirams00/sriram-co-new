@@ -12,3 +12,12 @@ export interface ProductReviewSummary {
   canReview: boolean;
   hasReviewed: boolean;
 }
+
+export interface AdminProductReview extends ProductReview {
+  id: string;
+  product: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+}

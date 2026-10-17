@@ -6,7 +6,7 @@ import { Product, Category } from '@/types/product';
 import { StoreLocation } from '@/types/store';
 import { Testimonial } from '@/types/testimonial';
 import { Order } from '@/types/order';
-import type { ProductReview, ProductReviewSummary } from '@/types/review';
+import type { AdminProductReview, ProductReview, ProductReviewSummary } from '@/types/review';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
@@ -274,6 +274,30 @@ export const api = {
     }
 
     return res.json();
+  },
+
+  async getAdminProductReviews(token: string): Promise<AdminProductReview[]> {
+    const res = await fetch(`${API_BASE}/reviews/admin/all`, {
+      headers: { Authorization: 'Bearer ' + token },
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      throw new Error(await extractErrorMessage(res, 'Failed to load customer reviews'));
+    }
+
+    return res.json() as Promise<AdminProductReview[]>;
+  },
+
+  async deleteProductReview(reviewId: string, token: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/reviews/${encodeURIComponent(reviewId)}`, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + token },
+    });
+
+    if (!res.ok) {
+      throw new Error(await extractErrorMessage(res, 'Failed to delete customer review'));
+    }
   },
 
   async getBestSellers(): Promise<Product[]> {
