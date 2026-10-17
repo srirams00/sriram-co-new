@@ -24,11 +24,17 @@ export default function RegisterPage() {
   const [touched, setTouched] = useState<{ [K in keyof FormErrors]?: boolean }>({});
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
   const handleGoogleSignUp = async () => {
+    if (!termsAccepted) {
+      setServerError('Please accept the Terms and Conditions before creating an account.');
+      return;
+    }
+
     try {
       setGoogleLoading(true);
       setServerError(null);
@@ -111,6 +117,11 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!termsAccepted) {
+      setServerError('Please accept the Terms and Conditions before creating an account.');
+      return;
+    }
+    setServerError(null);
 
     // Validate all fields
     const newErrors: FormErrors = {
@@ -198,6 +209,25 @@ export default function RegisterPage() {
             <p className={styles.formSubtitle}>
               Start building a home you love, one useful thing at a time.
             </p>
+            <label className={styles.termsAcceptance}>
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(event) => {
+                  setTermsAccepted(event.target.checked);
+                  if (event.target.checked) setServerError(null);
+                }}
+                required
+                aria-required="true"
+              />
+              <span>
+                I agree to the{' '}
+                <Link href="/terms" target="_blank" rel="noopener noreferrer">
+                  Terms and Conditions
+                </Link>
+                .
+              </span>
+            </label>
           </div>
 
           {/* Google Sign Up */}

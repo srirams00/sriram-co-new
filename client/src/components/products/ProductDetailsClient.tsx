@@ -39,11 +39,26 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
   const effectiveOriginalPrice = getEffectiveOriginalPrice(product.price, product.originalPrice);
   const discount = calculateDiscount(product.price, effectiveOriginalPrice);
 
+  const redirectToLogin = () => {
+    const productPath = `/product/${encodeURIComponent(product.slug || product.id)}`;
+    router.push(`/login?redirect=${encodeURIComponent(productPath)}`);
+  };
+
   const handleAddToCart = () => {
+    if (!localStorage.getItem('src_auth_token')) {
+      redirectToLogin();
+      return;
+    }
+
     addToCart(product, quantity);
   };
 
   const handleBuyNow = () => {
+    if (!localStorage.getItem('src_auth_token')) {
+      redirectToLogin();
+      return;
+    }
+
     addToCart(product, quantity);
     router.push('/checkout');
   };

@@ -9,12 +9,16 @@ import styles from './HeroSection.module.css';
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLElement>(null);
+  const yearsCountRef = useRef<HTMLElement>(null);
+  const homesCountRef = useRef<HTMLElement>(null);
 
   useGSAP(
     () => {
       if (isReducedMotion()) return;
 
       const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+      const yearsCount = { value: 0 };
+      const homesCount = { value: 0 };
 
       tl.from(`.${styles.eyebrowBadge}`, {
         opacity: 0,
@@ -57,6 +61,34 @@ export default function HeroSection() {
             duration: 0.4,
           },
           '-=0.2'
+        )
+        .to(
+          yearsCount,
+          {
+            value: 20,
+            duration: 1.6,
+            ease: 'power1.out',
+            onUpdate: () => {
+              if (yearsCountRef.current) {
+                yearsCountRef.current.textContent = `${Math.round(yearsCount.value)}+`;
+              }
+            },
+          },
+          '<'
+        )
+        .to(
+          homesCount,
+          {
+            value: 25000,
+            duration: 1.8,
+            ease: 'power1.out',
+            onUpdate: () => {
+              if (homesCountRef.current) {
+                homesCountRef.current.textContent = `${Math.round(homesCount.value).toLocaleString('en-IN')}+`;
+              }
+            },
+          },
+          '<'
         )
         .from(
           `.${styles.imageBackdrop}`,
@@ -113,12 +145,12 @@ export default function HeroSection() {
 
           <div className={styles.trustMetrics}>
             <div className={styles.metricItem}>
-              <strong>20+</strong>
+              <strong ref={yearsCountRef} aria-label="20 plus">20+</strong>
               <span>Years of trust</span>
             </div>
             <div className={styles.metricDivider} />
             <div className={styles.metricItem}>
-              <strong>25,000+</strong>
+              <strong ref={homesCountRef} aria-label="25,000 plus">25,000+</strong>
               <span>Happy homes</span>
             </div>
             <div className={styles.metricDivider} />

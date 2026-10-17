@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Heart } from 'lucide-react';
 import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
@@ -15,6 +16,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const router = useRouter();
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const inWishlist = isInWishlist(product.id);
@@ -24,6 +26,16 @@ export default function ProductCard({ product }: ProductCardProps) {
     effectiveOriginalPrice > product.price
       ? Math.round(((effectiveOriginalPrice - product.price) / effectiveOriginalPrice) * 100)
       : null;
+
+  const handleAddToCart = () => {
+    if (!localStorage.getItem('src_auth_token')) {
+      const productPath = `/product/${encodeURIComponent(product.slug || product.id)}`;
+      router.push(`/login?redirect=${encodeURIComponent(productPath)}`);
+      return;
+    }
+
+    addToCart(product, 1);
+  };
 
   return (
     <div className={styles.card}>
@@ -105,7 +117,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <button
             type="button"
             className={styles.addBtn}
-            onClick={() => addToCart(product, 1)}
+            onClick={handleAddToCart}
             aria-label={`Add ${product.name} to cart`}
           >
             Add to cart

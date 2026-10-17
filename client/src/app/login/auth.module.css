@@ -148,6 +148,31 @@
   line-height: 1.5;
 }
 
+.termsAcceptance {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 16px;
+  color: #344238;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.termsAcceptance input {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: #174A2B;
+}
+
+.termsAcceptance a {
+  color: #174A2B;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 /* Google OAuth Button */
 .googleBtn {
   width: 100%;
