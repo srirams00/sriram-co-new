@@ -183,35 +183,17 @@ export default function CheckoutPage() {
       // 3. Create Razorpay order on backend
       const razorpayOrder = await api.createRazorpayOrder(orderPayload, token);
 
-      // Auto-dispatch 'Order Placed' email via Vercel serverless relay
-      if (orderPayload.customerInfo.email) {
-        fetch('/api/email/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            order: {
-              orderNumber: razorpayOrder.orderNumber,
-              customerInfo: orderPayload.customerInfo,
-              orderItems: items.map((it) => ({
-                name: it.product.name,
-                price: it.product.price,
-                quantity: it.quantity,
-                image: it.product.image,
-              })),
-              pricing: razorpayOrder.pricing || {
-                subtotal: items.reduce((acc, it) => acc + it.product.price * it.quantity, 0),
-                deliveryFee: 0,
-                total: razorpayOrder.amount / 100,
-              },
-              paymentMethod: 'razorpay',
-              paymentStatus: 'pending',
-              orderStatus: 'placed',
-              createdAt: new Date(),
-            },
-            templateType: 'placed',
-          }),
-        }).catch((err) => console.warn('[Auto Email] Placed email dispatch error:', err));
-      }
+      const markPaymentAttemptCancelled = async () => {
+        try {
+          await api.cancelRazorpayOrder({
+            orderNumber: razorpayOrder.orderNumber,
+            razorpayOrderId: razorpayOrder.razorpayOrderId,
+          });
+        } catch (error) {
+          console.error('[Order] Could not mark the cancelled payment attempt:', error);
+          setSubmitError('Payment was cancelled, but we could not update the unpaid attempt. It will remain hidden from your orders.');
+        }
+      };
 
       // 4. Open Razorpay Standard Checkout modal
       const options: RazorpayOptions = {
@@ -234,6 +216,7 @@ export default function CheckoutPage() {
           ondismiss: () => {
             setIsSubmitting(false);
             setSubmitError('Payment was cancelled. You can retry whenever you are ready.');
+            void markPaymentAttemptCancelled();
           },
         },
         handler: async (response: RazorpaySuccessResponse) => {
@@ -296,6 +279,7 @@ export default function CheckoutPage() {
           rzp.on('payment.failed', function (failResp: any) {
             setIsSubmitting(false);
             setSubmitError(`Payment failed: ${failResp?.error?.description || 'Transaction declined by bank.'}`);
+            void markPaymentAttemptCancelled();
           });
         } catch {
           // Fallback gracefully if event listener is not supported by current SDK bundle

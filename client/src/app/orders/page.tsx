@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react';
 import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { Order, OrderStatus } from '@/types/order';
 import styles from './orders.module.css';
 
-const ORDER_STEPS = ['Order Placed', 'Confirmed / Processing', 'Out for Delivery', 'Delivered'];
+const ORDER_STEPS = ['Order Placed', 'Confirmed', 'Processing', 'Out for Delivery', 'Delivered'];
 
 function getStatusLabel(status: OrderStatus): string {
   if (status === 'out_for_delivery') return 'Out for Delivery';
@@ -21,23 +21,29 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
   const currentStep = {
     placed: 0,
     confirmed: 1,
-    processing: 1,
-    out_for_delivery: 2,
-    delivered: 3,
+    processing: 2,
+    out_for_delivery: 3,
+    delivered: 4,
     cancelled: -1,
   }[status];
 
   return (
-    <div className={styles.timeline}>
+    <div className={styles.timeline} aria-label={`Order progress: ${getStatusLabel(status)}`}>
       {ORDER_STEPS.map((step, index) => {
-        const isDone = status === 'delivered' || index < currentStep;
-        const isCurrent = index === currentStep && status !== 'delivered';
+        const processingIsComplete = status === 'processing' && index === currentStep;
+        const isDone = status === 'delivered' || index < currentStep || processingIsComplete;
+        const isCurrent = index === currentStep && status !== 'delivered' && !processingIsComplete;
 
         return (
           <React.Fragment key={step}>
             {index > 0 && <div className={styles.timelineLine} />}
-            <div className={`${styles.timelineStep} ${isDone ? styles.stepDone : ''} ${isCurrent ? styles.stepCurrent : ''}`}>
-              <div className={styles.dot}>{isDone ? '✓' : index + 1}</div>
+            <div
+              className={`${styles.timelineStep} ${isDone ? styles.stepDone : ''} ${isCurrent ? styles.stepCurrent : ''}`}
+              aria-current={isCurrent ? 'step' : undefined}
+            >
+              <div className={styles.dot} aria-label={isDone ? 'Complete' : `Step ${index + 1}`}>
+                {isDone ? '✓' : index + 1}
+              </div>
               <span>{step}</span>
             </div>
           </React.Fragment>
@@ -128,7 +134,7 @@ export default function OrdersPage() {
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
 
-  useEffect(() => {
+  const refreshOrders = useCallback(async (showLoading = false) => {
     const token = localStorage.getItem('src_auth_token');
     if (!token) {
       setNeedsSignIn(true);
@@ -136,24 +142,62 @@ export default function OrdersPage() {
       return;
     }
 
+    if (showLoading) setOrdersLoading(true);
+    try {
+      const customerOrders = await api.getMyOrders(token);
+      setOrders(customerOrders);
+      setOrdersError(null);
+    } catch (error: unknown) {
+      setOrdersError(error instanceof Error ? error.message : 'Could not load your orders.');
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshOrders(true);
+
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void refreshOrders();
+    };
+    const intervalId = window.setInterval(() => void refreshOrders(), 15000);
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [refreshOrders]);
+
+  useEffect(() => {
+    if (!searchedOrder) return;
+
     let isMounted = true;
-    api.getMyOrders(token)
-      .then((customerOrders) => {
-        if (isMounted) setOrders(customerOrders);
-      })
-      .catch((error: unknown) => {
+    const refreshTrackedOrder = async () => {
+      try {
+        const order = await api.getOrderByNumber(searchedOrder.orderNumber);
         if (isMounted) {
-          setOrdersError(error instanceof Error ? error.message : 'Could not load your orders.');
+          setSearchedOrder(order);
+          setSearchError(null);
         }
-      })
-      .finally(() => {
-        if (isMounted) setOrdersLoading(false);
-      });
+      } catch (error: unknown) {
+        if (isMounted) {
+          setSearchError(error instanceof Error ? error.message : 'Could not refresh this order.');
+        }
+      }
+    };
+
+    const intervalId = window.setInterval(() => void refreshTrackedOrder(), 15000);
+    window.addEventListener('focus', refreshTrackedOrder);
 
     return () => {
       isMounted = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshTrackedOrder);
     };
-  }, []);
+  }, [searchedOrder?.orderNumber]);
 
   const handleTrackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,20 +272,32 @@ export default function OrdersPage() {
           </div>
         )}
 
-        <div className={styles.tabsRow}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <div className={styles.tabsRow} style={{ flex: 1 }}>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'all' ? styles.activeTab : ''}`}
+              onClick={() => setActiveTab('all')}
+            >
+              All Purchases ({orders.length})
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'active' ? styles.activeTab : ''}`}
+              onClick={() => setActiveTab('active')}
+            >
+              Live Deliveries ({activeOrderCount})
+            </button>
+          </div>
           <button
             type="button"
-            className={`${styles.tabBtn} ${activeTab === 'all' ? styles.activeTab : ''}`}
-            onClick={() => setActiveTab('all')}
+            onClick={() => void refreshOrders(true)}
+            disabled={ordersLoading}
+            className="btn btn-secondary"
+            aria-label="Refresh orders"
           >
-            All Purchases ({orders.length})
-          </button>
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === 'active' ? styles.activeTab : ''}`}
-            onClick={() => setActiveTab('active')}
-          >
-            Live Deliveries ({activeOrderCount})
+            <RefreshCw size={16} className={ordersLoading ? 'animate-spin' : ''} />
+            <span>Refresh</span>
           </button>
         </div>
 

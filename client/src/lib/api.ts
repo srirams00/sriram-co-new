@@ -580,6 +580,22 @@ export const api = {
     return res.json();
   },
 
+  async cancelRazorpayOrder(cancellationData: {
+    orderNumber: string;
+    razorpayOrderId: string;
+  }): Promise<void> {
+    const res = await fetch(`${API_BASE}/orders/razorpay/cancel-order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cancellationData),
+    });
+
+    if (!res.ok) {
+      const errorMsg = await extractErrorMessage(res, 'Could not update cancelled payment attempt');
+      throw new Error(errorMsg);
+    }
+  },
+
   // Orders
   async createOrder(orderData: any, token?: string): Promise<Order> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };

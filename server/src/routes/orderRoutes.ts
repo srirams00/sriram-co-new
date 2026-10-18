@@ -168,11 +168,6 @@ router.post('/razorpay/create-order', orderCreationLimiter, authenticateIfPresen
 
     const savedOrder = await newOrder.save();
 
-    // Asynchronously dispatch Order Placed email to customer via Zoho Mail
-    sendOrderLifecycleEmail(savedOrder, 'placed').catch((err) =>
-      console.warn('[Zoho Mail] Could not dispatch placed email:', err.message)
-    );
-
     res.status(201).json({
       orderId: savedOrder._id,
       orderNumber: savedOrder.orderNumber,
@@ -244,8 +239,6 @@ router.post('/razorpay/verify-payment', paymentVerificationLimiter, async (req: 
       console.warn(
         `[Security Alert] Payment signature verification failed for order ${orderNumber} (IP: ${req.ip || 'unknown'})`
       );
-      order.paymentStatus = 'failed';
-      await order.save();
       res.status(400).json({
         success: false,
         message: 'Invalid payment signature. Verification failed.',
@@ -253,18 +246,42 @@ router.post('/razorpay/verify-payment', paymentVerificationLimiter, async (req: 
       return;
     }
 
-    // Transition to confirmed and paid
-    order.paymentStatus = 'paid';
-    order.orderStatus = 'confirmed';
-    order.razorpayPaymentId = razorpayPaymentId;
-    order.razorpaySignature = razorpaySignature;
-    order.paymentDetails = {
-      verifiedAt: new Date().toISOString(),
-      razorpayOrderId,
-      razorpayPaymentId,
-    };
+    const verifiedAt = new Date().toISOString();
+    const updatedOrder = await Order.findOneAndUpdate(
+      { _id: order._id, paymentStatus: { $ne: 'paid' }, razorpayOrderId },
+      {
+        $set: {
+          paymentStatus: 'paid',
+          orderStatus: 'confirmed',
+          razorpayPaymentId,
+          razorpaySignature,
+          paymentDetails: {
+            verifiedAt,
+            razorpayOrderId,
+            razorpayPaymentId,
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    );
 
-    const updatedOrder = await order.save();
+    if (!updatedOrder) {
+      const currentOrder = await Order.findById(order._id);
+      if (currentOrder?.paymentStatus === 'paid') {
+        res.json({
+          success: true,
+          message: 'Payment already verified.',
+          order: currentOrder,
+        });
+        return;
+      }
+
+      res.status(409).json({
+        success: false,
+        message: 'Payment could not be applied to this order. Please contact support.',
+      });
+      return;
+    }
 
     // Asynchronously dispatch Order Confirmed email to customer via Zoho Mail
     sendOrderLifecycleEmail(updatedOrder, 'confirmed').catch((err) =>
@@ -279,6 +296,44 @@ router.post('/razorpay/verify-payment', paymentVerificationLimiter, async (req: 
   } catch (error: unknown) {
     console.error('Razorpay payment verification error:', error);
     res.status(500).json({ message: getErrorMessage(error) || 'Payment verification failed.' });
+  }
+});
+
+// POST /api/orders/razorpay/cancel-order - Mark an unpaid checkout attempt as cancelled
+router.post('/razorpay/cancel-order', paymentVerificationLimiter, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { orderNumber, razorpayOrderId } = req.body;
+    if (typeof orderNumber !== 'string' || typeof razorpayOrderId !== 'string') {
+      res.status(400).json({ message: 'Order number and Razorpay order ID are required.' });
+      return;
+    }
+
+    const order = await Order.findOneAndUpdate(
+      { orderNumber, razorpayOrderId, paymentStatus: { $in: ['pending', 'failed'] } },
+      { $set: { paymentStatus: 'failed', orderStatus: 'cancelled' } },
+      { new: true, runValidators: true }
+    );
+
+    if (order) {
+      res.json({ success: true, order });
+      return;
+    }
+
+    const currentOrder = await Order.findOne({ orderNumber, razorpayOrderId });
+    if (!currentOrder) {
+      res.status(404).json({ message: 'Order not found.' });
+      return;
+    }
+
+    if (currentOrder.paymentStatus === 'paid') {
+      res.status(409).json({ message: 'A verified payment cannot be cancelled.' });
+      return;
+    }
+
+    res.json({ success: true, order: currentOrder });
+  } catch (error: unknown) {
+    console.error('Razorpay order cancellation error:', error);
+    res.status(500).json({ message: getErrorMessage(error) || 'Could not update the cancelled payment attempt.' });
   }
 });
 
@@ -301,22 +356,26 @@ router.post('/razorpay/webhook', async (req: Request, res: Response): Promise<vo
       const rzpOrderId = paymentEntity?.order_id || payload?.order?.entity?.id;
 
       if (rzpOrderId) {
-        const order = await Order.findOne({ razorpayOrderId: rzpOrderId });
-        if (order && order.paymentStatus !== 'paid') {
-          order.paymentStatus = 'paid';
-          order.orderStatus = 'confirmed';
-          if (paymentEntity?.id) {
-            order.razorpayPaymentId = paymentEntity.id;
-          }
-          order.paymentDetails = {
-            webhookEvent: event,
-            method: paymentEntity?.method,
-            bank: paymentEntity?.bank,
-            vpa: paymentEntity?.vpa,
-            wallet: paymentEntity?.wallet,
-            verifiedAt: new Date().toISOString(),
-          };
-          const savedOrder = await order.save();
+        const savedOrder = await Order.findOneAndUpdate(
+          { razorpayOrderId: rzpOrderId, paymentStatus: { $ne: 'paid' } },
+          {
+            $set: {
+              paymentStatus: 'paid',
+              orderStatus: 'confirmed',
+              ...(paymentEntity?.id ? { razorpayPaymentId: paymentEntity.id } : {}),
+              paymentDetails: {
+                webhookEvent: event,
+                method: paymentEntity?.method,
+                bank: paymentEntity?.bank,
+                vpa: paymentEntity?.vpa,
+                wallet: paymentEntity?.wallet,
+                verifiedAt: new Date().toISOString(),
+              },
+            },
+          },
+          { new: true, runValidators: true }
+        );
+        if (savedOrder) {
           // Asynchronously dispatch Order Confirmed email to customer via Zoho Mail if not already sent
           sendOrderLifecycleEmail(savedOrder, 'confirmed').catch((err) =>
             console.warn('[Zoho Mail Webhook] Could not dispatch confirmed email:', err.message)
@@ -348,7 +407,7 @@ router.get('/mine', authenticate, async (req: AuthRequest, res: Response): Promi
       return;
     }
 
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ user: req.user._id, paymentStatus: 'paid' }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     console.error('Customer order retrieval error:', error);
@@ -360,7 +419,7 @@ router.get('/mine', authenticate, async (req: AuthRequest, res: Response): Promi
 router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
     const { status, search } = req.query;
-    const query: FilterQuery<IOrder> = {};
+    const query: FilterQuery<IOrder> = { paymentStatus: 'paid' };
 
     if (status && status !== 'all') {
       query.orderStatus = status;
@@ -383,7 +442,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void>
     const orders = await Order.find(query).sort({ createdAt: -1 });
 
     // Calculate aggregated stats across all orders
-    const allOrders = await Order.find({});
+    const allOrders = await Order.find({ paymentStatus: 'paid' });
     const totalOrders = allOrders.length;
     const totalRevenue = allOrders.reduce((sum, o) => sum + (o.pricing?.total || 0), 0);
     const pendingCount = allOrders.filter(o => ['placed', 'confirmed', 'processing', 'out_for_delivery'].includes(o.orderStatus)).length;
@@ -415,6 +474,11 @@ router.get('/:orderNumber', authenticateIfPresent, async (req: AuthRequest, res:
     // Authenticated order owner or store administrator receives full unredacted order details
     const isOwner = Boolean(req.user && order.user && req.user._id.toString() === order.user.toString());
     const isAdmin = Boolean(req.user && req.user.role === 'admin');
+
+    if (order.paymentStatus !== 'paid' && !isAdmin) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
 
     if (isOwner || isAdmin) {
       res.json(order);
