@@ -350,7 +350,7 @@ export default function Header() {
               <ArrowRight size={16} />
             </Link>
             <Link 
-              href="/login" 
+              href={currentUser ? '/account' : '/login'}
               className={styles.mobileNavLink}
               onClick={() => setMobileMenuOpen(false)}
             >

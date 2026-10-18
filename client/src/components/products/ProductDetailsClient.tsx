@@ -12,7 +12,8 @@ import {
   ShieldCheck, 
   Truck, 
   RotateCcw,
-  Heart
+  Heart,
+  X
 } from 'lucide-react';
 import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
@@ -32,12 +33,30 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
   const { isInWishlist, toggleWishlist } = useWishlist();
 
   const [selectedImage, setSelectedImage] = useState(product.image);
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const inWishlist = isInWishlist(product.id);
 
   const images = [product.image, ...(product.additionalImages || [])];
   const effectiveOriginalPrice = getEffectiveOriginalPrice(product.price, product.originalPrice);
   const discount = calculateDiscount(product.price, effectiveOriginalPrice);
+
+  React.useEffect(() => {
+    if (!isImageViewerOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsImageViewerOpen(false);
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isImageViewerOpen]);
 
   const redirectToLogin = () => {
     const productPath = `/product/${encodeURIComponent(product.slug || product.id)}`;
@@ -92,13 +111,20 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
               {product.badge && (
                 <span className={styles.badge}>{product.badge}</span>
               )}
-              <img
-                src={getOptimizedImageUrl(selectedImage, 800)}
-                alt={product.name}
-                className={styles.mainImage}
-                width={600}
-                height={600}
-              />
+              <button
+                type="button"
+                className={styles.mainImageButton}
+                onClick={() => setIsImageViewerOpen(true)}
+                aria-label={`View full-size image of ${product.name}`}
+              >
+                <img
+                  src={getOptimizedImageUrl(selectedImage, 800)}
+                  alt={product.name}
+                  className={styles.mainImage}
+                  width={600}
+                  height={600}
+                />
+              </button>
             </div>
 
             {/* Thumbnail Selectors */}
@@ -288,6 +314,31 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
             </div>
           </div>
         </div>
+
+        {isImageViewerOpen && (
+          <div
+            className={styles.imageViewer}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Full-size image of ${product.name}`}
+            onClick={() => setIsImageViewerOpen(false)}
+          >
+            <button
+              type="button"
+              className={styles.imageViewerClose}
+              onClick={() => setIsImageViewerOpen(false)}
+              aria-label="Close full-size image"
+            >
+              <X size={24} />
+            </button>
+            <img
+              src={getOptimizedImageUrl(selectedImage, 1600)}
+              alt={product.name}
+              className={styles.imageViewerImage}
+              onClick={(event) => event.stopPropagation()}
+            />
+          </div>
+        )}
 
         <ProductReviews productId={product.id} />
 

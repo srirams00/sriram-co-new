@@ -18,6 +18,7 @@ import {
   validatePhoneNumber,
   validateEmail,
   validateAddress,
+  validateCity,
   validatePincode,
   validateCheckoutForm,
   cleanPhoneNumber,
@@ -35,7 +36,7 @@ export default function CheckoutPage() {
     phone: '',
     email: '',
     address: '',
-    city: 'Trichy',
+    city: '',
     pincode: '',
     notes: '',
   });
@@ -66,6 +67,9 @@ export default function CheckoutPage() {
         break;
       case 'address':
         error = validateAddress(value).error;
+        break;
+      case 'city':
+        error = validateCity(value).error;
         break;
       case 'pincode':
         error = validatePincode(value).error;
@@ -118,7 +122,7 @@ export default function CheckoutPage() {
     e.preventDefault();
 
     if (!termsAccepted) {
-      setSubmitError('Please agree to the Terms and Conditions before proceeding to payment.');
+      setSubmitError('Please agree to the Terms and Conditions and review the Warranty and Refund Policies before proceeding to payment.');
       return;
     }
 
@@ -533,21 +537,37 @@ export default function CheckoutPage() {
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="city">City / Region *</label>
-                  <select
+                  <input
                     id="city"
                     name="city"
+                    type="text"
+                    required
                     autoComplete="address-level2"
+                    aria-required="true"
+                    aria-invalid={Boolean(touched.city && fieldErrors.city)}
+                    aria-describedby={touched.city && fieldErrors.city ? "city-error" : "city-hint"}
+                    placeholder="Enter your city or region"
                     value={formData.city}
                     onChange={handleChange}
-                  >
-                    <option value="Trichy">Trichy (Same-day / Next-day store dispatch)</option>
-                    <option value="Chennai">Chennai (Fast store dispatch)</option>
-                    <option value="Madurai">Madurai</option>
-                    <option value="Coimbatore">Coimbatore</option>
-                    <option value="Salem">Salem</option>
-                    <option value="Thanjavur">Thanjavur</option>
-                    <option value="Other Tamil Nadu">Other Tamil Nadu Location</option>
-                  </select>
+                    onBlur={() => handleBlur('city')}
+                    className={
+                      touched.city
+                        ? fieldErrors.city
+                          ? styles.inputError
+                          : styles.inputValid
+                        : ''
+                    }
+                  />
+                  {touched.city && fieldErrors.city ? (
+                    <span id="city-error" className={styles.fieldError} role="alert">
+                      <AlertCircle size={14} />
+                      {fieldErrors.city}
+                    </span>
+                  ) : (
+                    <span id="city-hint" className={styles.fieldHint}>
+                      Enter the city or region for delivery
+                    </span>
+                  )}
                 </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="pincode">PIN Code *</label>
@@ -668,8 +688,9 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <label className={styles.termsAcceptance}>
+              <div className={styles.termsAcceptance}>
                 <input
+                  id="termsAccepted"
                   type="checkbox"
                   checked={termsAccepted}
                   onChange={(event) => {
@@ -680,13 +701,21 @@ export default function CheckoutPage() {
                   aria-required="true"
                 />
                 <span>
-                  I agree to the{' '}
+                  <label htmlFor="termsAccepted">I agree to the</label>{' '}
                   <Link href="/terms" target="_blank" rel="noopener noreferrer">
                     Terms and Conditions
                   </Link>
+                  {' '}and acknowledge the{' '}
+                  <Link href="/warranty-policy" target="_blank" rel="noopener noreferrer">
+                    Warranty Policy
+                  </Link>
+                  {' '}and{' '}
+                  <Link href="/refund-policy" target="_blank" rel="noopener noreferrer">
+                    Refund Policy
+                  </Link>
                   .
                 </span>
-              </label>
+              </div>
 
               <button
                 type="submit"

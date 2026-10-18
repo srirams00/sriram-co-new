@@ -195,6 +195,19 @@ export function validateAddress(address: string): ValidationResult {
 }
 
 /**
+ * Validates city or region
+ */
+export function validateCity(city: string): ValidationResult {
+  if (!(city || '').trim()) {
+    return {
+      isValid: false,
+      error: 'City or region is required',
+    };
+  }
+  return { isValid: true, error: null };
+}
+
+/**
  * Comprehensive checkout form validator
  */
 export function validateCheckoutForm(data: CheckoutFormData): CheckoutFormValidation {
@@ -211,6 +224,9 @@ export function validateCheckoutForm(data: CheckoutFormData): CheckoutFormValida
 
   const addressVal = validateAddress(data.address);
   if (!addressVal.isValid && addressVal.error) errors.address = addressVal.error;
+
+  const cityVal = validateCity(data.city);
+  if (!cityVal.isValid && cityVal.error) errors.city = cityVal.error;
 
   const pinVal = validatePincode(data.pincode);
   if (!pinVal.isValid && pinVal.error) errors.pincode = pinVal.error;

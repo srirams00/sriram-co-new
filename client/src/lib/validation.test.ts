@@ -5,6 +5,7 @@ import {
   validateFullName,
   validateEmail,
   validateAddress,
+  validateCity,
   validatePincode,
   validateCheckoutForm,
   cleanPhoneNumber,
@@ -144,6 +145,18 @@ describe('Checkout Form Validation Suite', () => {
     });
   });
 
+  describe('City or Region Validation', () => {
+    it('accepts a city or region entered by the customer', () => {
+      assert.equal(validateCity('Chennai').isValid, true);
+      assert.equal(validateCity('  Coimbatore  ').isValid, true);
+    });
+
+    it('rejects an empty or whitespace-only city or region', () => {
+      assert.equal(validateCity('').isValid, false);
+      assert.equal(validateCity('   ').isValid, false);
+    });
+  });
+
   describe('Full Checkout Form Validator', () => {
     it('returns valid when all fields meet requirements', () => {
       const validForm = {
@@ -165,7 +178,7 @@ describe('Checkout Form Validation Suite', () => {
         phone: '12345',
         email: 'bad-email',
         address: 'Short',
-        city: 'Trichy',
+        city: '',
         pincode: 'abc',
       };
       const result = validateCheckoutForm(invalidForm);
@@ -174,6 +187,7 @@ describe('Checkout Form Validation Suite', () => {
       assert.ok(result.errors.phone);
       assert.ok(result.errors.email);
       assert.ok(result.errors.address);
+      assert.ok(result.errors.city);
       assert.ok(result.errors.pincode);
     });
   });
