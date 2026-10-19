@@ -19,7 +19,7 @@
 
 .storyGrid {
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   gap: 56px;
   align-items: center;
 }
@@ -107,6 +107,145 @@
   line-height: 1.5;
 }
 
+.achievementsSection {
+  padding: 80px 0;
+}
+
+.achievementsHeader {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.achievementsLead {
+  color: var(--color-text-secondary);
+  max-width: 640px;
+  margin: 12px auto 0;
+  line-height: 1.6;
+}
+
+.achievementsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.achievementCard {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.achievementButton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.achievementButton:focus-visible,
+.photoDialogClose:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: -3px;
+}
+
+.achievementCard:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+}
+
+.achievementImage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform 350ms ease;
+}
+
+.achievementCard:hover .achievementImage {
+  transform: scale(1.05);
+}
+
+.achievementCard figcaption {
+  padding: 16px 18px;
+  color: var(--color-text-main);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.photoDialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(92vw, 1100px);
+  max-width: none;
+  max-height: 92vh;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: transparent;
+}
+
+.photoDialog::backdrop {
+  background: rgb(0 0 0 / 82%);
+}
+
+.photoDialogContent {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-xl);
+  background: #ffffff;
+}
+
+.enlargedPhoto {
+  display: block;
+  max-width: 100%;
+  max-height: calc(92vh - 64px);
+  object-fit: contain;
+  border-radius: calc(var(--radius-xl) - 4px);
+}
+
+.photoDialogContent p {
+  margin: 0;
+  color: var(--color-text-main);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.photoDialogClose {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 70%);
+  color: #ffffff;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .achievementCard,
+  .achievementImage {
+    transition: none;
+  }
+}
+
 .ctaSection {
   padding-top: 60px;
 }
@@ -144,14 +283,21 @@
 @media (max-width: 900px) {
   .storyGrid {
     grid-template-columns: 1fr;
+    gap: 32px;
   }
   .valuesGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .achievementsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 600px) {
   .valuesGrid {
+    grid-template-columns: 1fr;
+  }
+  .achievementsGrid {
     grid-template-columns: 1fr;
   }
   .ctaButtons {

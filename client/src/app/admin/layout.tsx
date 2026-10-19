@@ -130,6 +130,9 @@ export default function AdminLayout({
   } else if (pathname.startsWith('/admin/customers')) {
     breadcrumbTag = 'RELATIONSHIPS';
     pageHeaderTitle = 'Customers';
+  } else if (pathname.startsWith('/admin/reviews')) {
+    breadcrumbTag = 'MODERATION';
+    pageHeaderTitle = 'Customer Reviews';
   } else if (pathname.includes('/new')) {
     breadcrumbTag = 'CATALOG';
     pageHeaderTitle = 'Add Product';

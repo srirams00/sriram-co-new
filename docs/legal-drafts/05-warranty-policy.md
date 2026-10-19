@@ -63,7 +63,7 @@ After the initial 5 business days, your product remains covered under the **1-Ye
 In strict compliance with Rule 4(4) of the Consumer Protection (E-Commerce) Rules, 2020:
 - **Grievance Redressal Officer:** S. Ramkumar
 - **Official Address:** Sri Ram & Co, No. 11 Vinola Complex, Tiruchirappalli (Trichy) - 620018, Tamil Nadu
-- **Email:** `support@sriramandco.com` / `ramkumar@sriramandco.in`
+- **Email:** `ramkumar@sriramandco.in`
 - **Customer Helpline:** +91 93454 03136
 - **Acknowledgment SLA:** All grievances are acknowledged within 48 hours with a unique tracking ticket.
 - **Resolution SLA:** Redressal and resolution are completed within one (1) month from ticket receipt.

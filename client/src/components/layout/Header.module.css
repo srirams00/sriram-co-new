@@ -196,6 +196,11 @@
   transition: all var(--transition-fast);
 }
 
+.searchInput::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .searchInput:focus {
   border-color: var(--color-primary);
   background-color: #ffffff;

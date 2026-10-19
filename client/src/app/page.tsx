@@ -1,34 +1,19 @@
 import React from 'react';
 import HeroSection from '@/components/home/HeroSection';
 import TrustFeatures from '@/components/home/TrustFeatures';
-import CategoryGrid from '@/components/home/CategoryGrid';
-import BestSellersGrid from '@/components/home/BestSellersGrid';
-import PromoEditorialGrid from '@/components/home/PromoEditorialGrid';
-import TestimonialsSection from '@/components/home/TestimonialsSection';
-import HowItWorks from '@/components/home/HowItWorks';
-import StoreLocationsSection from '@/components/home/StoreLocationsSection';
-import ContactCtaBar from '@/components/home/ContactCtaBar';
-import { api } from '@/lib/api';
+import LazyHomeSection from '@/components/home/LazyHomeSection';
 
-export default async function HomePage() {
-  const [categories, bestSellers, testimonials, stores] = await Promise.all([
-    api.getCategories(),
-    api.getBestSellers(),
-    api.getTestimonials(),
-    api.getStores(),
-  ]);
-
+export default function HomePage() {
   return (
     <>
       <HeroSection />
       <TrustFeatures />
-      <CategoryGrid categories={categories} />
-      <BestSellersGrid products={bestSellers} />
-      <PromoEditorialGrid />
-      <TestimonialsSection testimonials={testimonials} />
-      <HowItWorks />
-      <StoreLocationsSection stores={stores} />
-      <ContactCtaBar />
+      <LazyHomeSection section="categories" />
+      <LazyHomeSection section="bestSellers" />
+      <LazyHomeSection section="testimonials" />
+      <LazyHomeSection section="howItWorks" />
+      <LazyHomeSection section="stores" />
+      <LazyHomeSection section="contact" />
     </>
   );
 }

@@ -148,6 +148,31 @@
   line-height: 1.5;
 }
 
+.termsAcceptance {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 0;
+  color: #344238;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.termsAcceptance input {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: #174A2B;
+}
+
+.termsAcceptance a {
+  color: #174A2B;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 /* Google OAuth Button */
 .googleBtn {
   width: 100%;
@@ -309,16 +334,18 @@
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.15s ease;
+  transition: background-color 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
 }
 
-.submitBtn:hover {
+.submitBtn:hover:not(:disabled) {
   background-color: #113820;
   transform: translateY(-1px);
 }
 
 .submitBtn:disabled {
-  opacity: 0.65;
+  background-color: #9ca3af;
+  color: #f9fafb;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 

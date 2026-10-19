@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search } from 'lucide-react';
+import { RefreshCw, Search, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { Order, OrderStatus } from '@/types/order';
 import styles from './orders.module.css';
 
-const ORDER_STEPS = ['Order Placed', 'Confirmed / Processing', 'Out for Delivery', 'Delivered'];
+const ORDER_STEPS = ['Order Placed', 'Confirmed', 'Processing', 'Out for Delivery', 'Delivered'];
 
 function getStatusLabel(status: OrderStatus): string {
   if (status === 'out_for_delivery') return 'Out for Delivery';
@@ -21,23 +21,29 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
   const currentStep = {
     placed: 0,
     confirmed: 1,
-    processing: 1,
-    out_for_delivery: 2,
-    delivered: 3,
+    processing: 2,
+    out_for_delivery: 3,
+    delivered: 4,
     cancelled: -1,
   }[status];
 
   return (
-    <div className={styles.timeline}>
+    <div className={styles.timeline} aria-label={`Order progress: ${getStatusLabel(status)}`}>
       {ORDER_STEPS.map((step, index) => {
-        const isDone = status === 'delivered' || index < currentStep;
-        const isCurrent = index === currentStep && status !== 'delivered';
+        const processingIsComplete = status === 'processing' && index === currentStep;
+        const isDone = status === 'delivered' || index < currentStep || processingIsComplete;
+        const isCurrent = index === currentStep && status !== 'delivered' && !processingIsComplete;
 
         return (
           <React.Fragment key={step}>
             {index > 0 && <div className={styles.timelineLine} />}
-            <div className={`${styles.timelineStep} ${isDone ? styles.stepDone : ''} ${isCurrent ? styles.stepCurrent : ''}`}>
-              <div className={styles.dot}>{isDone ? '✓' : index + 1}</div>
+            <div
+              className={`${styles.timelineStep} ${isDone ? styles.stepDone : ''} ${isCurrent ? styles.stepCurrent : ''}`}
+              aria-current={isCurrent ? 'step' : undefined}
+            >
+              <div className={styles.dot} aria-label={isDone ? 'Complete' : `Step ${index + 1}`}>
+                {isDone ? '✓' : index + 1}
+              </div>
               <span>{step}</span>
             </div>
           </React.Fragment>
@@ -47,9 +53,47 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
   );
 }
 
-function OrderCard({ order, highlighted = false }: { order: Order; highlighted?: boolean }) {
+function getPaymentBadgeText(status: string): string {
+  switch (status) {
+    case 'paid':
+      return '✓ Paid';
+    case 'refunded':
+      return '✓ Refunded';
+    case 'refund_initiated':
+      return '⏳ Refund Initiated';
+    case 'failed':
+      return '✕ Failed';
+    default:
+      return status.toUpperCase();
+  }
+}
+
+function getPaymentBadgeColor(status: string): string {
+  switch (status) {
+    case 'paid':
+    case 'refunded':
+      return '#16a34a';
+    case 'refund_initiated':
+      return '#2563eb';
+    case 'failed':
+      return '#dc2626';
+    default:
+      return '#d97706';
+  }
+}
+
+function OrderCard({
+  order,
+  highlighted = false,
+  onCancelClick,
+}: {
+  order: Order;
+  highlighted?: boolean;
+  onCancelClick?: (order: Order) => void;
+}) {
   const isDelivered = order.orderStatus === 'delivered';
   const isCancelled = order.orderStatus === 'cancelled';
+  const isPreDispatch = ['placed', 'confirmed', 'processing'].includes(order.orderStatus);
 
   return (
     <div
@@ -62,7 +106,7 @@ function OrderCard({ order, highlighted = false }: { order: Order; highlighted?:
             Order Ref: <strong>{order.orderNumber}</strong>
           </span>
           <span className={styles.orderDate}>
-            Placed on {new Date(order.createdAt).toLocaleDateString('en-IN')} · {order.paymentMethod === 'razorpay' ? 'Online (Razorpay)' : order.paymentMethod.toUpperCase()} · <strong style={{ color: order.paymentStatus === 'paid' ? '#16a34a' : '#d97706' }}>{order.paymentStatus === 'paid' ? '✓ Paid' : order.paymentStatus.toUpperCase()}</strong>
+            Placed on {new Date(order.createdAt).toLocaleDateString('en-IN')} · {order.paymentMethod === 'razorpay' ? 'Online (Razorpay)' : order.paymentMethod.toUpperCase()} · <strong style={{ color: getPaymentBadgeColor(order.paymentStatus) }}>{getPaymentBadgeText(order.paymentStatus)}</strong>
           </span>
           {order.razorpayPaymentId && (
             <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
@@ -73,9 +117,9 @@ function OrderCard({ order, highlighted = false }: { order: Order; highlighted?:
         <div className={styles.statusBadge}>
           <span
             className={isDelivered ? styles.badgeDelivered : styles.badgeActive}
-            style={isCancelled ? { color: '#DC2626' } : undefined}
+            style={isCancelled ? { color: '#DC2626', backgroundColor: '#fee2e2' } : undefined}
           >
-            {isDelivered ? '✓ ' : isCancelled ? '' : '🚚 '}
+            {isDelivered ? '✓ ' : isCancelled ? '✕ ' : '🚚 '}
             {getStatusLabel(order.orderStatus)}
           </span>
         </div>
@@ -113,6 +157,38 @@ function OrderCard({ order, highlighted = false }: { order: Order; highlighted?:
           <strong>{formatCurrency(order.pricing.total)}</strong>
         </div>
       </div>
+
+      {/* Pre-Dispatch Cancellation & Refund Action Banner */}
+      {isCancelled ? (
+        <div className={styles.cancelledBanner}>
+          <AlertCircle size={16} />
+          <span>
+            Order Cancelled{order.cancellationReason ? ` (${order.cancellationReason})` : ''} ·{' '}
+            {order.paymentStatus === 'refunded' || order.paymentStatus === 'refund_initiated'
+              ? `Refund of ${formatCurrency(order.pricing.total)} initiated to your original payment method (5–7 working days SLA).`
+              : 'No payment was captured for this order.'}
+          </span>
+        </div>
+      ) : isPreDispatch ? (
+        <div className={styles.cancelActionRow}>
+          <span className={styles.cancelInfoNotice}>
+            Eligible for free pre-dispatch cancellation and immediate refund before dispatch.
+          </span>
+          {onCancelClick && (
+            <button
+              type="button"
+              onClick={() => onCancelClick(order)}
+              className={styles.cancelBtn}
+            >
+              Cancel Order &amp; Request Refund
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className={styles.dispatchedNotice}>
+          📦 Order is {order.orderStatus === 'out_for_delivery' ? 'out for delivery' : 'delivered'}. Covered by Sri Ram &amp; Co <strong>7-Day Store Replacement Policy</strong>. Need support? Call +91 93454 03136.
+        </div>
+      )}
     </div>
   );
 }
@@ -128,32 +204,79 @@ export default function OrdersPage() {
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem('src_auth_token');
+  // Cancellation Modal State
+  const [cancelModalOrder, setCancelModalOrder] = useState<Order | null>(null);
+  const [cancelReason, setCancelReason] = useState('Changed mind / Placed by mistake');
+  const [customReason, setCustomReason] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  const refreshOrders = useCallback(async (showLoading = false) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('src_auth_token') : null;
     if (!token) {
       setNeedsSignIn(true);
       setOrdersLoading(false);
       return;
     }
 
+    if (showLoading) setOrdersLoading(true);
+    try {
+      const customerOrders = await api.getMyOrders(token);
+      setOrders(customerOrders);
+      setOrdersError(null);
+    } catch (error: unknown) {
+      setOrdersError(error instanceof Error ? error.message : 'Could not load your orders.');
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshOrders(true);
+
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void refreshOrders();
+    };
+    const intervalId = window.setInterval(() => void refreshOrders(), 15000);
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [refreshOrders]);
+
+  useEffect(() => {
+    if (!searchedOrder) return;
+
     let isMounted = true;
-    api.getMyOrders(token)
-      .then((customerOrders) => {
-        if (isMounted) setOrders(customerOrders);
-      })
-      .catch((error: unknown) => {
+    const refreshTrackedOrder = async () => {
+      try {
+        const order = await api.getOrderByNumber(searchedOrder.orderNumber);
         if (isMounted) {
-          setOrdersError(error instanceof Error ? error.message : 'Could not load your orders.');
+          setSearchedOrder(order);
+          setSearchError(null);
         }
-      })
-      .finally(() => {
-        if (isMounted) setOrdersLoading(false);
-      });
+      } catch (error: unknown) {
+        if (isMounted) {
+          setSearchError(error instanceof Error ? error.message : 'Could not refresh this order.');
+        }
+      }
+    };
+
+    const intervalId = window.setInterval(() => void refreshTrackedOrder(), 15000);
+    window.addEventListener('focus', refreshTrackedOrder);
 
     return () => {
       isMounted = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshTrackedOrder);
     };
-  }, []);
+  }, [searchedOrder?.orderNumber]);
 
   const handleTrackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,6 +295,50 @@ export default function OrdersPage() {
     }
   };
 
+  const handleOpenCancelModal = (order: Order) => {
+    setCancelModalOrder(order);
+    setCancelReason('Changed mind / Placed by mistake');
+    setCustomReason('');
+    setGuestPhone('');
+    setCancelError(null);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelModalOrder) return;
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('src_auth_token') || undefined : undefined;
+    const finalReason = cancelReason === 'Other' ? customReason.trim() || 'Customer requested pre-dispatch cancellation' : cancelReason;
+
+    setCancelling(true);
+    setCancelError(null);
+
+    try {
+      const response = await api.cancelOrder(
+        cancelModalOrder.id || cancelModalOrder.orderNumber,
+        {
+          reason: finalReason,
+          phone: guestPhone.trim(),
+        },
+        token
+      );
+
+      // Update in state
+      const updated = response.order;
+      setOrders((prev) => prev.map((o) => (o.orderNumber === updated.orderNumber ? updated : o)));
+      if (searchedOrder && searchedOrder.orderNumber === updated.orderNumber) {
+        setSearchedOrder(updated);
+      }
+
+      setCancelModalOrder(null);
+      setSuccessToast(response.message || `Order #${updated.orderNumber} cancelled successfully. Refund initiated.`);
+      setTimeout(() => setSuccessToast(null), 8000);
+    } catch (err: unknown) {
+      setCancelError(err instanceof Error ? err.message : 'Failed to cancel order. Please verify your phone number.');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const filteredOrders = activeTab === 'active'
     ? orders.filter((order) => !['delivered', 'cancelled'].includes(order.orderStatus))
     : orders;
@@ -186,12 +353,32 @@ export default function OrdersPage() {
           <span className="text-eyebrow">Customer Care</span>
           <h1 className="heading-section">Track &amp; View Orders</h1>
           <p className={styles.bannerSubtitle}>
-            Monitor your live store delivery or inspect past purchase invoices.
+            Monitor your live store delivery or manage orders and pre-dispatch refunds.
           </p>
         </div>
       </div>
 
       <div className="container">
+        {successToast && (
+          <div
+            style={{
+              backgroundColor: '#f0fdf4',
+              border: '1px solid #86efac',
+              borderRadius: '12px',
+              padding: '14px 18px',
+              marginBottom: '24px',
+              color: '#15803d',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontWeight: 500,
+            }}
+          >
+            <CheckCircle2 size={20} />
+            <span>{successToast}</span>
+          </div>
+        )}
+
         <div className={styles.trackCard}>
           <div className={styles.trackContent}>
             <h3>Track Direct Delivery</h3>
@@ -224,24 +411,40 @@ export default function OrdersPage() {
             <h3 style={{ color: '#174A2B', marginBottom: '12px', fontSize: '1.1rem' }}>
               Live Delivery Status: {searchedOrder.orderNumber}
             </h3>
-            <OrderCard order={searchedOrder} highlighted />
+            <OrderCard
+              order={searchedOrder}
+              highlighted
+              onCancelClick={handleOpenCancelModal}
+            />
           </div>
         )}
 
-        <div className={styles.tabsRow}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <div className={styles.tabsRow} style={{ flex: 1 }}>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'all' ? styles.activeTab : ''}`}
+              onClick={() => setActiveTab('all')}
+            >
+              All Purchases ({orders.length})
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'active' ? styles.activeTab : ''}`}
+              onClick={() => setActiveTab('active')}
+            >
+              Live Deliveries ({activeOrderCount})
+            </button>
+          </div>
           <button
             type="button"
-            className={`${styles.tabBtn} ${activeTab === 'all' ? styles.activeTab : ''}`}
-            onClick={() => setActiveTab('all')}
+            onClick={() => void refreshOrders(true)}
+            disabled={ordersLoading}
+            className="btn btn-secondary"
+            aria-label="Refresh orders"
           >
-            All Purchases ({orders.length})
-          </button>
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === 'active' ? styles.activeTab : ''}`}
-            onClick={() => setActiveTab('active')}
-          >
-            Live Deliveries ({activeOrderCount})
+            <RefreshCw size={16} className={ordersLoading ? 'animate-spin' : ''} />
+            <span>Refresh</span>
           </button>
         </div>
 
@@ -252,17 +455,132 @@ export default function OrdersPage() {
           )}
           {!ordersLoading && !ordersError && needsSignIn && (
             <p>
-              <Link href="/login">Sign in</Link> to view the orders placed with your account.
+              <Link href="/login" style={{ color: '#174A2B', textDecoration: 'underline', fontWeight: 600 }}>Sign in</Link> to view all orders placed with your account, or track a specific purchase above.
             </p>
           )}
           {!ordersLoading && !ordersError && !needsSignIn && filteredOrders.length === 0 && (
             <p>{activeTab === 'active' ? 'You have no active deliveries.' : 'You have not placed any orders yet.'}</p>
           )}
           {filteredOrders.map((order) => (
-            <OrderCard key={order.id} order={order} />
+            <OrderCard
+              key={order.id || order.orderNumber}
+              order={order}
+              onCancelClick={handleOpenCancelModal}
+            />
           ))}
         </div>
       </div>
+
+      {/* Cancellation & Refund Modal */}
+      {cancelModalOrder && (
+        <div className={styles.modalOverlay} onClick={() => !cancelling && setCancelModalOrder(null)}>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Cancel Order &amp; Request Refund</h3>
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={() => setCancelModalOrder(null)}
+                className={styles.closeModalBtn}
+                aria-label="Close modal"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <p>
+                You are requesting pre-dispatch cancellation for Order <strong>#{cancelModalOrder.orderNumber}</strong>.
+              </p>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Reason for cancellation</label>
+                <select
+                  className={styles.formSelect}
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  disabled={cancelling}
+                >
+                  <option value="Changed mind / Placed by mistake">Changed mind / Placed by mistake</option>
+                  <option value="Need to change delivery address or phone">Need to change delivery address or phone</option>
+                  <option value="Want to purchase a different appliance / model">Want to purchase a different appliance / model</option>
+                  <option value="Found an alternative / duplicate order">Found an alternative / duplicate order</option>
+                  <option value="Delivery timeframe does not suit me">Delivery timeframe does not suit me</option>
+                  <option value="Other">Other (specify below)</option>
+                </select>
+              </div>
+
+              {cancelReason === 'Other' && (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Please describe the reason</label>
+                  <input
+                    type="text"
+                    className={styles.formInput}
+                    placeholder="Enter reason..."
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    disabled={cancelling}
+                  />
+                </div>
+              )}
+
+              {needsSignIn && (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Verify Checkout Phone Number</label>
+                  <input
+                    type="tel"
+                    className={styles.formInput}
+                    placeholder="e.g. 9345403136"
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value)}
+                    disabled={cancelling}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                    Required for unauthenticated guest orders to prevent unauthorized cancellations.
+                  </span>
+                </div>
+              )}
+
+              <div className={styles.refundAlertBox}>
+                <strong>Refund Guarantee SLA:</strong>
+                <br />
+                {cancelModalOrder.paymentStatus === 'paid' ? (
+                  <>
+                    Full refund of <strong>{formatCurrency(cancelModalOrder.pricing.total)}</strong> will be credited directly back to your original payment method (UPI / Card / Netbanking) within <strong>5–7 working days</strong>.
+                  </>
+                ) : (
+                  <>No payment was captured for this order. No charges will be incurred.</>
+                )}
+              </div>
+
+              {cancelError && (
+                <p role="alert" style={{ color: '#dc2626', fontSize: '0.8125rem', fontWeight: 600 }}>
+                  {cancelError}
+                </p>
+              )}
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={() => setCancelModalOrder(null)}
+                className={styles.keepOrderBtn}
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={handleConfirmCancel}
+                className={styles.confirmCancelBtn}
+              >
+                {cancelling ? 'Processing Refund...' : 'Confirm Cancellation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

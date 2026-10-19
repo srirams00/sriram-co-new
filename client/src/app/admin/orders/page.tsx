@@ -607,7 +607,7 @@ export default function AdminOrdersPage() {
 
       {/* Driver Assignment Prompt Modal (Out for Delivery) */}
       {driverModal && (
-        <div className={styles.modalOverlay} onClick={() => setDriverModal(null)}>
+        <div className={styles.modalOverlay}>
           <div className={styles.promptDialog} onClick={(e) => e.stopPropagation()}>
             <div className={styles.dialogHeader}>
               <h3 className={styles.dialogTitle}>Assign Delivery Driver</h3>

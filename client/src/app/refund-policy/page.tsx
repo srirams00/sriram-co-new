@@ -114,7 +114,7 @@ export default function RefundPolicyPage() {
 
         <h3>How to Initiate Your Request (Within 5 Business Days):</h3>
         <ol>
-          <li>Send an email to <strong>support@sriramandco.com</strong> or WhatsApp our support line at <strong>+91 93454 03136</strong>.</li>
+          <li>Send an email to <strong>ramkumar@sriramandco.in</strong> or WhatsApp our support line at <strong>+91 93454 03136</strong>.</li>
           <li>Provide your Order Number (e.g., <code>SRC-123456</code>), along with photos or a brief video displaying the issue and carton serial number.</li>
           <li>Our store dispatch team will arrange a doorstep inspection and exchange with zero reverse pickup fees.</li>
         </ol>

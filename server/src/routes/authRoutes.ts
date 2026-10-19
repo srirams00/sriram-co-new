@@ -398,7 +398,7 @@ router.get('/customers', requireAdmin, async (req: Request, res: Response, next:
     }
 
     const customers = await User.find(query).sort({ createdAt: -1 });
-    const allOrders = await Order.find({});
+    const allOrders = await Order.find({ paymentStatus: 'paid' });
 
     const enrichedCustomers = customers.map((c) => {
       const customerOrders = allOrders.filter(

@@ -6,7 +6,7 @@ import {
   getEffectiveOriginalPrice,
   getWhatsAppUrl,
   getOptimizedImageUrl,
-} from './utils.ts';
+} from './utils';
 
 describe('Client Utility Suite (Low Priority Coverage)', () => {
   describe('formatCurrency', () => {

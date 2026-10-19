@@ -1,13 +1,51 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { Product, IProduct } from '../models/Product.js';
 import { Order } from '../models/Order.js';
+import { Review } from '../models/Review.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { requireAdmin, AuthRequest } from '../middleware/authMiddleware.js';
 import { cacheService } from '../utils/cacheService.js';
 
 const router = Router();
+
+async function attachReviewStats(products: IProduct[]) {
+  if (products.length === 0) return [];
+
+  const summaries = await Review.aggregate<{
+    _id: Types.ObjectId;
+    averageRating: number;
+    reviewCount: number;
+  }>([
+    { $match: { product: { $in: products.map((product) => product._id) } } },
+    {
+      $group: {
+        _id: '$product',
+        averageRating: { $avg: '$rating' },
+        reviewCount: { $sum: 1 },
+      },
+    },
+  ]);
+  const summaryByProduct = new Map(
+    summaries.map((summary) => [
+      String(summary._id),
+      {
+        rating: Math.round(summary.averageRating * 10) / 10,
+        reviewCount: summary.reviewCount,
+      },
+    ])
+  );
+
+  return products.map((product) => {
+    const summary = summaryByProduct.get(String(product._id));
+    return {
+      ...product.toJSON(),
+      rating: summary?.rating ?? 0,
+      reviewCount: summary?.reviewCount ?? 0,
+    };
+  });
+}
 
 // Helper to convert strings to clean URL slugs
 function slugify(text: string): string {
@@ -57,7 +95,11 @@ function deriveCategorySlug(categoryName: string, explicitSlug?: string): string
 // 24-character hexadecimal MongoDB ObjectId validator
 const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid MongoDB ObjectId');
 
-// Secure Image URL validator (HTTPS protocol, relative site asset paths, or base64 data URLs)
+function isHalfStarRating(rating: number): boolean {
+  return Number.isInteger(rating * 2);
+}
+
+// Secure image URL validator (HTTPS protocol, relative site asset paths, or base64 data URLs)
 const ProductImageSchema = z.string().trim().refine(
   (val) =>
     /^https:\/\/.+/i.test(val) ||
@@ -87,6 +129,7 @@ const ProductInputSchema = z.object({
   fullDescription: z.string().trim().min(10, 'Full description is required'),
   price: z.coerce.number().positive('Price must be greater than 0'),
   originalPrice: z.coerce.number().positive().nullable().optional(),
+  rating: z.coerce.number().min(0).max(5).optional(),
   image: ProductImageSchema,
   additionalImages: z.array(ProductImageSchema).optional().default([]),
   badge: z.enum(['Best Seller', 'New', 'Top Rated', 'Popular', 'Sale']).nullable().optional().or(z.literal('')),
@@ -179,7 +222,7 @@ router.get('/id/:id', async (req: Request, res: Response, next: NextFunction): P
       throw new AppError(`Product not found`, 404, 'PRODUCT_NOT_FOUND');
     }
 
-    res.json(product);
+    res.json((await attachReviewStats([product]))[0]);
   } catch (error) {
     next(error);
   }
@@ -197,12 +240,17 @@ router.get('/featured', async (_req: Request, res: Response, next: NextFunction)
 
     const products = await Product.find({
       isArchived: { $ne: true },
+      slug: { $ne: 'live-payment-test-item' },
       $or: [{ badge: 'Best Seller' }, { badge: 'Top Rated' }],
     }).limit(8);
 
-    const result = products.length > 0 ? products : await Product.find({ isArchived: { $ne: true } }).limit(8);
-    cacheService.set('products:featured', result, 60);
-    res.json(result);
+    const result =
+      products.length > 0
+        ? products
+        : await Product.find({ isArchived: { $ne: true }, slug: { $ne: 'live-payment-test-item' } }).limit(8);
+    const productsWithReviewStats = await attachReviewStats(result);
+    cacheService.set('products:featured', productsWithReviewStats, 60);
+    res.json(productsWithReviewStats);
   } catch (error) {
     next(error);
   }
@@ -214,7 +262,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
     const parsed = ProductQuerySchema.parse(req.query);
     const { page, limit, category, query, minPrice, maxPrice, sortBy } = parsed;
 
-    const filter: Record<string, any> = { isArchived: { $ne: true } };
+    const filter: Record<string, any> = {
+      isArchived: { $ne: true },
+      slug: { $ne: 'live-payment-test-item' },
+    };
 
     if (category) {
       const normalizedSlug = category.toLowerCase().trim();
@@ -280,7 +331,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
     const totalPages = Math.ceil(total / limit) || 1;
 
     res.json({
-      data: products,
+      data: await attachReviewStats(products),
       pagination: {
         page,
         limit,
@@ -299,6 +350,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
 router.post('/', requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const validatedData = ProductInputSchema.parse(req.body);
+    if (validatedData.rating !== undefined && !isHalfStarRating(validatedData.rating)) {
+      throw new AppError('Product rating must use half-star increments', 400, 'INVALID_PRODUCT_RATING');
+    }
 
     // Auto-generate clean slug
     let baseSlug = slugify(validatedData.name);
@@ -322,7 +376,7 @@ router.post('/', requireAdmin, async (req: AuthRequest, res: Response, next: Nex
       slug: finalSlug,
       categorySlug,
       sku,
-      rating: 0,
+      rating: validatedData.rating ?? 0,
       reviewCount: 0,
     });
 
@@ -350,6 +404,13 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res: Response, next: N
     if (!product || product.isArchived) {
       throw new AppError('Product not found', 404, 'PRODUCT_NOT_FOUND');
     }
+    if (
+      validatedData.rating !== undefined
+      && !isHalfStarRating(validatedData.rating)
+      && validatedData.rating !== product.rating
+    ) {
+      throw new AppError('Product rating must use half-star increments', 400, 'INVALID_PRODUCT_RATING');
+    }
 
     // If name changed, optionally regenerate slug if needed
     if (product.name !== validatedData.name) {
@@ -371,6 +432,9 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res: Response, next: N
     product.fullDescription = validatedData.fullDescription;
     product.price = validatedData.price;
     product.originalPrice = validatedData.originalPrice || undefined;
+    if (validatedData.rating !== undefined) {
+      product.rating = validatedData.rating;
+    }
     product.image = validatedData.image;
     product.additionalImages = validatedData.additionalImages || [];
     product.badge = (validatedData.badge || undefined) as IProduct['badge'];
@@ -383,7 +447,7 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res: Response, next: N
     cacheService.invalidatePattern('products:');
     cacheService.invalidatePattern('categories:');
 
-    res.json(product);
+    res.json((await attachReviewStats([product]))[0]);
   } catch (error) {
     next(error);
   }
@@ -467,6 +531,9 @@ router.delete('/:id', requireAdmin, async (req: AuthRequest, res: Response, next
 // GET /api/products/:slug - Single product lookup by slug (for public store)
 router.get('/:slug', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    if (req.params.slug === 'live-payment-test-item') {
+      throw new AppError(`Product with slug '${req.params.slug}' not found`, 404, 'PRODUCT_NOT_FOUND');
+    }
     const product = await Product.findOne({ slug: req.params.slug, isArchived: { $ne: true } });
     if (!product) {
       throw new AppError(`Product with slug '${req.params.slug}' not found`, 404, 'PRODUCT_NOT_FOUND');

@@ -2,7 +2,7 @@
 
 **Effective Date:** 14 October 2026  
 **Governing Statute:** Consumer Protection Act, 2019 & Indian Contract Act, 1872  
-**Support Desk:** support@sriramandco.com | Phone: +91 93454 03136  
+**Support Desk:** ramkumar@sriramandco.in | Phone: +91 93454 03136  
 **Fulfillment Hubs:** Trichy Main Branch & Chennai Experience Store  
 
 ---
@@ -28,7 +28,7 @@ Customers must inspect their orders upon delivery. In the event of an issue, **c
 4. **Missing Components:** Original factory accessories, cords, or attachments are absent from the sealed packaging.
 
 ### How to Initiate a Request (Within 5 Business Days):
-1. Contact customer support via WhatsApp or email (`support@sriramandco.com` / +91 93454 03136) **within 5 business days** of receiving your package.
+1. Contact customer support via WhatsApp or email (`ramkumar@sriramandco.in` / +91 93454 03136) **within 5 business days** of receiving your package.
 2. Provide your Order Number, photographs or a short video showing the defect/damage, and the serial number on the carton.
 3. Our store logistics team will coordinate doorstep pickup or a replacement exchange at **zero additional charge**.
 

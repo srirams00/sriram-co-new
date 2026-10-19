@@ -3,6 +3,7 @@
   inset: 0;
   background-color: rgba(17, 24, 39, 0.45);
   backdrop-filter: blur(4px);
+  overscroll-behavior: contain;
   z-index: 100;
   display: flex;
   justify-content: flex-end;
@@ -107,6 +108,7 @@
 .drawerBody {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px 24px;
 }
 

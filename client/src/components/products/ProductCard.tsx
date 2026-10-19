@@ -2,11 +2,13 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Heart, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Heart } from 'lucide-react';
 import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { formatCurrency, getOptimizedImageUrl, getEffectiveOriginalPrice } from '@/lib/utils';
+import RatingStars from './RatingStars';
 import styles from './ProductCard.module.css';
 
 interface ProductCardProps {
@@ -14,6 +16,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const router = useRouter();
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const inWishlist = isInWishlist(product.id);
@@ -23,6 +26,16 @@ export default function ProductCard({ product }: ProductCardProps) {
     effectiveOriginalPrice > product.price
       ? Math.round(((effectiveOriginalPrice - product.price) / effectiveOriginalPrice) * 100)
       : null;
+
+  const handleAddToCart = () => {
+    if (!localStorage.getItem('src_auth_token')) {
+      const productPath = `/product/${encodeURIComponent(product.slug || product.id)}`;
+      router.push(`/login?redirect=${encodeURIComponent(productPath)}`);
+      return;
+    }
+
+    addToCart(product, 1);
+  };
 
   return (
     <div className={styles.card}>
@@ -46,7 +59,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </button>
 
         <Link
-          href={`/product/${product.slug}`}
+          href={`/product/${encodeURIComponent(product.slug || product.id)}`}
           className={styles.imageLink}
           aria-hidden="true"
           tabIndex={-1}
@@ -67,13 +80,15 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className={styles.content}>
         <div className={styles.categoryRow}>
           <span className={styles.category}>{product.category}</span>
-          <div className={styles.rating} aria-label={`Rating: ${product.rating} out of 5 stars`}>
-            <Star size={12} fill="#E5A11A" color="#E5A11A" aria-hidden="true" />
-            <span aria-hidden="true">{product.rating}</span>
-          </div>
+          {product.reviewCount > 0 && (
+            <div className={styles.rating}>
+              <RatingStars rating={product.rating} size={12} />
+              <span>{product.rating.toFixed(1)}</span>
+            </div>
+          )}
         </div>
 
-        <Link href={`/product/${product.slug}`} className={styles.titleLink}>
+        <Link href={`/product/${encodeURIComponent(product.slug || product.id)}`} className={styles.titleLink}>
           <h3 className={styles.title}>{product.name}</h3>
         </Link>
 
@@ -102,7 +117,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <button
             type="button"
             className={styles.addBtn}
-            onClick={() => addToCart(product, 1)}
+            onClick={handleAddToCart}
             aria-label={`Add ${product.name} to cart`}
           >
             Add to cart

@@ -1,0 +1,99 @@
+.placeholder {
+  min-height: 360px;
+  padding: var(--space-4xl) 0;
+  background-color: var(--color-bg-page);
+}
+
+.categories,
+.bestSellers {
+  min-height: 540px;
+}
+
+.testimonials,
+.stores {
+  min-height: 460px;
+}
+
+.heading,
+.image,
+.line {
+  display: block;
+  background: linear-gradient(90deg, #eeeeeb 25%, #f7f7f5 50%, #eeeeeb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+.heading {
+  width: min(280px, 65%);
+  height: 32px;
+  margin-bottom: 28px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.card {
+  min-width: 0;
+}
+
+.image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 12px;
+}
+
+.line {
+  width: 80%;
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+.shortLine {
+  width: 55%;
+  height: 12px;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: inherit;
+  padding: 24px;
+  text-align: center;
+}
+
+.error p {
+  color: var(--color-text-secondary);
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .categories,
+  .bestSellers {
+    min-height: 480px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heading,
+  .image,
+  .line {
+    animation: none;
+  }
+}

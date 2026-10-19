@@ -21,6 +21,7 @@ import storeRoutes from './routes/storeRoutes';
 import testimonialRoutes from './routes/testimonialRoutes';
 import orderRoutes from './routes/orderRoutes';
 import authRoutes from './routes/authRoutes';
+import reviewRoutes from './routes/reviewRoutes';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -128,6 +129,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/reviews', reviewRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/stores', storeRoutes);

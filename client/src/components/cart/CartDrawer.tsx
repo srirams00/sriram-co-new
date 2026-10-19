@@ -21,6 +21,17 @@ export default function CartDrawer() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isCartDrawerOpen, setIsCartDrawerOpen]);
 
+  React.useEffect(() => {
+    if (!isCartDrawerOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isCartDrawerOpen]);
+
   if (!isCartDrawerOpen) return null;
 
   const progressPercent = Math.min(100, Math.round((summary.subtotal / 1000) * 100));

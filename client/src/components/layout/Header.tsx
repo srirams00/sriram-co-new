@@ -52,7 +52,7 @@ function ProductSearchSuggestions({
           {suggestions.map(product => (
             <li key={product.id}>
               <Link
-                href={`/product/${product.slug}`}
+                href={`/product/${encodeURIComponent(product.slug || product.id)}`}
                 className={styles.searchSuggestion}
                 onClick={onSelect}
               >
@@ -252,7 +252,7 @@ export default function Header() {
           </Link>
 
           <Link
-            href="/shop"
+            href="/wishlist"
             className={styles.actionBtn}
             aria-label={`Wishlist with ${wishlistIds.length} ${wishlistIds.length === 1 ? 'item' : 'items'}`}
             title="Wishlist"
@@ -350,7 +350,7 @@ export default function Header() {
               <ArrowRight size={16} />
             </Link>
             <Link 
-              href="/login" 
+              href={currentUser ? '/account' : '/login'}
               className={styles.mobileNavLink}
               onClick={() => setMobileMenuOpen(false)}
             >

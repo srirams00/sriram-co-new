@@ -4,10 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   CheckCircle2, 
-  Truck, 
-  Store, 
-  CreditCard, 
-  QrCode, 
   ArrowLeft, 
   ShieldCheck,
   AlertCircle,
@@ -22,6 +18,7 @@ import {
   validatePhoneNumber,
   validateEmail,
   validateAddress,
+  validateCity,
   validatePincode,
   validateCheckoutForm,
   cleanPhoneNumber,
@@ -39,7 +36,7 @@ export default function CheckoutPage() {
     phone: '',
     email: '',
     address: '',
-    city: 'Trichy',
+    city: '',
     pincode: '',
     notes: '',
   });
@@ -47,9 +44,9 @@ export default function CheckoutPage() {
   // Real-time Validation State
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [policyAgreed, setPolicyAgreed] = useState(false);
+  const [policyError, setPolicyError] = useState<string | null>(null);
 
-  const [deliveryMethod, setDeliveryMethod] = useState<'store_delivery' | 'express' | 'pickup'>('store_delivery');
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
   const [placedPaymentId, setPlacedPaymentId] = useState('');
@@ -70,6 +67,9 @@ export default function CheckoutPage() {
         break;
       case 'address':
         error = validateAddress(value).error;
+        break;
+      case 'city':
+        error = validateCity(value).error;
         break;
       case 'pincode':
         error = validatePincode(value).error;
@@ -145,6 +145,15 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!policyAgreed) {
+      setPolicyError('You must agree to the Terms of Service, Privacy Policy, and Refund Policy to proceed.');
+      setSubmitError('Please accept the Terms of Service and store policies before placing your order.');
+      const el = document.getElementById('policyConsentCheckbox');
+      if (el) el.focus();
+      return;
+    }
+
+    setPolicyError(null);
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -173,41 +182,22 @@ export default function CheckoutPage() {
           name: item.product.name,
           quantity: item.quantity,
         })),
-        notes: `Delivery Method: ${deliveryMethod === 'pickup' ? 'Store Pickup' : 'Direct Store Delivery'}`,
       };
 
       // 3. Create Razorpay order on backend
       const razorpayOrder = await api.createRazorpayOrder(orderPayload, token);
 
-      // Auto-dispatch 'Order Placed' email via Vercel serverless relay
-      if (orderPayload.customerInfo.email) {
-        fetch('/api/email/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            order: {
-              orderNumber: razorpayOrder.orderNumber,
-              customerInfo: orderPayload.customerInfo,
-              orderItems: items.map((it) => ({
-                name: it.product.name,
-                price: it.product.price,
-                quantity: it.quantity,
-                image: it.product.image,
-              })),
-              pricing: razorpayOrder.pricing || {
-                subtotal: items.reduce((acc, it) => acc + it.product.price * it.quantity, 0),
-                deliveryFee: 0,
-                total: razorpayOrder.amount / 100,
-              },
-              paymentMethod: 'razorpay',
-              paymentStatus: 'pending',
-              orderStatus: 'placed',
-              createdAt: new Date(),
-            },
-            templateType: 'placed',
-          }),
-        }).catch((err) => console.warn('[Auto Email] Placed email dispatch error:', err));
-      }
+      const markPaymentAttemptCancelled = async () => {
+        try {
+          await api.cancelRazorpayOrder({
+            orderNumber: razorpayOrder.orderNumber,
+            razorpayOrderId: razorpayOrder.razorpayOrderId,
+          });
+        } catch (error) {
+          console.error('[Order] Could not mark the cancelled payment attempt:', error);
+          setSubmitError('Payment was cancelled, but we could not update the unpaid attempt. It will remain hidden from your orders.');
+        }
+      };
 
       // 4. Open Razorpay Standard Checkout modal
       const options: RazorpayOptions = {
@@ -230,6 +220,7 @@ export default function CheckoutPage() {
           ondismiss: () => {
             setIsSubmitting(false);
             setSubmitError('Payment was cancelled. You can retry whenever you are ready.');
+            void markPaymentAttemptCancelled();
           },
         },
         handler: async (response: RazorpaySuccessResponse) => {
@@ -292,6 +283,7 @@ export default function CheckoutPage() {
           rzp.on('payment.failed', function (failResp: any) {
             setIsSubmitting(false);
             setSubmitError(`Payment failed: ${failResp?.error?.description || 'Transaction declined by bank.'}`);
+            void markPaymentAttemptCancelled();
           });
         } catch {
           // Fallback gracefully if event listener is not supported by current SDK bundle
@@ -533,21 +525,37 @@ export default function CheckoutPage() {
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="city">City / Region *</label>
-                  <select
+                  <input
                     id="city"
                     name="city"
+                    type="text"
+                    required
                     autoComplete="address-level2"
+                    aria-required="true"
+                    aria-invalid={Boolean(touched.city && fieldErrors.city)}
+                    aria-describedby={touched.city && fieldErrors.city ? "city-error" : "city-hint"}
+                    placeholder="Enter your city or region"
                     value={formData.city}
                     onChange={handleChange}
-                  >
-                    <option value="Trichy">Trichy (Same-day / Next-day store dispatch)</option>
-                    <option value="Chennai">Chennai (Fast store dispatch)</option>
-                    <option value="Madurai">Madurai</option>
-                    <option value="Coimbatore">Coimbatore</option>
-                    <option value="Salem">Salem</option>
-                    <option value="Thanjavur">Thanjavur</option>
-                    <option value="Other Tamil Nadu">Other Tamil Nadu Location</option>
-                  </select>
+                    onBlur={() => handleBlur('city')}
+                    className={
+                      touched.city
+                        ? fieldErrors.city
+                          ? styles.inputError
+                          : styles.inputValid
+                        : ''
+                    }
+                  />
+                  {touched.city && fieldErrors.city ? (
+                    <span id="city-error" className={styles.fieldError} role="alert">
+                      <AlertCircle size={14} />
+                      {fieldErrors.city}
+                    </span>
+                  ) : (
+                    <span id="city-hint" className={styles.fieldHint}>
+                      Enter the city or region for delivery
+                    </span>
+                  )}
                 </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="pincode">PIN Code *</label>
@@ -587,57 +595,10 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Step 3: Delivery Method */}
+            {/* Step 3: 100% Online Payment via Razorpay */}
             <div className={styles.stepSection}>
               <div className={styles.stepHeader}>
                 <span className={styles.stepNumber}>3</span>
-                <h3>Delivery Method</h3>
-              </div>
-              <div className={styles.optionsList}>
-                <label htmlFor="delivery-store" className={`${styles.optionLabel} ${deliveryMethod === 'store_delivery' ? styles.optionActive : ''}`}>
-                  <input
-                    id="delivery-store"
-                    type="radio"
-                    name="deliveryMethod"
-                    value="store_delivery"
-                    checked={deliveryMethod === 'store_delivery'}
-                    onChange={() => setDeliveryMethod('store_delivery')}
-                  />
-                  <div className={styles.optionContent}>
-                    <Truck size={20} className={styles.optionIcon} />
-                    <div>
-                      <strong>Standard Direct Store Delivery</strong>
-                      <span>Dispatched directly by Sriram &amp; Co delivery team within 24–48 hours</span>
-                    </div>
-                  </div>
-                  <strong className={styles.freeText}>FREE</strong>
-                </label>
-
-                <label htmlFor="delivery-pickup" className={`${styles.optionLabel} ${deliveryMethod === 'pickup' ? styles.optionActive : ''}`}>
-                  <input
-                    id="delivery-pickup"
-                    type="radio"
-                    name="deliveryMethod"
-                    value="pickup"
-                    checked={deliveryMethod === 'pickup'}
-                    onChange={() => setDeliveryMethod('pickup')}
-                  />
-                  <div className={styles.optionContent}>
-                    <Store size={20} className={styles.optionIcon} />
-                    <div>
-                      <strong>Store Counter Pickup</strong>
-                      <span>Pick up from our Trichy Main Branch or Chennai Experience Store</span>
-                    </div>
-                  </div>
-                  <strong className={styles.freeText}>FREE</strong>
-                </label>
-              </div>
-            </div>
-
-            {/* Step 4: 100% Online Payment via Razorpay */}
-            <div className={styles.stepSection}>
-              <div className={styles.stepHeader}>
-                <span className={styles.stepNumber}>4</span>
                 <h3>Payment Method</h3>
               </div>
               <div className={styles.optionsList}>
@@ -715,9 +676,43 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              <div className={styles.policyConsentGroup}>
+                <label className={styles.policyConsentLabel} htmlFor="policyConsentCheckbox">
+                  <input
+                    type="checkbox"
+                    id="policyConsentCheckbox"
+                    checked={policyAgreed}
+                    onChange={(e) => {
+                      setPolicyAgreed(e.target.checked);
+                      if (e.target.checked) {
+                        setPolicyError(null);
+                        setSubmitError(null);
+                      }
+                    }}
+                    className={styles.policyCheckbox}
+                    aria-required="true"
+                    aria-invalid={Boolean(policyError)}
+                    aria-describedby={policyError ? "policy-error" : undefined}
+                  />
+                  <span>
+                    I have read and agree to the{' '}
+                    <Link href="/terms" target="_blank" className={styles.legalLink}>Terms of Service</Link>,{' '}
+                    <Link href="/privacy" target="_blank" className={styles.legalLink}>Privacy Policy</Link>,{' '}
+                    <Link href="/warranty-policy" target="_blank" className={styles.legalLink}>Warranty Policy</Link>, and{' '}
+                    <Link href="/refund-policy" target="_blank" className={styles.legalLink}>Refund Policy</Link>. *
+                  </span>
+                </label>
+                {policyError && (
+                  <span id="policy-error" className={styles.fieldError} role="alert">
+                    <AlertCircle size={14} />
+                    {policyError}
+                  </span>
+                )}
+              </div>
+
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !policyAgreed}
                 className={`btn btn-primary btn-lg ${styles.placeOrderBtn}`}
               >
                 {isSubmitting

@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import {
   verifyPaymentSignature,
   verifyWebhookSignature,
+  isRazorpayConfigured,
   RAZORPAY_KEY_SECRET,
   RAZORPAY_WEBHOOK_SECRET,
 } from '../config/razorpay';
@@ -13,6 +14,15 @@ describe('Razorpay Security & Anti-Tampering Suite', () => {
   const testPaymentId = 'pay_9876543210ABC';
   const testKeySecret = RAZORPAY_KEY_SECRET || 'test_key_secret_for_suite_123';
   const testWebhookSecret = RAZORPAY_WEBHOOK_SECRET || 'test_webhook_secret_for_suite_456';
+
+  it('requires a correctly formatted, non-placeholder Razorpay configuration', () => {
+    assert.strictEqual(isRazorpayConfigured('rzp_test_example123', 'valid-test-secret'), true);
+    assert.strictEqual(isRazorpayConfigured('rzp_live_example123', 'valid-live-secret'), true);
+    assert.strictEqual(isRazorpayConfigured('', ''), false);
+    assert.strictEqual(isRazorpayConfigured('mock_key_for_test', 'mock_secret_for_test'), false);
+    assert.strictEqual(isRazorpayConfigured('your_razorpay_key_id', 'your_razorpay_key_secret'), false);
+    assert.strictEqual(isRazorpayConfigured('rzp_test_example123', 'your_razorpay_key_secret'), false);
+  });
 
   // Helper to generate legitimate HMAC SHA-256 signature
   const generateLegitSignature = (orderId: string, paymentId: string, secret: string) => {

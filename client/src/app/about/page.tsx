@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck, Award, HeartHandshake, MapPin } from 'lucide-react';
+import AchievementsGallery from './AchievementsGallery';
 import styles from './about.module.css';
 
 export const metadata: Metadata = {
@@ -32,30 +33,18 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Story Section */}
-      <section className="section">
-        <div className={`container ${styles.storyGrid}`}>
-          <div className={styles.storyContent}>
-            <span className="text-eyebrow">How We Began</span>
-            <h2 className="heading-section">Built on straightforward advice, not sales pressure.</h2>
-            <p>
-              When Sriram &amp; Co first opened our doors on West Boulevard Road in Trichy, we made a simple promise: never recommend an appliance or a power tool that we wouldn't use in our own homes.
-            </p>
-            <p>
-              Over three decades later, that founding philosophy remains unchanged. In a world full of confusing specifications, disposable gadgets, and impersonal delivery apps, we believe in standing behind every single product we sell.
-            </p>
-            <p>
-              Whether you are a homeowner upgrading your kitchen, a hobbyist setting up a workshop, or a contractor outfitting a work crew, our team takes the time to understand your exact needs before recommending a solution.
+      {/* Achievements */}
+      <section className={styles.achievementsSection}>
+        <div className="container">
+          <div className={styles.achievementsHeader}>
+            <span className="text-eyebrow">Milestones &amp; Recognition</span>
+            <h2 className="heading-section">Proud moments along the way</h2>
+            <p className={styles.achievementsLead}>
+              We are grateful for the recognition and relationships built with our customers, partners, and community.
             </p>
           </div>
 
-          <div className={styles.storyVisual}>
-            <img
-              src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80"
-              alt="Store team and appliances"
-              className={styles.storyImage}
-            />
-          </div>
+          <AchievementsGallery />
         </div>
       </section>
 
@@ -99,6 +88,33 @@ export default function AboutPage() {
               <h3>Local Store Dispatch</h3>
               <p>Direct packing and doorstep delivery by our dedicated staff across Trichy, Chennai, and Tamil Nadu.</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Story Section */}
+      <section className="section">
+        <div className={`container ${styles.storyGrid}`}>
+          <div className={styles.storyVisual}>
+            <img
+              src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80"
+              alt="Store team and appliances"
+              className={styles.storyImage}
+            />
+          </div>
+
+          <div className={styles.storyContent}>
+            <span className="text-eyebrow">How We Began</span>
+            <h2 className="heading-section">Built on straightforward advice, not sales pressure.</h2>
+            <p>
+              When Sriram &amp; Co first opened our doors on West Boulevard Road in Trichy, we made a simple promise: never recommend an appliance or a power tool that we wouldn't use in our own homes.
+            </p>
+            <p>
+              Over three decades later, that founding philosophy remains unchanged. In a world full of confusing specifications, disposable gadgets, and impersonal delivery apps, we believe in standing behind every single product we sell.
+            </p>
+            <p>
+              Whether you are a homeowner upgrading your kitchen, a hobbyist setting up a workshop, or a contractor outfitting a work crew, our team takes the time to understand your exact needs before recommending a solution.
+            </p>
           </div>
         </div>
       </section>

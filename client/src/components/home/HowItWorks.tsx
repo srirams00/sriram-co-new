@@ -9,23 +9,18 @@ import styles from './HowItWorks.module.css';
 const STEPS = [
   {
     step: '01',
-    title: 'Pick what you need',
-    description: 'Add items to your basket, or browse catalog items right from your phone.',
+    title: 'Choose your products',
+    description: 'Browse the catalog, select what you need, and add it to your basket.',
   },
   {
     step: '02',
-    title: 'We call to confirm',
-    description: 'Someone from our store team will call to confirm product details and delivery timing.',
+    title: 'Pay securely online',
+    description: 'Complete your payment online by UPI, card, or NetBanking to place your order.',
   },
   {
     step: '03',
-    title: 'Delivered to your door',
-    description: 'Direct local store dispatch. Safe packing and fast delivery within 24 to 48 hours.',
-  },
-  {
-    step: '04',
-    title: 'Pay the way you like',
-    description: 'Pay securely via UPI, Card, or NetBanking online with instant order tracking.',
+    title: 'We pack and ship your order',
+    description: 'Once we receive your order, our team carefully packs your products and sends them to you.',
   },
 ];
 
@@ -71,7 +66,7 @@ export default function HowItWorks() {
         <div className={styles.header}>
           <h2 className="heading-section">How ordering works</h2>
           <p className={styles.subtitle}>
-            Getting an item from us is straightforward and secure. No hidden charges, no delivery delays.
+            Choose the products you need and pay online. Once your order comes through, we pack it carefully and ship it to you.
           </p>
         </div>
 
