@@ -38,4 +38,6 @@ skills-lock.json
 # Test artifacts
 .playwright-mcp/
 .superpowers/
+*.tsbuildinfo
+
 

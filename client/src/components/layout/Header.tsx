@@ -252,7 +252,7 @@ export default function Header() {
           </Link>
 
           <Link
-            href="/shop"
+            href="/wishlist"
             className={styles.actionBtn}
             aria-label={`Wishlist with ${wishlistIds.length} ${wishlistIds.length === 1 ? 'item' : 'items'}`}
             title="Wishlist"

@@ -24,7 +24,7 @@ export interface OrderPricing {
 }
 
 export type OrderStatus = 'placed' | 'confirmed' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
-export type PaymentStatus = 'pending' | 'paid' | 'failed';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'refund_initiated';
 export type PaymentMethod = 'razorpay' | 'upi' | 'card' | 'netbanking';
 
 export interface Order {
@@ -35,6 +35,9 @@ export interface Order {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
+  cancellationReason?: string;
+  cancelledBy?: 'customer' | 'admin' | 'store';
+  refundDetails?: Record<string, any>;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   razorpaySignature?: string;

@@ -537,9 +537,24 @@ router.patch('/:id/status', requireAdmin, async (req: Request, res: Response): P
       return;
     }
 
-    const updateFields: Partial<Pick<IOrder, 'orderStatus' | 'paymentStatus'>> = {};
+    const existingOrder = await Order.findById(id);
+    if (!existingOrder) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+
+    const updateFields: Partial<Pick<IOrder, 'orderStatus' | 'paymentStatus' | 'cancellationReason' | 'cancelledBy'>> = {};
     if (orderStatus) updateFields.orderStatus = orderStatus;
-    if (paymentStatus) updateFields.paymentStatus = paymentStatus;
+    if (paymentStatus) {
+      updateFields.paymentStatus = paymentStatus;
+    } else if (orderStatus === 'cancelled' && existingOrder.paymentStatus === 'paid') {
+      updateFields.paymentStatus = 'refunded';
+    }
+
+    if (orderStatus === 'cancelled') {
+      if (req.body.cancellationReason) updateFields.cancellationReason = req.body.cancellationReason;
+      updateFields.cancelledBy = req.body.cancelledBy || 'store';
+    }
 
     const updatedOrder = await Order.findByIdAndUpdate(
       id,
@@ -579,6 +594,133 @@ router.patch('/:id/status', requireAdmin, async (req: Request, res: Response): P
     res.json(updatedOrder);
   } catch (error: unknown) {
     res.status(500).json({ message: getErrorMessage(error) || 'Failed to update order status' });
+  }
+});
+
+// POST /api/orders/:idOrNumber/cancel - Customer Pre-Dispatch Cancellation & Automated Refund Endpoint
+router.post('/:idOrNumber/cancel', authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { idOrNumber } = req.params;
+    const { reason, phone, email } = req.body;
+
+    let order = null;
+    if (mongoose.Types.ObjectId.isValid(idOrNumber)) {
+      order = await Order.findById(idOrNumber);
+    }
+    if (!order) {
+      order = await Order.findOne({ orderNumber: idOrNumber });
+    }
+
+    if (!order) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+
+    // Authorization check:
+    // If user is authenticated, must be owner or admin
+    // If guest / unauthenticated, require matching phone or email for anti-tamper security
+    const isOwner = Boolean(req.user && order.user && req.user._id.toString() === order.user.toString());
+    const isAdmin = Boolean(req.user && req.user.role === 'admin');
+
+    if (!isOwner && !isAdmin) {
+      const orderPhoneDigits = (order.customerInfo?.phone || '').replace(/\D/g, '');
+      const inputPhoneDigits = typeof phone === 'string' ? phone.replace(/\D/g, '') : '';
+      const orderEmailLower = (order.customerInfo?.email || '').trim().toLowerCase();
+      const inputEmailLower = typeof email === 'string' ? email.trim().toLowerCase() : '';
+
+      const phoneMatches = Boolean(
+        inputPhoneDigits.length >= 4 &&
+        (orderPhoneDigits.endsWith(inputPhoneDigits) || inputPhoneDigits.endsWith(orderPhoneDigits))
+      );
+      const emailMatches = Boolean(inputEmailLower && orderEmailLower && inputEmailLower === orderEmailLower);
+
+      if (!phoneMatches && !emailMatches) {
+        res.status(403).json({
+          message: 'Verification failed. Please enter the customer phone number used during checkout to cancel this order.',
+        });
+        return;
+      }
+    }
+
+    // Pre-dispatch status check: only allowed before order is out for delivery or delivered
+    if (order.orderStatus === 'cancelled') {
+      res.status(400).json({ message: 'This order is already cancelled.' });
+      return;
+    }
+
+    if (order.orderStatus === 'out_for_delivery' || order.orderStatus === 'delivered') {
+      res.status(400).json({
+        message: `Order cannot be cancelled because it is already ${order.orderStatus === 'out_for_delivery' ? 'out for delivery' : 'delivered'}. In accordance with Sri Ram & Co store policy, please refer to our 7-Day Return / Replacement Policy once your delivery arrives.`,
+      });
+      return;
+    }
+
+    const cancellationReason = (typeof reason === 'string' && reason.trim()) || 'Requested by customer prior to dispatch';
+    const cancelledBy = isAdmin ? 'store' : 'customer';
+
+    // Handle payment & refund status
+    let refundInfo: Record<string, unknown> = {
+      initiatedAt: new Date().toISOString(),
+      amount: order.pricing.total,
+      currency: 'INR',
+    };
+
+    if (order.paymentStatus === 'paid') {
+      // Attempt automated gateway refund if credentials are live
+      if (order.razorpayPaymentId && RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET && !RAZORPAY_KEY_ID.includes('mock')) {
+        try {
+          const refundResponse = await razorpay.payments.refund(order.razorpayPaymentId, {
+            amount: Math.round(order.pricing.total * 100),
+            notes: {
+              orderNumber: order.orderNumber,
+              reason: cancellationReason,
+            },
+          });
+          refundInfo = {
+            ...refundInfo,
+            refundId: refundResponse.id,
+            status: refundResponse.status || 'processed',
+            speedProcessed: refundResponse.speed_processed,
+          };
+          order.paymentStatus = 'refunded';
+        } catch (rfErr: unknown) {
+          console.warn('[Razorpay Refund] Auto-refund note:', getErrorMessage(rfErr));
+          refundInfo.note = 'Refund queued for 5-7 working days processing via gateway dashboard.';
+          order.paymentStatus = 'refund_initiated';
+        }
+      } else {
+        refundInfo.note = 'Refund queued for 5-7 working days bank processing.';
+        order.paymentStatus = 'refund_initiated';
+      }
+    } else {
+      order.paymentStatus = 'failed';
+    }
+
+    order.orderStatus = 'cancelled';
+    order.cancellationReason = cancellationReason;
+    order.cancelledBy = cancelledBy;
+    order.refundDetails = refundInfo;
+
+    const savedOrder = await order.save();
+
+    // Asynchronously dispatch Order Cancelled email to customer via Zoho Mail
+    sendOrderLifecycleEmail(savedOrder, 'cancelled', {
+      cancellationReason,
+      cancelledBy,
+    }).catch((err) =>
+      console.warn('[Zoho Mail] Could not dispatch cancellation email:', getErrorMessage(err))
+    );
+
+    res.json({
+      success: true,
+      message: order.paymentStatus === 'refunded' || order.paymentStatus === 'refund_initiated'
+        ? `Order #${order.orderNumber} has been cancelled successfully. Your refund of ₹${order.pricing.total} has been initiated back to your original payment method (5–7 business days).`
+        : `Order #${order.orderNumber} has been cancelled successfully.`,
+      order: savedOrder,
+    });
+  } catch (error: unknown) {
+    console.error('Order cancellation error:', error);
+    res.status(500).json({ message: getErrorMessage(error) || 'Failed to cancel order.' });
   }
 });
 

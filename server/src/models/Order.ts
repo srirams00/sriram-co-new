@@ -23,8 +23,11 @@ export interface IOrder extends Document {
   };
   orderItems: IOrderItem[];
   paymentMethod: 'razorpay' | 'upi' | 'card' | 'netbanking';
-  paymentStatus: 'pending' | 'paid' | 'failed';
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'refund_initiated';
   orderStatus: 'placed' | 'confirmed' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
+  cancellationReason?: string;
+  cancelledBy?: 'customer' | 'admin' | 'store';
+  refundDetails?: Record<string, unknown>;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   razorpaySignature?: string;
@@ -88,8 +91,21 @@ const OrderSchema = new Schema<IOrder>(
     },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'paid', 'failed'],
+      enum: ['pending', 'paid', 'failed', 'refunded', 'refund_initiated'],
       default: 'pending',
+    },
+    cancellationReason: {
+      type: String,
+      default: null,
+    },
+    cancelledBy: {
+      type: String,
+      enum: ['customer', 'admin', 'store'],
+      default: null,
+    },
+    refundDetails: {
+      type: Schema.Types.Mixed,
+      default: null,
     },
     razorpayOrderId: {
       type: String,

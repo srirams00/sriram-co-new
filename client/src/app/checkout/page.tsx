@@ -44,8 +44,8 @@ export default function CheckoutPage() {
   // Real-time Validation State
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [policyAgreed, setPolicyAgreed] = useState(false);
+  const [policyError, setPolicyError] = useState<string | null>(null);
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
@@ -121,11 +121,6 @@ export default function CheckoutPage() {
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!termsAccepted) {
-      setSubmitError('Please agree to the Terms and Conditions and review the Warranty and Refund Policies before proceeding to payment.');
-      return;
-    }
-
     // Mark all fields as touched
     setTouched({
       fullName: true,
@@ -150,6 +145,15 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!policyAgreed) {
+      setPolicyError('You must agree to the Terms of Service, Privacy Policy, and Refund Policy to proceed.');
+      setSubmitError('Please accept the Terms of Service and store policies before placing your order.');
+      const el = document.getElementById('policyConsentCheckbox');
+      if (el) el.focus();
+      return;
+    }
+
+    setPolicyError(null);
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -672,38 +676,43 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div className={styles.termsAcceptance}>
-                <input
-                  id="termsAccepted"
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={(event) => {
-                    setTermsAccepted(event.target.checked);
-                    if (event.target.checked) setSubmitError(null);
-                  }}
-                  required
-                  aria-required="true"
-                />
-                <span>
-                  <label htmlFor="termsAccepted">I agree to the</label>{' '}
-                  <Link href="/terms" target="_blank" rel="noopener noreferrer">
-                    Terms and Conditions
-                  </Link>
-                  {' '}and acknowledge the{' '}
-                  <Link href="/warranty-policy" target="_blank" rel="noopener noreferrer">
-                    Warranty Policy
-                  </Link>
-                  {' '}and{' '}
-                  <Link href="/refund-policy" target="_blank" rel="noopener noreferrer">
-                    Refund Policy
-                  </Link>
-                  .
-                </span>
+              <div className={styles.policyConsentGroup}>
+                <label className={styles.policyConsentLabel} htmlFor="policyConsentCheckbox">
+                  <input
+                    type="checkbox"
+                    id="policyConsentCheckbox"
+                    checked={policyAgreed}
+                    onChange={(e) => {
+                      setPolicyAgreed(e.target.checked);
+                      if (e.target.checked) {
+                        setPolicyError(null);
+                        setSubmitError(null);
+                      }
+                    }}
+                    className={styles.policyCheckbox}
+                    aria-required="true"
+                    aria-invalid={Boolean(policyError)}
+                    aria-describedby={policyError ? "policy-error" : undefined}
+                  />
+                  <span>
+                    I have read and agree to the{' '}
+                    <Link href="/terms" target="_blank" className={styles.legalLink}>Terms of Service</Link>,{' '}
+                    <Link href="/privacy" target="_blank" className={styles.legalLink}>Privacy Policy</Link>,{' '}
+                    <Link href="/warranty-policy" target="_blank" className={styles.legalLink}>Warranty Policy</Link>, and{' '}
+                    <Link href="/refund-policy" target="_blank" className={styles.legalLink}>Refund Policy</Link>. *
+                  </span>
+                </label>
+                {policyError && (
+                  <span id="policy-error" className={styles.fieldError} role="alert">
+                    <AlertCircle size={14} />
+                    {policyError}
+                  </span>
+                )}
               </div>
 
               <button
                 type="submit"
-                disabled={isSubmitting || !termsAccepted}
+                disabled={isSubmitting || !policyAgreed}
                 className={`btn btn-primary btn-lg ${styles.placeOrderBtn}`}
               >
                 {isSubmitting

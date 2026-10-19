@@ -13,7 +13,8 @@ import {
   Truck, 
   RotateCcw,
   Heart,
-  X
+  X,
+  Info,
 } from 'lucide-react';
 import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
@@ -311,6 +312,38 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Statutory Disclosures & Legal Metrology */}
+          <div className={styles.statutoryCard}>
+            <div className={styles.statutoryHeading}>
+              <Info size={16} />
+              <span>Statutory Compliance &amp; Legal Metrology Disclosures</span>
+            </div>
+            <div className={styles.statutoryGrid}>
+              <div className={styles.statutoryItem}>
+                <span className={styles.statutoryLabel}>Country of Origin</span>
+                <span className={styles.statutoryValue}>{product.specifications?.['Country of Origin'] || 'India'}</span>
+              </div>
+              <div className={styles.statutoryItem}>
+                <span className={styles.statutoryLabel}>Net Quantity</span>
+                <span className={styles.statutoryValue}>1 Unit</span>
+              </div>
+              <div className={styles.statutoryItem}>
+                <span className={styles.statutoryLabel}>Marketed &amp; Distributed By</span>
+                <span className={styles.statutoryValue}>Sri Ram &amp; Co, No. 11, Vinola Complex, Thanjai Main Road, Trichy - 620014, Tamil Nadu</span>
+              </div>
+              <div className={styles.statutoryItem}>
+                <span className={styles.statutoryLabel}>Consumer Care Helpline</span>
+                <span className={styles.statutoryValue}>+91 93454 03136 • contact@sriramandco.in</span>
+              </div>
+            </div>
+            <div className={styles.statutoryPolicies}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Applicable Policies:</span>
+              <Link href="/warranty-policy" className={styles.statutoryPolicyLink}>Warranty &amp; Service Terms</Link>
+              <Link href="/shipping-policy" className={styles.statutoryPolicyLink}>Shipping &amp; Delivery SLA</Link>
+              <Link href="/refund-policy" className={styles.statutoryPolicyLink}>7-Day Replacement Guarantee</Link>
             </div>
           </div>
         </div>

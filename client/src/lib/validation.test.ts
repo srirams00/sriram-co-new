@@ -10,7 +10,7 @@ import {
   validateCheckoutForm,
   cleanPhoneNumber,
   cleanPincode,
-} from './validation.ts';
+} from './validation';
 
 describe('Checkout Form Validation Suite', () => {
   describe('Phone Number Validation (Indian 10-digit mobile)', () => {

@@ -442,6 +442,74 @@
   color: var(--color-text-secondary);
 }
 
+.statutoryCard {
+  margin-top: 32px;
+  background-color: var(--color-bg-page, #f8fafc);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 12px);
+  padding: 24px;
+}
+
+.statutoryHeading {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statutoryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  font-size: 0.8125rem;
+}
+
+.statutoryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statutoryLabel {
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.statutoryValue {
+  color: var(--color-text-main);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.statutoryPolicies {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--color-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.statutoryPolicyLink {
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+.statutoryPolicyLink:hover {
+  color: var(--color-primary-dark);
+}
+
 .relatedSection {
   padding-top: 48px;
   border-top: 1px solid var(--color-border);

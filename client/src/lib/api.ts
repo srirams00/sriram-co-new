@@ -682,6 +682,27 @@ export const api = {
     return res.json();
   },
 
+  async cancelOrder(
+    orderIdOrNumber: string,
+    payload: { reason?: string; phone?: string; email?: string },
+    token?: string
+  ): Promise<{ success: boolean; message: string; order: Order }> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/orders/${orderIdOrNumber}/cancel`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errorMsg = await extractErrorMessage(res, 'Failed to cancel order');
+      throw new Error(errorMsg);
+    }
+    return res.json();
+  },
+
   async sendOrderEmail(
     id: string,
     templateId: string,
