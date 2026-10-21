@@ -6,6 +6,7 @@ import { STORES } from '@/data/stores';
 import styles from './LazyHomeSection.module.css';
 
 type HomeSection =
+  | 'specialProducts'
   | 'categories'
   | 'bestSellers'
   | 'testimonials'
@@ -14,6 +15,7 @@ type HomeSection =
   | 'contact';
 
 const sectionLabels: Record<HomeSection, string> = {
+  specialProducts: 'Special products',
   categories: 'Shop by category',
   bestSellers: 'Best sellers',
   testimonials: 'Customer testimonials',
@@ -24,6 +26,10 @@ const sectionLabels: Record<HomeSection, string> = {
 
 async function loadSection(section: HomeSection): Promise<ReactNode> {
   switch (section) {
+    case 'specialProducts': {
+      const { default: SpecialProductsGrid } = await import('./SpecialProductsGrid');
+      return <SpecialProductsGrid />;
+    }
     case 'categories': {
       const [{ api }, { default: CategoryGrid }] = await Promise.all([
         import('@/lib/api'),

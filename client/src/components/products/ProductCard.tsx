@@ -80,7 +80,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className={styles.content}>
         <div className={styles.categoryRow}>
           <span className={styles.category}>{product.category}</span>
-          {product.reviewCount > 0 && (
+          {product.rating > 0 && (
             <div className={styles.rating}>
               <RatingStars rating={product.rating} size={12} />
               <span>{product.rating.toFixed(1)}</span>

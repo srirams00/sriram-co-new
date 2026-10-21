@@ -8,6 +8,7 @@ export default function HomePage() {
     <>
       <HeroSection />
       <TrustFeatures />
+      <LazyHomeSection section="specialProducts" />
       <LazyHomeSection section="categories" />
       <LazyHomeSection section="bestSellers" />
       <LazyHomeSection section="testimonials" />

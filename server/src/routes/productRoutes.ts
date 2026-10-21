@@ -41,8 +41,8 @@ async function attachReviewStats(products: IProduct[]) {
     const summary = summaryByProduct.get(String(product._id));
     return {
       ...product.toJSON(),
-      rating: summary?.rating ?? 0,
-      reviewCount: summary?.reviewCount ?? 0,
+      rating: summary?.rating ?? product.rating,
+      reviewCount: summary?.reviewCount ?? product.reviewCount,
     };
   });
 }
