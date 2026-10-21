@@ -29,6 +29,13 @@
   gap: 24px;
 }
 
+@media (max-width: 600px) {
+  .wishlistGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
 .wishlistCard {
   background-color: #ffffff;
   border: 1px solid var(--color-border);
