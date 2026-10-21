@@ -5,6 +5,7 @@
 
 export type EmailTemplateType =
   | 'placed'
+  | 'shipped'
   | 'confirmed'
   | 'processing'
   | 'out_for_delivery'
@@ -135,7 +136,7 @@ export function compileOrderEmailHtml(
   let preheader = '';
   let statusTitle = '';
   let statusBodyHtml = '';
-  let progressStep = 0; // 0 = placed, 1 = confirmed, 2 = processing, 3 = out for delivery, 4 = delivered
+  let progressStep = 0; // 1 = order placed, 2 = shipped, 3 = out for delivery, 4 = delivered
   let showHighlightCard = false;
   let showDriverCard = false;
   let showNumberedList = false;
@@ -154,6 +155,15 @@ export function compileOrderEmailHtml(
       statusTitle = `Thanks, ${escapeHtml(firstName)}. We’ve got your order.`;
       statusBodyHtml = `Your order has been placed. Our store fulfillment team is verifying the products and delivery schedule. Please keep your phone nearby.`;
       progressStep = 1;
+      break;
+
+    case 'shipped':
+      subject = `Your order ${orderNumber} has shipped | Sri Ram & Co`;
+      preheader = `Expected delivery ${expectedDelivery}.`;
+      statusTitle = `Your order has shipped.`;
+      statusBodyHtml = `Your order has been dispatched from our ${escapeHtml(storeBranch)} store and is moving through our delivery process. We’ll notify you when it is out for delivery.`;
+      progressStep = 2;
+      showHighlightCard = true;
       break;
 
     case 'confirmed':
@@ -227,7 +237,7 @@ export function compileOrderEmailHtml(
     .join('');
 
   // Progress Bar HTML (Omitted on cancelled orders)
-  const progressSteps = ['Placed', 'Confirmed', 'Out for delivery', 'Delivered'];
+  const progressSteps = ['Order Placed', 'Shipped', 'Out for Delivery', 'Delivered'];
   const progressHtml = isCancelled
     ? ''
     : `

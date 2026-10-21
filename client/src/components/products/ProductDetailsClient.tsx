@@ -288,31 +288,15 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
           </div>
         </div>
 
-        {/* Detailed Tabs / Specifications */}
+        {/* Product Details */}
         <div className={styles.specsSection}>
           <div className={styles.sectionHeader}>
-            <h2 className="heading-section">Product Details &amp; Specifications</h2>
+            <h2 className="heading-section">Product Details</h2>
           </div>
 
-          <div className={styles.specsGrid}>
-            <div className={styles.narrativeCol}>
-              <h3>Detailed Overview</h3>
-              <p className={styles.narrativeText}>{product.fullDescription}</p>
-            </div>
-
-            <div className={styles.tableCol}>
-              <h3>Technical Specifications</h3>
-              <table className={styles.specsTable}>
-                <tbody>
-                  {Object.entries(product.specifications || {}).map(([key, value]) => (
-                    <tr key={key}>
-                      <td className={styles.specKey}>{key}</td>
-                      <td className={styles.specVal}>{value}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className={styles.narrativeCol}>
+            <h3>Detailed Overview</h3>
+            <p className={styles.narrativeText}>{product.fullDescription}</p>
           </div>
 
           {/* Statutory Disclosures & Legal Metrology */}

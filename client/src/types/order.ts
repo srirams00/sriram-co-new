@@ -23,7 +23,7 @@ export interface OrderPricing {
   total: number;
 }
 
-export type OrderStatus = 'placed' | 'confirmed' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
+export type OrderStatus = 'placed' | 'shipped' | 'confirmed' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'refund_initiated';
 export type PaymentMethod = 'razorpay' | 'upi' | 'card' | 'netbanking';
 

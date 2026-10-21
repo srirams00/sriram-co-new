@@ -60,6 +60,7 @@ export type ApiResponse<TData, TMeta = Record<string, unknown>> =
 
 export type OrderStatus =
   | 'placed'
+  | 'shipped'
   | 'confirmed'
   | 'processing'
   | 'out_for_delivery'
@@ -102,6 +103,10 @@ export type OrderLifecycleState =
       status: 'confirmed';
       confirmedAt: string | Date;
       storeBranch: string;
+    }
+  | {
+      status: 'shipped';
+      shippedAt: string | Date;
     }
   | {
       status: 'processing';

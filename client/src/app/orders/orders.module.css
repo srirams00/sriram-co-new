@@ -202,6 +202,10 @@
   color: var(--color-primary);
 }
 
+.stepCurrent.stepDone .dot {
+  color: #ffffff;
+}
+
 .timelineLine {
   flex: 1;
   height: 2px;
@@ -514,4 +518,3 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
-

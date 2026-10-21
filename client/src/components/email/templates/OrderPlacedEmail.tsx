@@ -20,8 +20,7 @@ export function OrderPlacedEmail() {
         title="Thanks, {{first_name}}. We’ve got your order."
       >
         <EmailText>
-          Your order is placed but not confirmed yet. Someone from our store team will call you to confirm the products
-          and delivery timing. Please keep your phone nearby.
+          Your order has been placed. Our store team is preparing your products and delivery schedule. Please keep your phone nearby.
         </EmailText>
       </StatusBlock>
       <Spacer size={28} />

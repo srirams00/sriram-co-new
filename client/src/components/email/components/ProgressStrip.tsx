@@ -10,7 +10,7 @@ interface ProgressStripProps {
 
 type StepState = 'done' | 'current' | 'upcoming';
 
-const steps = ['Placed', 'Confirmed', 'Out for delivery', 'Delivered'];
+const steps = ['Order Placed', 'Shipped', 'Out for Delivery', 'Delivered'];
 
 export function ProgressStrip({ completed, current, partialAfter }: ProgressStripProps) {
   const stateOf = (i: number): StepState => (i < completed ? 'done' : i === current ? 'current' : 'upcoming');

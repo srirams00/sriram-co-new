@@ -4,6 +4,7 @@ import { EmailTemplateType } from '@/lib/emailTemplates';
 
 const ALLOWED_TEMPLATES: EmailTemplateType[] = [
   'placed',
+  'shipped',
   'confirmed',
   'processing',
   'out_for_delivery',
