@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { PRODUCTS } from '@/data/products';
-import ProductCard from '@/components/products/ProductCard';
-import styles from './BestSellersGrid.module.css';
+import { getOptimizedImageUrl } from '@/lib/utils';
+import styles from './SpecialProductsGrid.module.css';
 
 export default function SpecialProductsGrid() {
   return (
@@ -16,9 +17,29 @@ export default function SpecialProductsGrid() {
           </div>
         </div>
 
-        <div className={styles.grid}>
-          {PRODUCTS.slice(0, 4).map((product) => (
-            <ProductCard key={product.id} product={product} />
+        <div className={styles.features}>
+          {PRODUCTS.slice(0, 4).map((product, index) => (
+            <article
+              className={`${styles.feature} ${index % 2 === 1 ? styles.reversed : ''}`}
+              key={product.id}
+            >
+              <Link
+                href={index === 0 ? '/product/akari-8516sf' : `/product/${encodeURIComponent(product.slug || product.id)}`}
+                className={styles.imageLink}
+                aria-label={`View ${index === 0 ? 'AKARI 8516SF' : product.name}`}
+              >
+                <img
+                  src={index === 0 ? '/fan-image.jpeg' : getOptimizedImageUrl(product.image, 900)}
+                  alt={product.name}
+                  className={styles.image}
+                  loading="lazy"
+                  decoding="async"
+                  width={800}
+                  height={600}
+                />
+              </Link>
+              <p className={styles.description}>{product.fullDescription || product.shortDescription}</p>
+            </article>
           ))}
         </div>
       </div>
