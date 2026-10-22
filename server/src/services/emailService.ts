@@ -35,6 +35,7 @@ const SMTP_SECURE = process.env.SMTP_SECURE === 'true' || SMTP_PORT === 465;
 const SMTP_USER = process.env.SMTP_USER || 'ramkumar@sriramandco.in';
 const SMTP_PASS = process.env.SMTP_PASS || '';
 const EMAIL_FROM = process.env.EMAIL_FROM || '"Sri Ram & Co" <ramkumar@sriramandco.in>';
+const EMAIL_RELAY_SECRET = process.env.EMAIL_RELAY_SECRET || process.env.CF_SECRET_TOKEN || 'src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2';
 
 let cachedTransporter: Transporter | null = null;
 
@@ -71,14 +72,53 @@ function getTransporter(): Transporter {
  * or safely logs to console in simulated dev mode if password is not yet configured.
  * Never throws exceptions that could crash checkout or order mutations.
  */
-export async function sendEmail(payload: SendEmailPayload): Promise<SendEmailResult> {
+export async function sendEmail(payload: SendEmailPayload, relayBaseUrl?: string): Promise<SendEmailResult> {
   const { to, subject, html, text, replyTo } = payload;
 
   if (!to || !to.includes('@')) {
     return { success: false, reason: 'INVALID_RECIPIENT_EMAIL' };
   }
 
-  // Simulated mode for offline/dev or unconfigured password
+  // 1. Try Vercel Serverless Relay if in production or relayBaseUrl is provided
+  // On Render Free tier, outbound SMTP ports (25, 465, 587) are strictly blocked by Render firewall.
+  // The Vercel relay operates over HTTPS port 443 and connects to Zoho Mail without firewall blocks.
+  const relayUrl = relayBaseUrl || (process.env.NODE_ENV === 'production' ? (process.env.CLIENT_URL || 'https://www.sriramandco.in') : undefined);
+  if (relayUrl && process.env.NODE_ENV !== 'test') {
+    try {
+      const cleanRelayUrl = relayUrl.replace(/\/+$/, '');
+      const res = await fetch(`${cleanRelayUrl}/api/email/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-relay-secret': EMAIL_RELAY_SECRET,
+        },
+        body: JSON.stringify({
+          templateType: 'password_reset',
+          secret: EMAIL_RELAY_SECRET,
+          to,
+          subject,
+          html,
+          text,
+        }),
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as { success: boolean; messageId?: string };
+        console.log(`[Zoho Relay] Email successfully relayed via Vercel to ${to} (MessageId: ${data.messageId})`);
+        return {
+          success: true,
+          messageId: data.messageId,
+          simulated: false,
+        };
+      } else {
+        console.warn(`[Zoho Relay] Vercel relay returned status ${res.status}, falling back to direct SMTP...`);
+      }
+    } catch (relayErr: any) {
+      console.warn(`[Zoho Relay] Vercel relay attempt error: ${relayErr.message}, falling back to direct SMTP...`);
+    }
+  }
+
+  // 2. Direct SMTP transport (local development or when Render SMTP is unblocked)
   if (!isSmtpConfigured()) {
     console.log('\n================== [ZOHO MAIL: SIMULATED DISPATCH] ==================');
     console.log(`From:    ${EMAIL_FROM}`);
