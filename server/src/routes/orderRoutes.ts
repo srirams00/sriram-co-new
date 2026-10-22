@@ -6,6 +6,7 @@ import { Product } from '../models/Product.js';
 import {
   razorpay,
   RAZORPAY_KEY_ID,
+  RAZORPAY_KEY_SECRET,
   isRazorpayConfigured,
   verifyPaymentSignature,
   verifyWebhookSignature,
