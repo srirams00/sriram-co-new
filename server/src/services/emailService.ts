@@ -82,7 +82,12 @@ export async function sendEmail(payload: SendEmailPayload, relayBaseUrl?: string
   // 1. Try Vercel Serverless Relay if in production or relayBaseUrl is provided
   // On Render Free tier, outbound SMTP ports (25, 465, 587) are strictly blocked by Render firewall.
   // The Vercel relay operates over HTTPS port 443 and connects to Zoho Mail without firewall blocks.
-  const relayUrl = relayBaseUrl || (process.env.NODE_ENV === 'production' ? (process.env.CLIENT_URL || 'https://www.sriramandco.in') : undefined);
+  // CRITICAL: Always use https://www.sriramandco.in as the production relay endpoint.
+  // Preview domains like review.sriramandco.in or *.vercel.app have Vercel Authentication enabled,
+  // which blocks backend-to-frontend HTTP calls with 401 Protected Deployment.
+  const relayUrl = process.env.NODE_ENV === 'production'
+    ? 'https://www.sriramandco.in'
+    : (relayBaseUrl || process.env.CLIENT_URL);
   if (relayUrl && process.env.NODE_ENV !== 'test') {
     try {
       const cleanRelayUrl = relayUrl.replace(/\/+$/, '');
