@@ -16,32 +16,28 @@ export default function SpecialProductsGrid() {
             <h2 className="heading-section">Special products</h2>
           </div>
         </div>
-
-        <div className={styles.features}>
-          {PRODUCTS.slice(0, 4).map((product, index) => (
-            <article
-              className={`${styles.feature} ${index % 2 === 1 ? styles.reversed : ''}`}
-              key={product.id}
+      </div>
+      <div className={styles.features}>
+        {PRODUCTS.slice(0, 4).map((product, index) => (
+          <article className={styles.feature} key={product.id}>
+            <Link
+              href={index === 0 ? '/product/akari-8516sf' : `/product/${encodeURIComponent(product.slug || product.id)}`}
+              className={styles.imageLink}
+              aria-label={`View ${index === 0 ? 'AKARI 8516SF' : product.name}`}
             >
-              <Link
-                href={index === 0 ? '/product/akari-8516sf' : `/product/${encodeURIComponent(product.slug || product.id)}`}
-                className={styles.imageLink}
-                aria-label={`View ${index === 0 ? 'AKARI 8516SF' : product.name}`}
-              >
-                <img
-                  src={index === 0 ? '/fan-image.jpeg' : getOptimizedImageUrl(product.image, 900)}
-                  alt={product.name}
-                  className={styles.image}
-                  loading="lazy"
-                  decoding="async"
-                  width={800}
-                  height={600}
-                />
-              </Link>
-              <p className={styles.description}>{product.fullDescription || product.shortDescription}</p>
-            </article>
-          ))}
-        </div>
+              <img
+                src={index === 0 ? '/fan-image.jpeg' : getOptimizedImageUrl(product.image, 900)}
+                alt={product.name}
+                className={styles.image}
+                loading="lazy"
+                decoding="async"
+                width={800}
+                height={600}
+              />
+            </Link>
+            <p className={styles.description}>{product.fullDescription || product.shortDescription}</p>
+          </article>
+        ))}
       </div>
     </section>
   );

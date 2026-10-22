@@ -122,7 +122,7 @@ function ShopContent() {
             className={`${styles.pill} ${selectedCategory === 'all' ? styles.activePill : ''}`}
             onClick={() => setSelectedCategory('all')}
           >
-            All Products ({products.length})
+            All Products
           </button>
           {CATEGORIES.map(cat => (
             <button
@@ -136,19 +136,17 @@ function ShopContent() {
           ))}
         </div>
 
-        {/* Status info */}
-        <div className={styles.resultsInfo}>
-          <span>Showing <strong>{filteredProducts.length}</strong> products</span>
-          {selectedCategory !== 'all' && (
-            <button 
-              type="button" 
+        {selectedCategory !== 'all' && (
+          <div className={styles.resultsInfo}>
+            <button
+              type="button"
               className={styles.resetFilter}
               onClick={() => setSelectedCategory('all')}
             >
               Clear filter
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Products Grid */}
         {filteredProducts.length > 0 ? (

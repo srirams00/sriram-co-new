@@ -10,9 +10,10 @@ import styles from './CategoryGrid.module.css';
 
 interface CategoryGridProps {
   categories: Category[];
+  showViewAll?: boolean;
 }
 
-export default function CategoryGrid({ categories }: CategoryGridProps) {
+export default function CategoryGrid({ categories, showViewAll = true }: CategoryGridProps) {
   const sectionRef = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -56,10 +57,12 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
             <span className="text-eyebrow">Find what fits your home</span>
             <h2 className="heading-section">Shop by category</h2>
           </div>
-          <Link href="/shop" className={styles.viewAllLink}>
-            <span>View all</span>
-            <ArrowRight size={16} />
-          </Link>
+          {showViewAll && (
+            <Link href="/categories" className={styles.viewAllLink}>
+              <span>View all</span>
+              <ArrowRight size={16} />
+            </Link>
+          )}
         </div>
 
         {/* Categories Grid */}
