@@ -96,15 +96,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
         name: 'Sri Ram & Co',
       },
     },
-    ...(product.reviewCount > 0 && {
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: product.rating,
-        reviewCount: product.reviewCount,
-        bestRating: 5,
-        worstRating: 1,
-      },
-    }),
   };
 
   const breadcrumbJsonLd = {

@@ -17,19 +17,6 @@
   color: var(--color-text-secondary);
 }
 
-.summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-}
-
-.summary strong {
-  color: var(--color-text-main);
-}
-
 .form {
   display: flex;
   flex-direction: column;
@@ -39,11 +26,6 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-bg-subtle);
-}
-
-.form h3 {
-  color: var(--color-text-main);
-  font-size: 1.125rem;
 }
 
 .ratingLabel {
@@ -99,7 +81,6 @@
 }
 
 .reviewNotice,
-.emptyState,
 .message {
   color: var(--color-text-secondary);
   line-height: 1.6;
@@ -126,48 +107,6 @@
 .success {
   margin-bottom: 16px;
   color: var(--color-commerce-green);
-}
-
-.reviewList {
-  display: grid;
-  gap: 16px;
-}
-
-.reviewCard {
-  padding: 20px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-}
-
-.reviewHeading,
-.reviewMeta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.reviewHeading {
-  margin-bottom: 8px;
-  color: var(--color-text-main);
-}
-
-.verified {
-  color: var(--color-commerce-green);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.reviewMeta {
-  margin-bottom: 12px;
-  color: var(--color-text-secondary);
-  font-size: 0.8125rem;
-}
-
-.reviewComment {
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 
 @media (max-width: 600px) {

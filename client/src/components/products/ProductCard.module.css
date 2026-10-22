@@ -112,16 +112,6 @@
   font-weight: 700;
 }
 
-.rating {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-text-dark);
-}
-
 .titleLink {
   text-decoration: none;
   color: inherit;
@@ -268,10 +258,6 @@
 
   .category {
     font-size: 0.5625rem;
-  }
-
-  .rating {
-    font-size: 0.6875rem;
   }
 
   .title {
