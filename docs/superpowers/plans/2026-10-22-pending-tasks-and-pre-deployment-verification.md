@@ -58,7 +58,7 @@ gantt
 | **TASK-03** | **Customer Account (`/account`)** | **Saved Address Book Management**: Allow customers to save multiple labeled addresses (Home, Work, Other) and select them in 1-click on `/checkout`. | **MEDIUM** | 3.0 hrs |
 | **TASK-04** | **Database Catalog Cleanup** | **Scrub Replica & Test SKUs**: Cleanse active MongoDB catalog of test products (e.g. ₹1 dummy products, replica headphones) preserving genuine kitchenware inventory. | **MEDIUM** | 1.0 hr |
 | **TASK-05** | **Order Dispatch Routing** | **Pincode Regional Routing**: Automatically assign orders to Trichy Main Hub (`620xxx-622xxx`) vs. Chennai Experience Store (`600xxx`) in admin order view. | **LOW** | 2.0 hrs |
-| **TASK-06** | **Payment Gateway Cutover** | **Production Razorpay Activation**: Swap test credentials on Vercel & Render for live merchant keys and production webhook endpoint. | **FINAL GATE** | 0.5 hr |
+| **TASK-06** | **Payment Gateway Cutover** | **Production Razorpay Activation**: Live Razorpay credentials configured on Vercel & Render dashboards. | ✅ **COMPLETED** | Done |
 
 ---
 
