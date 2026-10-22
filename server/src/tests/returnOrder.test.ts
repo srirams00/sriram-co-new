@@ -31,17 +31,17 @@ describe('Customer Return Request Suite', () => {
     assert.equal(returnReq.resolvedAt, undefined);
   });
 
-  it('verifies 7-day warranty cutoff calculation (168 hours)', () => {
+  it('verifies 3-day return cutoff calculation (72 hours)', () => {
     const deliveredAt = new Date('2026-10-15T10:00:00Z');
-    const returnWindowMs = 7 * 24 * 60 * 60 * 1000;
+    const returnWindowMs = 3 * 24 * 60 * 60 * 1000;
 
-    // Within window (e.g. 5 days later)
-    const withinWindowDate = new Date('2026-10-20T10:00:00Z');
+    // Within window (e.g. 2 days later)
+    const withinWindowDate = new Date('2026-10-17T10:00:00Z');
     const isEligible = withinWindowDate.getTime() - deliveredAt.getTime() <= returnWindowMs;
     assert.equal(isEligible, true);
 
-    // Outside window (e.g. 8 days later)
-    const outsideWindowDate = new Date('2026-10-23T11:00:00Z');
+    // Outside window (e.g. 4 days later)
+    const outsideWindowDate = new Date('2026-10-19T11:00:00Z');
     const isExpired = outsideWindowDate.getTime() - deliveredAt.getTime() > returnWindowMs;
     assert.equal(isExpired, true);
   });
@@ -106,21 +106,21 @@ describe('Customer Return Request Suite', () => {
     assert.ok(compiled.text.includes('reverse pickup'));
   });
 
-  it('enforces return validation constraints (policy agreement, non-empty feedback, 7-day boundary)', () => {
+  it('enforces return validation constraints (policy agreement, non-empty feedback, 3-day boundary)', () => {
     // Valid input test
     const validateReturn = (payload: { reason?: string; faultDetails?: string; agreedToPolicy?: boolean; orderStatus?: string; deliveredDaysAgo?: number }) => {
       if (!payload.reason || typeof payload.reason !== 'string') return { valid: false, error: 'Reason required' };
       if (!payload.faultDetails || payload.faultDetails.trim().length < 5) return { valid: false, error: 'Fault details min 5 chars' };
       if (payload.agreedToPolicy !== true) return { valid: false, error: 'Must agree to policies' };
       if (payload.orderStatus !== 'delivered') return { valid: false, error: 'Only delivered orders' };
-      if ((payload.deliveredDaysAgo || 0) > 7) return { valid: false, error: 'Return window expired' };
+      if ((payload.deliveredDaysAgo || 0) > 3) return { valid: false, error: 'Return window expired' };
       return { valid: true };
     };
 
-    assert.equal(validateReturn({ reason: 'Defective', faultDetails: 'Motor stopped spinning', agreedToPolicy: true, orderStatus: 'delivered', deliveredDaysAgo: 3 }).valid, true);
-    assert.equal(validateReturn({ reason: 'Defective', faultDetails: 'Bad', agreedToPolicy: true, orderStatus: 'delivered', deliveredDaysAgo: 3 }).valid, false);
-    assert.equal(validateReturn({ reason: 'Defective', faultDetails: 'Motor stopped spinning', agreedToPolicy: false, orderStatus: 'delivered', deliveredDaysAgo: 3 }).valid, false);
-    assert.equal(validateReturn({ reason: 'Defective', faultDetails: 'Motor stopped spinning', agreedToPolicy: true, orderStatus: 'shipped', deliveredDaysAgo: 3 }).valid, false);
-    assert.equal(validateReturn({ reason: 'Defective', faultDetails: 'Motor stopped spinning', agreedToPolicy: true, orderStatus: 'delivered', deliveredDaysAgo: 10 }).valid, false);
+    assert.equal(validateReturn({ reason: 'Defective', faultDetails: 'Motor stopped spinning', agreedToPolicy: true, orderStatus: 'delivered', deliveredDaysAgo: 2 }).valid, true);
+    assert.equal(validateReturn({ reason: 'Defective', faultDetails: 'Bad', agreedToPolicy: true, orderStatus: 'delivered', deliveredDaysAgo: 2 }).valid, false);
+    assert.equal(validateReturn({ reason: 'Defective', faultDetails: 'Motor stopped spinning', agreedToPolicy: false, orderStatus: 'delivered', deliveredDaysAgo: 2 }).valid, false);
+    assert.equal(validateReturn({ reason: 'Defective', faultDetails: 'Motor stopped spinning', agreedToPolicy: true, orderStatus: 'shipped', deliveredDaysAgo: 2 }).valid, false);
+    assert.equal(validateReturn({ reason: 'Defective', faultDetails: 'Motor stopped spinning', agreedToPolicy: true, orderStatus: 'delivered', deliveredDaysAgo: 5 }).valid, false);
   });
 });

@@ -21,7 +21,7 @@ export interface ReturnValidationResult {
 }
 
 /**
- * Checks if a delivered order is still within the 7-day Sri Ram & Co store replacement window.
+ * Checks if a delivered order is still within the 3-day Sri Ram & Co store replacement window.
  * Accepts optional referenceNow timestamp for deterministic testing.
  */
 export function isEligibleForReturn(deliveredAtIso?: string | null, referenceNow: number = Date.now()): boolean {
@@ -29,7 +29,7 @@ export function isEligibleForReturn(deliveredAtIso?: string | null, referenceNow
   const deliveredTime = new Date(deliveredAtIso).getTime();
   if (isNaN(deliveredTime)) return false;
 
-  const returnWindowMs = 7 * 24 * 60 * 60 * 1000;
+  const returnWindowMs = 3 * 24 * 60 * 60 * 1000;
   // Allow a 60-second buffer to absorb network latency and clock jitter
   return (referenceNow - deliveredTime) <= (returnWindowMs + 60 * 1000);
 }

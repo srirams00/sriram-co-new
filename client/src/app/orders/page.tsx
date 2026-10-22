@@ -103,7 +103,7 @@ function OrderCard({
   const isDelivered = order.orderStatus === 'delivered';
   const isCancelled = order.orderStatus === 'cancelled';
   const isPreDispatch = ['placed', 'confirmed', 'processing'].includes(order.orderStatus);
-  const isWithin7Days = isDelivered && isEligibleForReturn(order.updatedAt || order.createdAt);
+  const isWithin3Days = isDelivered && isEligibleForReturn(order.updatedAt || order.createdAt);
   const isReturnRequested = order.orderStatus === 'return_requested' || Boolean(order.returnRequest);
 
   return (
@@ -156,7 +156,7 @@ function OrderCard({
                   <RotateCcw size={12} /> Return Requested ({order.returnRequest?.reason || 'Under Review'})
                 </span>
               )}
-              {isWithin7Days && !isReturnRequested && onReturnClick && (
+              {isWithin3Days && !isReturnRequested && onReturnClick && (
                 <button
                   type="button"
                   className={styles.returnProductBtn}
@@ -211,7 +211,7 @@ function OrderCard({
         </div>
       ) : (
         <div className={styles.dispatchedNotice}>
-          📦 Order is {order.orderStatus === 'shipped' || order.orderStatus === 'processing' ? 'shipped' : order.orderStatus === 'out_for_delivery' ? 'out for delivery' : 'delivered'}. Covered by Sri Ram &amp; Co <strong>7-Day Store Replacement Policy</strong>. Need support? Call +91 93454 03136.
+          📦 Order is {order.orderStatus === 'shipped' || order.orderStatus === 'processing' ? 'shipped' : order.orderStatus === 'out_for_delivery' ? 'out for delivery' : 'delivered'}. Covered by Sri Ram &amp; Co <strong>3-Day Return / 5-Day Replacement Policy</strong>. Need support? Call +91 93454 03136.
         </div>
       )}
     </div>

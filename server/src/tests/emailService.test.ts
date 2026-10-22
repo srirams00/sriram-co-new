@@ -87,10 +87,10 @@ describe('Transactional Email & Zoho Mail Suite', () => {
     assert.strictEqual(compiled.html.includes('At the door'), true);
   });
 
-  it('compiles "delivered" email template with 7-day replacement and warranty instructions', () => {
+  it('compiles "delivered" email template with 5-day replacement and warranty instructions', () => {
     const compiled = compileOrderEmailHtml(sampleOrder, 'delivered');
     assert.strictEqual(compiled.subject.includes('Delivered'), true);
-    assert.strictEqual(compiled.html.includes('7-Day Store Replacement'), true);
+    assert.strictEqual(compiled.html.includes('5-Day Store Replacement'), true);
     assert.strictEqual(compiled.html.includes('Keep Your GST Invoice'), true);
   });
 

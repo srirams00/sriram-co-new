@@ -339,8 +339,8 @@ export function compileOrderEmailHtml(
       <table role="presentation" width="100%">
         <tr>
           <td style="width: 50%; vertical-align: top; padding-right: 12px;">
-            <p style="margin: 0; font-size: 13px; font-weight: 700; color: ${THEME.text};">7-Day Store Replacement</p>
-            <p style="margin: 4px 0 0; font-size: 12px; color: ${THEME.muted}; line-height: 1.5;">If any item is damaged or faulty within 7 days of delivery, contact our store directly for immediate replacement.</p>
+            <p style="margin: 0; font-size: 13px; font-weight: 700; color: ${THEME.text};">5-Day Store Replacement</p>
+            <p style="margin: 4px 0 0; font-size: 12px; color: ${THEME.muted}; line-height: 1.5;">If any item is damaged or faulty within 5 days of delivery, contact our store directly for immediate replacement.</p>
             <a href="${STORE_CONFIG.siteUrl}/refund-policy" style="display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 600; color: ${THEME.green}; text-decoration: underline;">Returns &amp; Refunds</a>
           </td>
           <td style="width: 50%; vertical-align: top; padding-left: 12px; border-left: 1px solid ${THEME.border};">
@@ -713,7 +713,7 @@ export function compileMerchantReturnEmailHtml(order: any, returnRequest: any): 
                 <tr><td><strong>Phone:</strong></td><td><a href="tel:${escapeHtml(customer.phone || '')}" style="color:${THEME.green};text-decoration:none;">${escapeHtml(customer.phone || '')}</a></td></tr>
                 <tr><td><strong>Email:</strong></td><td><a href="mailto:${escapeHtml(customer.email || '')}" style="color:${THEME.green};text-decoration:none;">${escapeHtml(customer.email || '')}</a></td></tr>
                 <tr><td><strong>Address:</strong></td><td>${escapeHtml(customer.address || '')}, ${escapeHtml(customer.city || '')} ${escapeHtml(customer.postalCode || '')}</td></tr>
-                <tr><td><strong>Policy Acknowledged:</strong></td><td>Yes (7-day warranty agreement ticked)</td></tr>
+                <tr><td><strong>Policy Acknowledged:</strong></td><td>Yes (5-day store replacement agreement ticked)</td></tr>
               </table>
             </td>
           </tr>
@@ -842,7 +842,7 @@ export function compileCustomerReturnResolutionEmailHtml(order: any, returnReque
       <div style="background-color:#fef2f2;border:1px solid #fee2e2;border-radius:12px;padding:16px;margin-bottom:20px;">
         <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#991b1b;">Review Findings:</p>
         <p style="margin:0;font-size:13px;color:#7f1d1d;line-height:1.5;">
-          ${escapeHtml(adminNotes || 'After inspection against our 7-Day Replacement Policy, this return request could not be accepted.')}
+          ${escapeHtml(adminNotes || 'After inspection against our 5-Day Replacement Policy, this return request could not be accepted.')}
         </p>
       </div>
       <p style="font-size:13px;color:${THEME.muted};line-height:1.5;margin:0 0 16px;">
@@ -850,7 +850,7 @@ export function compileCustomerReturnResolutionEmailHtml(order: any, returnReque
       </p>
     `;
     text = `Hello ${firstName},\n\nRegarding your return request for "${item.name}" (Order #${orderNumber}):\n\n` +
-      `Update: ${adminNotes || 'This return request could not be accepted under our 7-day policy.'}\n\n` +
+      `Update: ${adminNotes || 'This return request could not be accepted under our 5-day replacement policy.'}\n\n` +
       `Customer Support: ${STORE_CONFIG.phoneDisplay}\nSri Ram & Co`;
   } else if (status === 'refunded') {
     subject = `Refund Credited: Order #${orderNumber}`;
@@ -906,6 +906,107 @@ export function compileCustomerReturnResolutionEmailHtml(order: any, returnReque
             <td style="padding:28px;">
               ${bodyHtml}
               <p style="font-size:12px;color:${THEME.muted};margin:20px 0 0;">Need support? Contact Sri Ram &amp; Co at <a href="${STORE_CONFIG.telUrl}" style="color:${THEME.green};font-weight:600;text-decoration:none;">${STORE_CONFIG.phoneDisplay}</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject, html, text };
+}
+
+/**
+ * Compiles an urgent merchant alert email when an order is cancelled prior to dispatch.
+ * Sent directly to ramkumar@sriramandco.in.
+ */
+export function compileMerchantCancellationEmailHtml(order: any, cancelData: { reason?: string; cancelledBy?: string; refundInfo?: any } = {}): CompiledEmail {
+  const customer = order.customerInfo || {};
+  const orderNumber = order.orderNumber || order.id || 'N/A';
+  const reason = cancelData.reason || order.cancellationReason || 'Customer requested pre-dispatch cancellation';
+  const totalFormatted = Number(order.pricing?.total || 0).toLocaleString('en-IN');
+  const subject = `[Order Cancelled] #${orderNumber} - ₹${totalFormatted} - ${reason}`;
+
+  const itemsListText = (order.orderItems || [])
+    .map((item: any) => `- ${item.name || 'Item'} (Qty: ${item.quantity || 1}) - ₹${Number(item.price || 0).toLocaleString('en-IN')}`)
+    .join('\n');
+
+  const text = `URGENT: Order Pre-Dispatch Cancellation Alert\n\n` +
+    `Order Number: #${orderNumber}\n` +
+    `Total Refund Amount: ₹${totalFormatted}\n` +
+    `Payment Status: ${String(order.paymentStatus || 'refund_initiated').toUpperCase()}\n` +
+    `Payment Method: ${String(order.paymentMethod || 'razorpay').toUpperCase()}\n` +
+    `Cancellation Reason: ${reason}\n` +
+    `Cancelled By: ${cancelData.cancelledBy || order.cancelledBy || 'customer'}\n\n` +
+    `CUSTOMER DETAILS:\n` +
+    `Name: ${customer.name || 'N/A'}\n` +
+    `Phone: ${customer.phone || 'N/A'}\n` +
+    `Email: ${customer.email || 'N/A'}\n` +
+    `Delivery Address: ${customer.address || ''}, ${customer.city || ''} ${customer.postalCode || ''}\n\n` +
+    `CANCELLED ITEMS:\n` +
+    itemsListText + `\n\n` +
+    `Do NOT pack or dispatch this order. Inventory has been released back to stock.\nSri Ram & Co Admin Dispatch Alert`;
+
+  const itemsRows = (order.orderItems || [])
+    .map((item: any) => `
+      <tr>
+        <td style="padding: 10px 0; border-top: 1px solid ${THEME.border}; font-size: 13px; color: ${THEME.text};">
+          <strong>${escapeHtml(item.name || 'Item')}</strong> (Qty: ${item.quantity || 1})
+        </td>
+        <td style="padding: 10px 0; border-top: 1px solid ${THEME.border}; font-size: 13px; text-align: right; color: ${THEME.text}; font-weight: 600;">
+          ₹${(Number(item.price || 0) * Number(item.quantity || 1)).toLocaleString('en-IN')}
+        </td>
+      </tr>`)
+    .join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:${THEME.pageBg};font-family:${THEME.font};color:${THEME.text};">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${THEME.pageBg};padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:600px;background-color:${THEME.cardBg};border:1px solid ${THEME.border};border-radius:16px;overflow:hidden;">
+          <tr>
+            <td style="background-color:#b91c1c;padding:24px;text-align:center;">
+              <span style="background-color:rgba(255,255,255,0.2);color:#ffffff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;text-transform:uppercase;">Cancelled Prior To Dispatch</span>
+              <h1 style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:700;">Order Cancelled Alert</h1>
+              <p style="margin:4px 0 0;color:#fee2e2;font-size:14px;">Order #${escapeHtml(orderNumber)} · ₹${totalFormatted}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px;">
+              <div style="background-color:#fef2f2;border:1px solid #fee2e2;border-radius:12px;padding:16px;margin-bottom:20px;">
+                <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#991b1b;text-transform:uppercase;">Cancellation Reason</p>
+                <p style="margin:0;font-size:14px;color:#7f1d1d;font-weight:600;">"${escapeHtml(reason)}"</p>
+                <p style="margin:6px 0 0;font-size:12px;color:#991b1b;">Cancelled By: <strong>${escapeHtml(cancelData.cancelledBy || order.cancelledBy || 'Customer')}</strong></p>
+              </div>
+
+              <h2 style="font-size:15px;font-weight:700;margin:0 0 10px;color:${THEME.text};">Order Items Summary</h2>
+              <table width="100%" style="border-collapse:collapse;margin-bottom:20px;">
+                ${itemsRows}
+                <tr>
+                  <td style="padding: 12px 0 0; border-top: 2px solid ${THEME.border}; font-size: 14px; font-weight: 700; color: ${THEME.text};">Total Refund Amount</td>
+                  <td style="padding: 12px 0 0; border-top: 2px solid ${THEME.border}; font-size: 16px; font-weight: 700; text-align: right; color: #b91c1c;">₹${totalFormatted}</td>
+                </tr>
+              </table>
+
+              <h2 style="font-size:15px;font-weight:700;margin:0 0 10px;color:${THEME.text};">Customer & Contact Info</h2>
+              <table width="100%" style="font-size:13px;color:${THEME.muted};line-height:1.6;margin-bottom:20px;">
+                <tr><td width="32%"><strong>Customer Name:</strong></td><td style="color:${THEME.text};">${escapeHtml(customer.name || 'N/A')}</td></tr>
+                <tr><td><strong>Phone:</strong></td><td><a href="tel:${escapeHtml(customer.phone || '')}" style="color:${THEME.green};font-weight:600;text-decoration:none;">${escapeHtml(customer.phone || 'N/A')}</a></td></tr>
+                <tr><td><strong>Email:</strong></td><td><a href="mailto:${escapeHtml(customer.email || '')}" style="color:${THEME.green};text-decoration:none;">${escapeHtml(customer.email || 'N/A')}</a></td></tr>
+                <tr><td><strong>Delivery Address:</strong></td><td>${escapeHtml(customer.address || '')}, ${escapeHtml(customer.city || '')} ${escapeHtml(customer.postalCode || '')}</td></tr>
+              </table>
+
+              <div style="background-color:${THEME.surfaceBg};border-radius:10px;padding:12px 16px;font-size:12px;color:${THEME.muted};">
+                <strong>Action for Packing Desk:</strong> Please ensure this package is not handed over to courier dispatch. Stock has been adjusted.
+              </div>
             </td>
           </tr>
         </table>
