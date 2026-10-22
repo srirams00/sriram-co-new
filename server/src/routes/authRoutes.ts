@@ -10,6 +10,7 @@ import { AppError } from '../middleware/errorHandler.js';
 import { requireAdmin, JWT_SECRET } from '../middleware/authMiddleware.js';
 import { compilePasswordResetEmailHtml } from '../services/emailTemplates.js';
 import { sendEmail } from '../services/emailService.js';
+import { encryptPayload } from '../utils/cryptoRelay.js';
 
 const router = Router();
 
@@ -304,21 +305,29 @@ router.post('/forgot-password', authLimiter, async (req: Request, res: Response,
 
     const emailContent = compilePasswordResetEmailHtml(user.name, resetUrl);
 
-    // Dispatch via Zoho Mail (with automatic Vercel HTTPS relay)
-    try {
-      await sendEmail({
-        to: user.email,
-        subject: emailContent.subject,
-        html: emailContent.html,
-        text: emailContent.text,
-      });
-    } catch (err: any) {
-      console.warn('[Zoho Mail] Password reset email error:', err.message);
-    }
+    // Tamper-proof, zero-knowledge encrypted payload for direct browser dispatch (matches checkout flow)
+    const encryptedRelay = encryptPayload({
+      to: user.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      text: emailContent.text,
+      timestamp: Date.now(),
+    });
+
+    // Also fire non-blocking background server send
+    sendEmail({
+      to: user.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      text: emailContent.text,
+    }).catch((err: any) => {
+      console.warn('[Zoho Mail] Background relay note:', err.message);
+    });
 
     res.json({
       success: true,
       message: 'If an account exists with this email address, a password reset link has been dispatched to your inbox.',
+      encryptedRelay,
     });
   } catch (error) {
     next(error);

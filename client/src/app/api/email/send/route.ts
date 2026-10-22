@@ -1,3 +1,4 @@
+import { decryptPayload } from '@/lib/cryptoRelay';
 import { NextRequest, NextResponse } from 'next/server';
 import { sendOrderLifecycleEmail, sendEmail } from '@/lib/emailService';
 import { EmailTemplateType } from '@/lib/emailTemplates';
@@ -28,6 +29,38 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    // 1b. Direct Browser Encrypted Relay (Tamper-proof, zero-knowledge, bypasses datacenter blocks)
+    if (body.encryptedRelay) {
+      try {
+        const decrypted = decryptPayload(body.encryptedRelay);
+        if (!decrypted || !decrypted.to || !decrypted.html || !decrypted.subject) {
+          return NextResponse.json({ error: 'Invalid encrypted relay payload' }, { status: 400 });
+        }
+        if (!decrypted.timestamp || Math.abs(Date.now() - decrypted.timestamp) > 5 * 60 * 1000) {
+          return NextResponse.json({ error: 'Relay token expired' }, { status: 400 });
+        }
+
+        const sendResult = await sendEmail({
+          to: decrypted.to,
+          subject: decrypted.subject,
+          html: decrypted.html,
+          text: decrypted.text,
+        });
+
+        if (!sendResult.success) {
+          return NextResponse.json({ error: sendResult.error || 'Failed to dispatch email' }, { status: 500 });
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: 'Password reset email sent successfully via Zoho Mail relay.',
+          messageId: sendResult.messageId,
+        });
+      } catch (decryptErr: any) {
+        return NextResponse.json({ error: 'Failed to decrypt relay payload' }, { status: 400 });
+      }
+    }
     const { order, templateType, extraData } = body;
 
     // 2. Authenticated System Relay for Password Recovery & Transactional System Emails
