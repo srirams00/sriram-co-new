@@ -117,6 +117,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
     status: dbConnected ? 'ok' : 'degraded',
     database: dbConnected ? 'connected' : 'disconnected',
     service: 'Sriram & Co Backend API',
+    buildVersion: 'v1.0.5-relay-fixed',
     uptime: Math.floor(process.uptime()),
     memory: {
       heapUsedMb: Math.round(memory.heapUsed / 1024 / 1024),
