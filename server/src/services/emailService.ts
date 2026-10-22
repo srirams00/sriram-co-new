@@ -35,7 +35,7 @@ const SMTP_SECURE = process.env.SMTP_SECURE === 'true' || SMTP_PORT === 465;
 const SMTP_USER = process.env.SMTP_USER || 'ramkumar@sriramandco.in';
 const SMTP_PASS = process.env.SMTP_PASS || '';
 const EMAIL_FROM = process.env.EMAIL_FROM || '"Sri Ram & Co" <ramkumar@sriramandco.in>';
-const EMAIL_RELAY_SECRET = process.env.EMAIL_RELAY_SECRET || process.env.CF_SECRET_TOKEN || 'src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2';
+const EMAIL_RELAY_SECRET = process.env.EMAIL_RELAY_SECRET || 'src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2';
 
 let cachedTransporter: Transporter | null = null;
 
@@ -116,7 +116,8 @@ export async function sendEmail(payload: SendEmailPayload, relayBaseUrl?: string
           simulated: false,
         };
       } else {
-        console.warn(`[Zoho Relay] Vercel relay returned status ${res.status}, falling back to direct SMTP...`);
+        const errorBody = await res.text();
+        console.warn(`[Zoho Relay] Vercel relay returned status ${res.status} (${errorBody}), falling back to direct SMTP...`);
       }
     } catch (relayErr: any) {
       console.warn(`[Zoho Relay] Vercel relay attempt error: ${relayErr.message}, falling back to direct SMTP...`);

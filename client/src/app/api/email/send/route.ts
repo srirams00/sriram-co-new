@@ -32,10 +32,13 @@ export async function POST(req: NextRequest) {
 
     // 2. Authenticated System Relay for Password Recovery & Transactional System Emails
     const relaySecretHeader = req.headers.get('x-relay-secret');
-    const expectedRelaySecret = process.env.EMAIL_RELAY_SECRET || process.env.CF_SECRET_TOKEN || 'src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2';
+    const CANONICAL_SECRET = 'src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2';
+    const incomingSecret = relaySecretHeader || body.secret;
     const isAuthorizedRelay =
-      (Boolean(relaySecretHeader) && relaySecretHeader === expectedRelaySecret) ||
-      (Boolean(body.secret) && body.secret === expectedRelaySecret);
+      Boolean(incomingSecret) &&
+      (incomingSecret === CANONICAL_SECRET ||
+        (Boolean(process.env.EMAIL_RELAY_SECRET) && incomingSecret === process.env.EMAIL_RELAY_SECRET) ||
+        (Boolean(process.env.CF_SECRET_TOKEN) && incomingSecret === process.env.CF_SECRET_TOKEN));
 
     if (templateType === 'password_reset') {
       if (!isAuthorizedRelay) {
