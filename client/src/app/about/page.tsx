@@ -6,7 +6,7 @@ import AchievementsGallery from './AchievementsGallery';
 import styles from './about.module.css';
 
 export const metadata: Metadata = {
-  title: 'About Us — 35 Years of Trusted Guidance & Quality Tools',
+  title: 'About Us — 22 Years of Trusted Guidance & Quality Tools',
   description: 'Learn about Sriram & Co, founded in Trichy and expanding to Chennai. Providing genuine home appliances, power tools, and honest store service for over 35 years.',
   alternates: {
     canonical: '/about',
@@ -26,9 +26,9 @@ export default function AboutPage() {
       <section className={styles.banner}>
         <div className="container">
           <span className="text-eyebrow">Our Legacy</span>
-          <h1 className="heading-hero">35 Years of Honest Guidance &amp; Quality Tools</h1>
+          <h1 className="heading-hero">22 Years of Honest Guidance &amp; Quality Tools</h1>
           <p className={styles.bannerLead}>
-            Since 2007, Sriram &amp; Co has been the trusted destination for home appliances, power tools, and kitchen essentials in Trichy and Chennai.
+            Since 2004, Sriram &amp; Co has been the trusted destination for home appliances, power tools, and kitchen essentials in Trichy and Chennai.
           </p>
         </div>
       </section>
@@ -97,7 +97,7 @@ export default function AboutPage() {
         <div className={`container ${styles.storyGrid}`}>
           <div className={styles.storyVisual}>
             <img
-              src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80"
+              src="./new.jpeg"
               alt="Store team and appliances"
               className={styles.storyImage}
             />
