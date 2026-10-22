@@ -2,10 +2,11 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { RefreshCw, Search, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { RefreshCw, Search, AlertCircle, CheckCircle2, X, RotateCcw } from 'lucide-react';
+import ReturnProductModal from '@/components/orders/ReturnProductModal';
 import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
 import { api } from '@/lib/api';
-import { Order, OrderStatus } from '@/types/order';
+import { Order, OrderStatus, OrderItem } from '@/types/order';
 import styles from './orders.module.css';
 
 const ORDER_STEPS = ['Order Placed', 'Shipped', 'Out for Delivery', 'Delivered'];
@@ -20,15 +21,18 @@ function getStatusLabel(status: OrderStatus): string {
 function OrderTimeline({ status }: { status: OrderStatus }) {
   if (status === 'cancelled') return null;
 
-  const currentStep = {
+  const stepMap: Record<OrderStatus, number> = {
     placed: 0,
     confirmed: 0,
     shipped: 1,
     processing: 1,
     out_for_delivery: 2,
     delivered: 3,
+    return_requested: 3,
+    returned: 3,
     cancelled: -1,
-  }[status];
+  };
+  const currentStep = stepMap[status] ?? 0;
 
   return (
     <div className={styles.timeline} aria-label={`Order progress: ${getStatusLabel(status)}`}>
@@ -88,14 +92,18 @@ function OrderCard({
   order,
   highlighted = false,
   onCancelClick,
+  onReturnClick,
 }: {
   order: Order;
   highlighted?: boolean;
   onCancelClick?: (order: Order) => void;
+  onReturnClick?: (order: Order, item: OrderItem) => void;
 }) {
   const isDelivered = order.orderStatus === 'delivered';
   const isCancelled = order.orderStatus === 'cancelled';
   const isPreDispatch = ['placed', 'confirmed', 'processing'].includes(order.orderStatus);
+  const isWithin7Days = isDelivered && (Date.now() - new Date(order.updatedAt || order.createdAt).getTime() <= 7 * 24 * 60 * 60 * 1000);
+  const isReturnRequested = order.orderStatus === 'return_requested' || Boolean(order.returnRequest);
 
   return (
     <div
@@ -142,6 +150,20 @@ function OrderCard({
             <div className={styles.itemInfo}>
               <h4>{item.name}</h4>
               <p>Quantity: {item.quantity}</p>
+              {isReturnRequested && (
+                <span className={styles.returnBadge}>
+                  <RotateCcw size={12} /> Return Requested ({order.returnRequest?.reason || 'Under Review'})
+                </span>
+              )}
+              {isWithin7Days && !isReturnRequested && onReturnClick && (
+                <button
+                  type="button"
+                  className={styles.returnProductBtn}
+                  onClick={() => onReturnClick(order, item)}
+                >
+                  <RotateCcw size={12} /> Return Product
+                </button>
+              )}
             </div>
             <strong className={styles.itemPrice}>
               {formatCurrency(item.price * item.quantity)}
@@ -205,6 +227,17 @@ export default function OrdersPage() {
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
+
+  // Return Modal State
+  const [returnModalData, setReturnModalData] = useState<{
+    isOpen: boolean;
+    order: Order | null;
+    item: OrderItem | null;
+  }>({
+    isOpen: false,
+    order: null,
+    item: null,
+  });
 
   // Cancellation Modal State
   const [cancelModalOrder, setCancelModalOrder] = useState<Order | null>(null);
@@ -341,6 +374,23 @@ export default function OrdersPage() {
     }
   };
 
+  const handleOpenReturnModal = (order: Order, item: OrderItem) => {
+    setReturnModalData({
+      isOpen: true,
+      order,
+      item,
+    });
+  };
+
+  const handleReturnSuccess = (updatedOrder: Order) => {
+    setOrders((prev) => prev.map((o) => (o.orderNumber === updatedOrder.orderNumber ? updatedOrder : o)));
+    if (searchedOrder && searchedOrder.orderNumber === updatedOrder.orderNumber) {
+      setSearchedOrder(updatedOrder);
+    }
+    setSuccessToast(`Return request submitted for Order #${updatedOrder.orderNumber}. Sri Ram & Co team will inspect and reach out to you within 24-48 hours.`);
+    setTimeout(() => setSuccessToast(null), 8000);
+  };
+
   const filteredOrders = activeTab === 'active'
     ? orders.filter((order) => !['delivered', 'cancelled'].includes(order.orderStatus))
     : orders;
@@ -417,6 +467,7 @@ export default function OrdersPage() {
               order={searchedOrder}
               highlighted
               onCancelClick={handleOpenCancelModal}
+              onReturnClick={handleOpenReturnModal}
             />
           </div>
         )}
@@ -468,10 +519,22 @@ export default function OrdersPage() {
               key={order.id || order.orderNumber}
               order={order}
               onCancelClick={handleOpenCancelModal}
+              onReturnClick={handleOpenReturnModal}
             />
           ))}
         </div>
       </div>
+
+{/* Product Return Modal */}
+      {returnModalData.isOpen && returnModalData.order && returnModalData.item && (
+        <ReturnProductModal
+          isOpen={returnModalData.isOpen}
+          order={returnModalData.order}
+          item={returnModalData.item}
+          onClose={() => setReturnModalData({ isOpen: false, order: null, item: null })}
+          onSuccess={handleReturnSuccess}
+        />
+      )}
 
       {/* Cancellation & Refund Modal */}
       {cancelModalOrder && (

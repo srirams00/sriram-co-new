@@ -518,3 +518,41 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+
+.returnProductBtn {
+  background: none;
+  border: 1px solid #b91c1c;
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  margin-top: 6px;
+  width: fit-content;
+}
+
+.returnProductBtn:hover {
+  background-color: #fef2f2;
+  border-color: #991b1b;
+  color: #991b1b;
+}
+
+.returnBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #fff7ed;
+  border: 1px solid #ffedd5;
+  color: #c2410c;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-top: 6px;
+}

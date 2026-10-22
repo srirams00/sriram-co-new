@@ -644,3 +644,147 @@ export function compilePasswordResetEmailHtml(name: string, resetUrl: string): C
 
   return { subject, html, text };
 }
+
+
+/**
+ * Compiles a structured merchant alert email for product return requests.
+ * Sent directly to ramkumar@sriramandco.in with customer email as replyTo.
+ */
+export function compileMerchantReturnEmailHtml(order: any, returnRequest: any): CompiledEmail {
+  const customer = order.customerInfo || {};
+  const item = returnRequest.item || {};
+  const orderNumber = order.orderNumber || order.id || 'N/A';
+  const subject = `[Return Request] Order #${orderNumber} - ${item.name || 'Product'}`;
+  
+  const text = `URGENT: Product Return Request Received\n\n` +
+    `Order Number: #${orderNumber}\n` +
+    `Customer Name: ${customer.name || 'N/A'}\n` +
+    `Customer Phone: ${customer.phone || 'N/A'}\n` +
+    `Customer Email: ${customer.email || 'N/A'}\n` +
+    `Delivery Address: ${customer.address || ''}, ${customer.city || ''} ${customer.postalCode || ''}\n\n` +
+    `RETURN ITEM DETAILS:\n` +
+    `Product: ${item.name || 'N/A'}\n` +
+    `Quantity: ${item.quantity || 1}\n` +
+    `Price: ₹${item.price || 0}\n\n` +
+    `RETURN REASON:\n` +
+    `Reason: ${returnRequest.reason}\n` +
+    `Customer Fault Review: ${returnRequest.faultDetails}\n` +
+    `Policy Acknowledged: ${returnRequest.agreedToPolicy ? 'YES' : 'NO'}\n` +
+    `Requested At: ${new Date(returnRequest.requestedAt || Date.now()).toLocaleString('en-IN')}\n\n` +
+    `Please review in Admin Dashboard and arrange reverse logistics.`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:${THEME.pageBg};font-family:${THEME.font};color:${THEME.text};">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${THEME.pageBg};padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:600px;background-color:${THEME.cardBg};border:1px solid ${THEME.border};border-radius:16px;overflow:hidden;">
+          <tr>
+            <td style="background-color:#b91c1c;padding:24px;text-align:center;">
+              <span style="background-color:rgba(255,255,255,0.2);color:#ffffff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;text-transform:uppercase;">Action Required</span>
+              <h1 style="margin:8px 0 0;color:#ffffff;font-size:20px;font-weight:700;">Customer Return Request</h1>
+              <p style="margin:4px 0 0;color:#fee2e2;font-size:13px;">Order #${escapeHtml(orderNumber)}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px;">
+              <h2 style="font-size:16px;font-weight:700;margin:0 0 12px;color:${THEME.text};">Return Item Details</h2>
+              <table width="100%" style="border-collapse:collapse;margin-bottom:20px;background-color:${THEME.surfaceBg};border-radius:12px;padding:12px;">
+                <tr>
+                  <td style="padding:12px;font-size:14px;font-weight:600;color:${THEME.text};">${escapeHtml(item.name || 'Product')}</td>
+                  <td style="padding:12px;font-size:14px;text-align:right;color:${THEME.text};">Qty: ${escapeHtml(String(item.quantity || 1))} &bull; <strong>₹${Number(item.price || 0).toLocaleString('en-IN')}</strong></td>
+                </tr>
+              </table>
+
+              <h2 style="font-size:16px;font-weight:700;margin:0 0 12px;color:${THEME.text};">Customer Fault Reason &amp; Feedback</h2>
+              <div style="background-color:#fff7ed;border:1px solid #ffedd5;border-radius:12px;padding:16px;margin-bottom:20px;">
+                <p style="margin:0 0 6px;font-size:13px;color:#9a3412;"><strong>Fault Category:</strong> ${escapeHtml(returnRequest.reason)}</p>
+                <p style="margin:0;font-size:13px;color:#431407;line-height:1.5;"><strong>Customer Detailed Review:</strong><br/>"${escapeHtml(returnRequest.faultDetails)}"</p>
+              </div>
+
+              <h2 style="font-size:16px;font-weight:700;margin:0 0 12px;color:${THEME.text};">Customer &amp; Pickup Address</h2>
+              <table width="100%" style="font-size:13px;color:${THEME.muted};line-height:1.6;margin-bottom:20px;">
+                <tr><td width="30%"><strong>Customer Name:</strong></td><td>${escapeHtml(customer.name || '')}</td></tr>
+                <tr><td><strong>Phone:</strong></td><td><a href="tel:${escapeHtml(customer.phone || '')}" style="color:${THEME.green};text-decoration:none;">${escapeHtml(customer.phone || '')}</a></td></tr>
+                <tr><td><strong>Email:</strong></td><td><a href="mailto:${escapeHtml(customer.email || '')}" style="color:${THEME.green};text-decoration:none;">${escapeHtml(customer.email || '')}</a></td></tr>
+                <tr><td><strong>Address:</strong></td><td>${escapeHtml(customer.address || '')}, ${escapeHtml(customer.city || '')} ${escapeHtml(customer.postalCode || '')}</td></tr>
+                <tr><td><strong>Policy Acknowledged:</strong></td><td>Yes (7-day warranty agreement ticked)</td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject, html, text };
+}
+
+/**
+ * Compiles customer acknowledgment email confirming return request submission.
+ */
+export function compileCustomerReturnAckEmailHtml(order: any, returnRequest: any): CompiledEmail {
+  const customer = order.customerInfo || {};
+  const item = returnRequest.item || {};
+  const orderNumber = order.orderNumber || order.id || 'N/A';
+  const firstName = (customer.name || 'Customer').trim().split(' ')[0];
+  const subject = `Return Request Received: Order #${orderNumber}`;
+
+  const text = `Hello ${firstName},\n\nWe have received your return request for "${item.name}" from Order #${orderNumber}.\n\n` +
+    `Reason: ${returnRequest.reason}\n\n` +
+    `What happens next?\n` +
+    `1. Our support team will inspect the request within 2 business days.\n` +
+    `2. A reverse pickup agent will be scheduled at your registered delivery address.\n` +
+    `3. Once the product passes quality check at our hub, your refund will be credited within 5-7 business days.\n\n` +
+    `Helpline: ${STORE_CONFIG.phoneDisplay}\nSri Ram & Co`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:${THEME.pageBg};font-family:${THEME.font};color:${THEME.text};">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${THEME.pageBg};padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:600px;background-color:${THEME.cardBg};border:1px solid ${THEME.border};border-radius:16px;overflow:hidden;">
+          <tr>
+            <td style="background-color:${THEME.green};padding:24px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">Sri Ram &amp; Co</h1>
+              <p style="margin:4px 0 0;color:#eef7f0;font-size:13px;">Return Request Acknowledgment</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px;">
+              <h2 style="font-size:18px;margin:0 0 12px;color:${THEME.text};">We've Received Your Return Request</h2>
+              <p style="font-size:14px;line-height:1.6;color:${THEME.muted};margin:0 0 20px;">
+                Hello ${escapeHtml(firstName)}, your return request for <strong>${escapeHtml(item.name || 'Product')}</strong> (Order #${escapeHtml(orderNumber)}) has been successfully recorded.
+              </p>
+              <div style="background-color:${THEME.surfaceBg};border:1px solid ${THEME.border};border-radius:12px;padding:16px;margin-bottom:24px;">
+                <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:${THEME.text};">Next Steps:</p>
+                <ol style="margin:0;padding-left:18px;font-size:13px;color:${THEME.muted};line-height:1.6;">
+                  <li>Our support specialist will review your request within 24–48 hours.</li>
+                  <li>Our courier partner will arrange reverse pickup from your doorstep.</li>
+                  <li>After inspection at our hub, your refund will be processed per our 7-day refund SLA.</li>
+                </ol>
+              </div>
+              <p style="font-size:12px;color:${THEME.muted};margin:0;">Need immediate assistance? Call us at <a href="${STORE_CONFIG.telUrl}" style="color:${THEME.green};font-weight:600;text-decoration:none;">${STORE_CONFIG.phoneDisplay}</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject, html, text };
+}
