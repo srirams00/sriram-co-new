@@ -25,7 +25,7 @@ export function ProcessingEmail() {
         </EmailText>
       </StatusBlock>
       <Spacer size={28} />
-      <ProgressStrip completed={2} partialAfter={1} />
+      <ProgressStrip completed={1} current={1} partialAfter={1} />
       <Spacer size={28} />
       <OrderSummary />
       <Spacer size={24} />

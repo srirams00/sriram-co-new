@@ -82,7 +82,7 @@ export default function AdminEmailStudioPage() {
             </div>
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#1c2b21' }}>Transactional Email Studio</h1>
             <p style={{ margin: '6px 0 0', fontSize: 14, color: '#617568', maxWidth: 640 }}>
-              Six transactional emails in one unified design system, rendered at desktop (600px) and mobile (375px) viewports with real store metadata and responsive HTML table styling.
+              Four order-stage emails plus cancellation, rendered at desktop (600px) and mobile (375px) viewports with real store metadata and responsive HTML table styling.
             </p>
           </div>
 

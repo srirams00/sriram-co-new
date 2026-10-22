@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 describe('Order Pre-Dispatch Cancellation & Refund Suite', () => {
   const PRE_DISPATCH_STATUSES = ['placed', 'confirmed', 'processing'];
-  const POST_DISPATCH_STATUSES = ['out_for_delivery', 'delivered'];
+  const POST_DISPATCH_STATUSES = ['shipped', 'out_for_delivery', 'delivered'];
 
   it('allows cancellation exclusively on pre-dispatch order statuses', () => {
     for (const status of PRE_DISPATCH_STATUSES) {
@@ -12,7 +12,7 @@ describe('Order Pre-Dispatch Cancellation & Refund Suite', () => {
     }
   });
 
-  it('blocks pre-dispatch cancellation once order is out for delivery or delivered', () => {
+  it('blocks pre-dispatch cancellation once the order has shipped', () => {
     for (const status of POST_DISPATCH_STATUSES) {
       const isCancellable = PRE_DISPATCH_STATUSES.includes(status);
       assert.strictEqual(isCancellable, false, `Status ${status} must not be cancellable via pre-dispatch flow`);

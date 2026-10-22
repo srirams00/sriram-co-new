@@ -54,6 +54,13 @@ describe('Transactional Email & Zoho Mail Suite', () => {
     assert.strictEqual(compiled.html.includes('Sri Ram &amp; Co') || compiled.html.includes('Sri Ram & Co'), true);
   });
 
+  it('compiles "shipped" email template with the four-stage progress and delivery details', () => {
+    const compiled = compileOrderEmailHtml(sampleOrder, 'shipped');
+    assert.strictEqual(compiled.subject.includes('has shipped'), true);
+    assert.strictEqual(compiled.html.includes('Shipped'), true);
+    assert.strictEqual(compiled.html.includes('Out for Delivery'), true);
+  });
+
   it('compiles "confirmed" email template with store branch and delivery highlight', () => {
     const compiled = compileOrderEmailHtml(sampleOrder, 'confirmed');
     assert.strictEqual(compiled.subject.includes('confirmed'), true);

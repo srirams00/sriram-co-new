@@ -41,8 +41,8 @@ async function attachReviewStats(products: IProduct[]) {
     const summary = summaryByProduct.get(String(product._id));
     return {
       ...product.toJSON(),
-      rating: summary?.rating ?? 0,
-      reviewCount: summary?.reviewCount ?? 0,
+      rating: summary?.rating ?? product.rating,
+      reviewCount: summary?.reviewCount ?? product.reviewCount,
     };
   });
 }
@@ -504,7 +504,7 @@ router.delete('/:id', requireAdmin, async (req: AuthRequest, res: Response, next
     // Integrity check: Check if product is in active customer orders
     const activeOrderCount = await Order.countDocuments({
       'orderItems.product': req.params.id,
-      orderStatus: { $in: ['placed', 'confirmed', 'processing', 'out_for_delivery'] },
+      orderStatus: { $in: ['placed', 'shipped', 'confirmed', 'processing', 'out_for_delivery'] },
     });
 
     if (activeOrderCount > 0) {

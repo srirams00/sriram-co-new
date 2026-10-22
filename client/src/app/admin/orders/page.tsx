@@ -168,9 +168,9 @@ export default function AdminOrdersPage() {
   const getStatusClass = (status: OrderStatus) => {
     switch (status) {
       case 'placed':
-        return styles.statusPlaced;
       case 'confirmed':
-        return styles.statusConfirmed;
+        return styles.statusPlaced;
+      case 'shipped':
       case 'processing':
         return styles.statusProcessing;
       case 'out_for_delivery':
@@ -284,9 +284,8 @@ export default function AdminOrdersPage() {
         <div className={styles.statusTabs}>
           {[
             { key: 'all', label: 'All Orders' },
-            { key: 'placed', label: 'Placed' },
-            { key: 'confirmed', label: 'Confirmed' },
-            { key: 'processing', label: 'Processing' },
+            { key: 'placed', label: 'Order Placed' },
+            { key: 'shipped', label: 'Shipped' },
             { key: 'out_for_delivery', label: 'Out for Delivery' },
             { key: 'delivered', label: 'Delivered' },
             { key: 'cancelled', label: 'Cancelled' },
@@ -408,16 +407,15 @@ export default function AdminOrdersPage() {
 
                     <td>
                       <select
-                        value={order.orderStatus}
+                        value={order.orderStatus === 'confirmed' ? 'placed' : order.orderStatus === 'processing' ? 'shipped' : order.orderStatus}
                         disabled={updatingId === order.id}
                         onChange={(e) =>
                           handleStatusChange(order.id, e.target.value as OrderStatus)
                         }
                         className={`${styles.statusSelect} ${getStatusClass(order.orderStatus)}`}
                       >
-                        <option value="placed">Placed</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="processing">Processing</option>
+                        <option value="placed">Order Placed</option>
+                        <option value="shipped">Shipped</option>
                         <option value="out_for_delivery">Out for Delivery</option>
                         <option value="delivered">Delivered</option>
                         <option value="cancelled">Cancelled</option>
@@ -569,11 +567,10 @@ export default function AdminOrdersPage() {
                 <div className={styles.emailGrid}>
                   {[
                     { id: 'placed', label: '1. Order Placed', desc: 'Order received receipt' },
-                    { id: 'confirmed', label: '2. Confirmed', desc: 'Payment captured' },
-                    { id: 'processing', label: '3. Processing', desc: 'Packed at Vinola hub' },
-                    { id: 'out_for_delivery', label: '4. Out for Delivery', desc: 'Driver & window' },
-                    { id: 'delivered', label: '5. Delivered', desc: 'Completion receipt' },
-                    { id: 'cancelled', label: '6. Cancelled', desc: 'Cancellation notice' },
+                    { id: 'shipped', label: '2. Shipped', desc: 'Order dispatched from store' },
+                    { id: 'out_for_delivery', label: '3. Out for Delivery', desc: 'Driver & window' },
+                    { id: 'delivered', label: '4. Delivered', desc: 'Completion receipt' },
+                    { id: 'cancelled', label: 'Cancelled', desc: 'Cancellation notice' },
                   ].map((tpl) => {
                     const isSending = sendingEmailKey === `${selectedOrder.id}-${tpl.id}`;
                     return (
@@ -768,11 +765,10 @@ export default function AdminOrdersPage() {
             <div className={styles.emailGrid}>
               {[
                 { id: 'placed', label: '1. Order Placed', desc: 'Order received receipt' },
-                { id: 'confirmed', label: '2. Confirmed', desc: 'Payment captured' },
-                { id: 'processing', label: '3. Processing', desc: 'Packed at Vinola hub' },
-                { id: 'out_for_delivery', label: '4. Out for Delivery', desc: 'Driver & window' },
-                { id: 'delivered', label: '5. Delivered', desc: 'Completion receipt' },
-                { id: 'cancelled', label: '6. Cancelled', desc: 'Cancellation notice' },
+                { id: 'shipped', label: '2. Shipped', desc: 'Order dispatched from store' },
+                { id: 'out_for_delivery', label: '3. Out for Delivery', desc: 'Driver & window' },
+                { id: 'delivered', label: '4. Delivered', desc: 'Completion receipt' },
+                { id: 'cancelled', label: 'Cancelled', desc: 'Cancellation notice' },
               ].map((tpl) => {
                 const isSending = sendingEmailKey === `${quickEmailOrder.id}-${tpl.id}`;
                 return (

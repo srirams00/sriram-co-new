@@ -1,7 +1,6 @@
 export type EmailId =
   | 'placed'
-  | 'confirmed'
-  | 'processing'
+  | 'shipped'
   | 'out-for-delivery'
   | 'delivered'
   | 'cancelled';

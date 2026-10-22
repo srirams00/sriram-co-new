@@ -380,6 +380,46 @@
   margin-bottom: 12px;
 }
 
+.successBanner {
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  color: #15803D;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forgotLink {
+  font-family: var(--font-body);
+  font-size: 0.775rem;
+  color: #174A2B;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.forgotLink:hover {
+  text-decoration: underline;
+  color: #18A957;
+}
+
+.authNoticeText {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #4B5A50;
+  margin-bottom: 18px;
+}
+
 /* ---------------- RESPONSIVE BREAKPOINTS ---------------- */
 @media (max-width: 820px) {
   .authCard {

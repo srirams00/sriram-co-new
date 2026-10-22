@@ -46,6 +46,7 @@ export default function CheckoutPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [policyAgreed, setPolicyAgreed] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
@@ -253,7 +254,7 @@ export default function CheckoutPage() {
                 pricing: razorpayOrder.pricing || { total: razorpayOrder.amount / 100 },
                 paymentMethod: 'razorpay',
                 paymentStatus: 'paid',
-                orderStatus: 'confirmed',
+                orderStatus: 'placed',
                 razorpayPaymentId: response.razorpay_payment_id,
                 createdAt: new Date(),
               };
@@ -263,7 +264,7 @@ export default function CheckoutPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   order: confirmedOrder,
-                  templateType: 'confirmed',
+                  templateType: 'placed',
                 }),
               }).catch((err) => console.warn('[Auto Email] Confirmed email dispatch error:', err));
             } else {
@@ -304,7 +305,7 @@ export default function CheckoutPage() {
             <div className={styles.successIcon}>
               <CheckCircle2 size={54} color="#16a34a" />
             </div>
-            <span className={styles.successTag}>Payment Verified &amp; Order Confirmed</span>
+            <span className={styles.successTag}>Payment Verified &amp; Order Placed</span>
             <h1 className={styles.successTitle}>Thank you, {formData.fullName}!</h1>
             <p className={styles.orderIdText}>Order Reference ID: <strong>{placedOrderId}</strong></p>
             {placedPaymentId && (
@@ -320,7 +321,7 @@ export default function CheckoutPage() {
               <h4>Order &amp; Delivery Details</h4>
               <p><strong>Deliver to:</strong> {formData.address}, {formData.city} - {formData.pincode}</p>
               <p><strong>Payment Mode:</strong> 100% Online Payment (Razorpay Verified)</p>
-              <p><strong>Status:</strong> Paid &amp; Confirmed</p>
+              <p><strong>Status:</strong> Order Placed</p>
             </div>
 
             <div className={styles.successActions}>

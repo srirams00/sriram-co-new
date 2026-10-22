@@ -5,8 +5,6 @@ import type { FormEvent } from 'react';
 import Link from 'next/link';
 import { Star } from 'lucide-react';
 import { api } from '@/lib/api';
-import type { ProductReview } from '@/types/review';
-import RatingStars from './RatingStars';
 import styles from './ProductReviews.module.css';
 
 interface ProductReviewsProps {
@@ -14,9 +12,6 @@ interface ProductReviewsProps {
 }
 
 export default function ProductReviews({ productId }: ProductReviewsProps) {
-  const [reviews, setReviews] = useState<ProductReview[]>([]);
-  const [averageRating, setAverageRating] = useState(0);
-  const [reviewCount, setReviewCount] = useState(0);
   const [canReview, setCanReview] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,9 +30,6 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
     api.getProductReviews(productId, token || undefined)
       .then((summary) => {
         if (cancelled) return;
-        setReviews(summary.reviews);
-        setAverageRating(summary.averageRating);
-        setReviewCount(summary.reviewCount);
         setCanReview(summary.canReview);
         setHasReviewed(summary.hasReviewed);
       })
@@ -69,10 +61,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
 
     setIsSubmitting(true);
     try {
-      const result = await api.createProductReview(productId, { rating, comment }, token);
-      setReviews((currentReviews) => [result.review, ...currentReviews]);
-      setAverageRating(result.averageRating);
-      setReviewCount(result.reviewCount);
+      await api.createProductReview(productId, { rating, comment }, token);
       setCanReview(false);
       setHasReviewed(true);
       setComment('');
@@ -89,25 +78,17 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
     <section className={styles.section} aria-labelledby="product-reviews-title">
       <div className={styles.header}>
         <div>
-          <h2 id="product-reviews-title" className="heading-section">Customer reviews</h2>
+          <h2 id="product-reviews-title" className="heading-section">Write a review</h2>
           <p className={styles.subtitle}>Share your experience with this product.</p>
         </div>
-        {reviewCount > 0 && (
-          <div className={styles.summary} aria-label={`${averageRating.toFixed(1)} out of 5 from ${reviewCount} reviews`}>
-            <RatingStars rating={averageRating} />
-            <strong>{averageRating.toFixed(1)}</strong>
-            <span>{reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}</span>
-          </div>
-        )}
       </div>
 
       {isLoading ? (
-        <p className={styles.message} role="status">Loading reviews…</p>
+        <p className={styles.message} role="status">Checking review availability…</p>
       ) : (
         <>
           {canReview && (
             <form className={styles.form} onSubmit={handleSubmit}>
-              <h3>Write a review</h3>
               <span className={styles.ratingLabel}>Your rating</span>
               <div className={styles.ratingInput} role="group" aria-label="Choose a rating">
                 {[1, 2, 3, 4, 5].map((value) => (
@@ -166,32 +147,6 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
 
           {error && <p className={styles.error} role="alert">{error}</p>}
           {success && <p className={styles.success} role="status">{success}</p>}
-
-          {reviews.length > 0 ? (
-            <div className={styles.reviewList}>
-              {reviews.map((review, index) => (
-                <article className={styles.reviewCard} key={`${review.createdAt}-${index}`}>
-                  <div className={styles.reviewHeading}>
-                    <strong>{review.customerName}</strong>
-                    <span className={styles.verified}>Customer review</span>
-                  </div>
-                  <div className={styles.reviewMeta}>
-                    <RatingStars rating={review.rating} size={14} />
-                    <time dateTime={review.createdAt}>
-                      {new Date(review.createdAt).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </time>
-                  </div>
-                  <p className={styles.reviewComment}>{review.comment}</p>
-                </article>
-              ))}
-            </div>
-          ) : !error ? (
-            <p className={styles.emptyState}>No customer reviews yet. Be the first to share one.</p>
-          ) : null}
         </>
       )}
     </section>

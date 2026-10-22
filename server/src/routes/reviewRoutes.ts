@@ -50,12 +50,27 @@ async function getReviewSummary(productId: Types.ObjectId) {
 router.get('/admin/all', requireAdmin, async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const reviews = await Review.find()
-      .populate('product', 'name slug')
+      .populate<{ product: { _id: Types.ObjectId; name: string; slug: string } | null }>(
+        'product',
+        'name slug'
+      )
       .sort({ createdAt: -1 })
       .limit(500)
       .lean();
 
-    res.json(reviews);
+    res.json(
+      reviews.map(({ _id, product, ...review }) => ({
+        ...review,
+        id: _id.toString(),
+        product: product
+          ? {
+              id: product._id.toString(),
+              name: product.name,
+              slug: product.slug,
+            }
+          : null,
+      }))
+    );
   } catch (error) {
     next(error);
   }

@@ -184,7 +184,7 @@ export default function Header() {
         {/* Center-Left: Desktop Navigation */}
         <nav className={styles.desktopNav} aria-label="Main navigation">
           <Link href="/shop" className={styles.navLink}>Shop</Link>
-          <Link href="/#categories" className={styles.navLink}>Categories</Link>
+          <Link href="/categories" className={styles.navLink}>Categories</Link>
           <Link href="/about" className={styles.navLink}>About us</Link>
           <Link href="/contact" className={styles.navLink}>Contact</Link>
         </nav>
@@ -326,7 +326,7 @@ export default function Header() {
               <ArrowRight size={16} />
             </Link>
             <Link 
-              href="/#categories" 
+              href="/categories"
               className={styles.mobileNavLink}
               onClick={() => setMobileMenuOpen(false)}
             >

@@ -252,7 +252,7 @@ router.post('/razorpay/verify-payment', paymentVerificationLimiter, async (req: 
       {
         $set: {
           paymentStatus: 'paid',
-          orderStatus: 'confirmed',
+          orderStatus: 'placed',
           razorpayPaymentId,
           razorpaySignature,
           paymentDetails: {
@@ -283,9 +283,9 @@ router.post('/razorpay/verify-payment', paymentVerificationLimiter, async (req: 
       return;
     }
 
-    // Asynchronously dispatch Order Confirmed email to customer via Zoho Mail
-    sendOrderLifecycleEmail(updatedOrder, 'confirmed').catch((err) =>
-      console.warn('[Zoho Mail] Could not dispatch confirmed email:', err.message)
+    // Asynchronously dispatch Order Placed email to customer via Zoho Mail
+    sendOrderLifecycleEmail(updatedOrder, 'placed').catch((err) =>
+      console.warn('[Zoho Mail] Could not dispatch placed email:', err.message)
     );
 
     res.json({
@@ -361,7 +361,7 @@ router.post('/razorpay/webhook', async (req: Request, res: Response): Promise<vo
           {
             $set: {
               paymentStatus: 'paid',
-              orderStatus: 'confirmed',
+              orderStatus: 'placed',
               ...(paymentEntity?.id ? { razorpayPaymentId: paymentEntity.id } : {}),
               paymentDetails: {
                 webhookEvent: event,
@@ -376,9 +376,9 @@ router.post('/razorpay/webhook', async (req: Request, res: Response): Promise<vo
           { new: true, runValidators: true }
         );
         if (savedOrder) {
-          // Asynchronously dispatch Order Confirmed email to customer via Zoho Mail if not already sent
-          sendOrderLifecycleEmail(savedOrder, 'confirmed').catch((err) =>
-            console.warn('[Zoho Mail Webhook] Could not dispatch confirmed email:', err.message)
+          // Asynchronously dispatch Order Placed email to customer via Zoho Mail if not already sent
+          sendOrderLifecycleEmail(savedOrder, 'placed').catch((err) =>
+            console.warn('[Zoho Mail Webhook] Could not dispatch placed email:', err.message)
           );
         }
       }
@@ -422,7 +422,13 @@ router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void>
     const query: FilterQuery<IOrder> = { paymentStatus: 'paid' };
 
     if (status && status !== 'all') {
-      query.orderStatus = status;
+      if (status === 'placed') {
+        query.orderStatus = { $in: ['placed', 'confirmed'] };
+      } else if (status === 'shipped') {
+        query.orderStatus = { $in: ['shipped', 'processing'] };
+      } else {
+        query.orderStatus = status;
+      }
     }
 
     // ReDoS-safe search input escaping and length limitation
@@ -445,7 +451,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void>
     const allOrders = await Order.find({ paymentStatus: 'paid' });
     const totalOrders = allOrders.length;
     const totalRevenue = allOrders.reduce((sum, o) => sum + (o.pricing?.total || 0), 0);
-    const pendingCount = allOrders.filter(o => ['placed', 'confirmed', 'processing', 'out_for_delivery'].includes(o.orderStatus)).length;
+    const pendingCount = allOrders.filter(o => ['placed', 'shipped', 'confirmed', 'processing', 'out_for_delivery'].includes(o.orderStatus)).length;
     const deliveredCount = allOrders.filter(o => o.orderStatus === 'delivered').length;
 
     res.json({
@@ -531,7 +537,7 @@ router.patch('/:id/status', requireAdmin, async (req: Request, res: Response): P
     const { id } = req.params;
     const { orderStatus, paymentStatus } = req.body;
 
-    const validStatuses = ['placed', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'];
+    const validStatuses = ['placed', 'shipped', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'];
     if (orderStatus && !validStatuses.includes(orderStatus)) {
       res.status(400).json({ message: 'Invalid order status value' });
       return;
@@ -571,6 +577,7 @@ router.patch('/:id/status', requireAdmin, async (req: Request, res: Response): P
     if (orderStatus) {
       const emailTypeMap: Record<string, EmailTemplateType> = {
         placed: 'placed',
+        shipped: 'shipped',
         confirmed: 'confirmed',
         processing: 'processing',
         out_for_delivery: 'out_for_delivery',
@@ -642,15 +649,15 @@ router.post('/:idOrNumber/cancel', authenticateIfPresent, async (req: AuthReques
       }
     }
 
-    // Pre-dispatch status check: only allowed before order is out for delivery or delivered
+    // Only allow cancellation before the order has shipped.
     if (order.orderStatus === 'cancelled') {
       res.status(400).json({ message: 'This order is already cancelled.' });
       return;
     }
 
-    if (order.orderStatus === 'out_for_delivery' || order.orderStatus === 'delivered') {
+    if (order.orderStatus === 'shipped' || order.orderStatus === 'out_for_delivery' || order.orderStatus === 'delivered') {
       res.status(400).json({
-        message: `Order cannot be cancelled because it is already ${order.orderStatus === 'out_for_delivery' ? 'out for delivery' : 'delivered'}. In accordance with Sri Ram & Co store policy, please refer to our 7-Day Return / Replacement Policy once your delivery arrives.`,
+        message: `Order cannot be cancelled because it has already ${order.orderStatus === 'shipped' ? 'shipped' : order.orderStatus === 'out_for_delivery' ? 'gone out for delivery' : 'been delivered'}. In accordance with Sri Ram & Co store policy, please refer to our 7-Day Return / Replacement Policy once your delivery arrives.`,
       });
       return;
     }
@@ -736,7 +743,7 @@ router.post('/:id/send-email', requireAdmin, async (req: Request, res: Response)
       return;
     }
 
-    const validTemplates: EmailTemplateType[] = ['placed', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'];
+    const validTemplates: EmailTemplateType[] = ['placed', 'shipped', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'];
     const chosenTemplate: EmailTemplateType = validTemplates.includes(templateId) ? templateId : (order.orderStatus as EmailTemplateType) || 'placed';
 
     const dispatchResult = await sendOrderLifecycleEmail(order, chosenTemplate, {

@@ -3,10 +3,13 @@ import mongoose, { FilterQuery } from 'mongoose';
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
+import crypto from 'crypto';
 import { User, IUser } from '../models/User.js';
 import { Order } from '../models/Order.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { requireAdmin, JWT_SECRET } from '../middleware/authMiddleware.js';
+import { compilePasswordResetEmailHtml } from '../services/emailTemplates.js';
+import { sendEmail } from '../services/emailService.js';
 
 const router = Router();
 
@@ -37,6 +40,15 @@ const RegisterSchema = z.object({
 const LoginSchema = z.object({
   email: z.string().trim().min(3, 'Email or mobile number is required').max(150),
   password: z.string().min(1, 'Password is required').max(100),
+});
+
+const ForgotPasswordSchema = z.object({
+  email: z.string().trim().email('Please provide a valid email address').max(150),
+});
+
+const ResetPasswordSchema = z.object({
+  token: z.string().min(10, 'Reset token is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters').max(100),
 });
 
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyCv81XKKvXB6xJg2jjrkXYJIy9BvvKsGLo';
@@ -243,6 +255,124 @@ router.post('/login', authLimiter, async (req: Request, res: Response, next: Nex
         role: user.role,
       },
       token,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/auth/forgot-password (Self-service customer password recovery)
+router.post('/forgot-password', authLimiter, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { email } = ForgotPasswordSchema.parse(req.body);
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    // Anti-enumeration protection (OWASP): always return success even if email does not exist
+    if (!user || user.role !== 'customer') {
+      res.json({
+        success: true,
+        message: 'If an account exists with this email address, a password reset link has been dispatched to your inbox.',
+      });
+      return;
+    }
+
+    // Generate cryptographically secure token and store SHA-256 hash in database
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    // 1-hour expiration window
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
+    await user.save();
+
+    // Construct reset link
+    const originHeader = (req.get('origin') || req.get('referer')) as string | undefined;
+    let clientUrl = process.env.CLIENT_URL;
+    if (!clientUrl && originHeader) {
+      try {
+        const parsed = new URL(originHeader);
+        clientUrl = parsed.origin;
+      } catch {
+        // Fallback
+      }
+    }
+    if (!clientUrl) {
+      clientUrl = 'https://www.sriramandco.in';
+    }
+    const resetUrl = `${clientUrl}/reset-password?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
+
+    const emailContent = compilePasswordResetEmailHtml(user.name, resetUrl);
+
+    // Asynchronously dispatch via Zoho Mail
+    sendEmail({
+      to: user.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      text: emailContent.text,
+    }).catch((err) => console.warn('[Zoho Mail] Password reset email error:', err.message));
+
+    res.json({
+      success: true,
+      message: 'If an account exists with this email address, a password reset link has been dispatched to your inbox.',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/auth/verify-reset-token (Verify token validity before rendering reset form)
+router.get('/verify-reset-token', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const token = req.query.token as string;
+    if (!token) {
+      res.status(400).json({ valid: false, message: 'Reset token is required.' });
+      return;
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      res.json({ valid: false, message: 'Password reset link is invalid or has expired. Please request a new one.' });
+      return;
+    }
+
+    res.json({ valid: true, email: user.email });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/auth/reset-password (Execute password reset with valid token)
+router.post('/reset-password', authLimiter, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { token, password } = ResetPasswordSchema.parse(req.body);
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: new Date() },
+    }).select('+password');
+
+    if (!user) {
+      throw new AppError('Password reset link is invalid or has expired. Please request a new one.', 400, 'INVALID_RESET_TOKEN');
+    }
+
+    // Set new password (pre-save hook automatically hashes with bcrypt)
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Your password has been successfully reset. You can now sign in with your new password.',
     });
   } catch (error) {
     next(error);

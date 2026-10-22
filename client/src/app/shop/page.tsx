@@ -64,8 +64,6 @@ function ShopContent() {
       result.sort((a, b) => a.price - b.price);
     } else if (sortBy === 'price-high') {
       result.sort((a, b) => b.price - a.price);
-    } else if (sortBy === 'rating') {
-      result.sort((a, b) => b.rating - a.rating);
     }
 
     return result;
@@ -110,7 +108,6 @@ function ShopContent() {
               <option value="featured">Featured First</option>
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
-              <option value="rating">Highest Rated</option>
             </select>
           </div>
         </div>
@@ -122,7 +119,7 @@ function ShopContent() {
             className={`${styles.pill} ${selectedCategory === 'all' ? styles.activePill : ''}`}
             onClick={() => setSelectedCategory('all')}
           >
-            All Products ({products.length})
+            All Products
           </button>
           {CATEGORIES.map(cat => (
             <button
@@ -136,19 +133,17 @@ function ShopContent() {
           ))}
         </div>
 
-        {/* Status info */}
-        <div className={styles.resultsInfo}>
-          <span>Showing <strong>{filteredProducts.length}</strong> products</span>
-          {selectedCategory !== 'all' && (
-            <button 
-              type="button" 
+        {selectedCategory !== 'all' && (
+          <div className={styles.resultsInfo}>
+            <button
+              type="button"
               className={styles.resetFilter}
               onClick={() => setSelectedCategory('all')}
             >
               Clear filter
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Products Grid */}
         {filteredProducts.length > 0 ? (

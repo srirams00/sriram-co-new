@@ -24,7 +24,7 @@ export interface IOrder extends Document {
   orderItems: IOrderItem[];
   paymentMethod: 'razorpay' | 'upi' | 'card' | 'netbanking';
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'refund_initiated';
-  orderStatus: 'placed' | 'confirmed' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
+  orderStatus: 'placed' | 'shipped' | 'confirmed' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
   cancellationReason?: string;
   cancelledBy?: 'customer' | 'admin' | 'store';
   refundDetails?: Record<string, unknown>;
@@ -125,7 +125,7 @@ const OrderSchema = new Schema<IOrder>(
     },
     orderStatus: {
       type: String,
-      enum: ['placed', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'],
+      enum: ['placed', 'shipped', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'],
       default: 'placed',
     },
     pricing: {

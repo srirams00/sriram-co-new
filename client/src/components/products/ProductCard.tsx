@@ -8,7 +8,6 @@ import { Product } from '@/types/product';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { formatCurrency, getOptimizedImageUrl, getEffectiveOriginalPrice } from '@/lib/utils';
-import RatingStars from './RatingStars';
 import styles from './ProductCard.module.css';
 
 interface ProductCardProps {
@@ -80,12 +79,6 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className={styles.content}>
         <div className={styles.categoryRow}>
           <span className={styles.category}>{product.category}</span>
-          {product.reviewCount > 0 && (
-            <div className={styles.rating}>
-              <RatingStars rating={product.rating} size={12} />
-              <span>{product.rating.toFixed(1)}</span>
-            </div>
-          )}
         </div>
 
         <Link href={`/product/${encodeURIComponent(product.slug || product.id)}`} className={styles.titleLink}>

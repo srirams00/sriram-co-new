@@ -8,9 +8,11 @@ import { api } from '@/lib/api';
 import { Order, OrderStatus } from '@/types/order';
 import styles from './orders.module.css';
 
-const ORDER_STEPS = ['Order Placed', 'Confirmed', 'Processing', 'Out for Delivery', 'Delivered'];
+const ORDER_STEPS = ['Order Placed', 'Shipped', 'Out for Delivery', 'Delivered'];
 
 function getStatusLabel(status: OrderStatus): string {
+  if (status === 'placed' || status === 'confirmed') return 'Order Placed';
+  if (status === 'shipped' || status === 'processing') return 'Shipped';
   if (status === 'out_for_delivery') return 'Out for Delivery';
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
@@ -20,19 +22,19 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
 
   const currentStep = {
     placed: 0,
-    confirmed: 1,
-    processing: 2,
-    out_for_delivery: 3,
-    delivered: 4,
+    confirmed: 0,
+    shipped: 1,
+    processing: 1,
+    out_for_delivery: 2,
+    delivered: 3,
     cancelled: -1,
   }[status];
 
   return (
     <div className={styles.timeline} aria-label={`Order progress: ${getStatusLabel(status)}`}>
       {ORDER_STEPS.map((step, index) => {
-        const processingIsComplete = status === 'processing' && index === currentStep;
-        const isDone = status === 'delivered' || index < currentStep || processingIsComplete;
-        const isCurrent = index === currentStep && status !== 'delivered' && !processingIsComplete;
+        const isDone = status === 'delivered' || index <= currentStep;
+        const isCurrent = index === currentStep && status !== 'delivered';
 
         return (
           <React.Fragment key={step}>
@@ -186,7 +188,7 @@ function OrderCard({
         </div>
       ) : (
         <div className={styles.dispatchedNotice}>
-          📦 Order is {order.orderStatus === 'out_for_delivery' ? 'out for delivery' : 'delivered'}. Covered by Sri Ram &amp; Co <strong>7-Day Store Replacement Policy</strong>. Need support? Call +91 93454 03136.
+          📦 Order is {order.orderStatus === 'shipped' || order.orderStatus === 'processing' ? 'shipped' : order.orderStatus === 'out_for_delivery' ? 'out for delivery' : 'delivered'}. Covered by Sri Ram &amp; Co <strong>7-Day Store Replacement Policy</strong>. Need support? Call +91 93454 03136.
         </div>
       )}
     </div>
