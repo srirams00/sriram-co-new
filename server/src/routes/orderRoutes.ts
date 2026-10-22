@@ -460,7 +460,10 @@ router.get('/mine', authenticate, async (req: AuthRequest, res: Response): Promi
       return;
     }
 
-    const orders = await Order.find({ user: req.user._id, paymentStatus: 'paid' }).sort({ createdAt: -1 });
+    const orders = await Order.find({
+      user: req.user._id,
+      paymentStatus: { $in: ['paid', 'refunded', 'refund_initiated'] },
+    }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     console.error('Customer order retrieval error:', error);
@@ -472,7 +475,9 @@ router.get('/mine', authenticate, async (req: AuthRequest, res: Response): Promi
 router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
     const { status, search } = req.query;
-    const query: FilterQuery<IOrder> = { paymentStatus: 'paid' };
+    const query: FilterQuery<IOrder> = {
+      paymentStatus: { $in: ['paid', 'refunded', 'refund_initiated'] },
+    };
 
     if (status && status !== 'all') {
       if (status === 'placed') {
@@ -501,7 +506,9 @@ router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void>
     const orders = await Order.find(query).sort({ createdAt: -1 });
 
     // Calculate aggregated stats across all orders
-    const allOrders = await Order.find({ paymentStatus: 'paid' });
+    const allOrders = await Order.find({
+      paymentStatus: { $in: ['paid', 'refunded', 'refund_initiated'] },
+    });
     const totalOrders = allOrders.length;
     const totalRevenue = allOrders.reduce((sum, o) => sum + (o.pricing?.total || 0), 0);
     const pendingCount = allOrders.filter(o => ['placed', 'shipped', 'confirmed', 'processing', 'out_for_delivery'].includes(o.orderStatus)).length;
@@ -536,7 +543,8 @@ router.get('/:orderNumber', authenticateIfPresent, async (req: AuthRequest, res:
     const isOwner = Boolean(req.user && order.user && req.user._id.toString() === order.user.toString());
     const isAdmin = Boolean(req.user && req.user.role === 'admin');
 
-    if (order.paymentStatus !== 'paid' && !isAdmin) {
+    const hasLegitimatePayment = ['paid', 'refunded', 'refund_initiated'].includes(order.paymentStatus);
+    if (!hasLegitimatePayment && !isAdmin) {
       res.status(404).json({ message: 'Order not found' });
       return;
     }
@@ -721,51 +729,45 @@ router.post('/:idOrNumber/cancel', orderMutationLimiter, authenticateIfPresent, 
     const cancelledBy = isAdmin ? 'store' : 'customer';
 
     // Handle payment & refund status
-    let refundInfo: Record<string, unknown> = {
+    // Store manual review refund details (No automated outbound Razorpay refund calls)
+    const refundInfo: Record<string, unknown> = {
       initiatedAt: new Date().toISOString(),
       amount: order.pricing.total,
       currency: 'INR',
+      method: 'manual_store_review',
+      gatewayPaymentId: order.razorpayPaymentId || null,
+      status: 'pending_owner_review',
+      note: 'Cancellation registered. Store owner notified for manual review/processing.',
     };
 
     if (order.paymentStatus === 'paid') {
-      // Attempt automated gateway refund if credentials are live
-      if (order.razorpayPaymentId && RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET && !RAZORPAY_KEY_ID.includes('mock')) {
-        try {
-          const refundResponse = await razorpay.payments.refund(order.razorpayPaymentId, {
-            amount: Math.round(order.pricing.total * 100),
-            notes: {
-              orderNumber: order.orderNumber,
-              reason: cancellationReason,
-            },
-          });
-          refundInfo = {
-            ...refundInfo,
-            refundId: refundResponse.id,
-            status: refundResponse.status || 'processed',
-            speedProcessed: refundResponse.speed_processed,
-          };
-          order.paymentStatus = 'refunded';
-        } catch (rfErr: unknown) {
-          console.warn('[Razorpay Refund] Auto-refund note:', getErrorMessage(rfErr));
-          refundInfo.note = 'Refund queued for 5-7 working days processing via gateway dashboard.';
-          order.paymentStatus = 'refund_initiated';
-        }
-      } else {
-        refundInfo.note = 'Refund queued for 5-7 working days bank processing.';
-        order.paymentStatus = 'refund_initiated';
-      }
+      order.paymentStatus = 'refund_initiated';
     } else {
       order.paymentStatus = 'failed';
     }
-
     order.orderStatus = 'cancelled';
     order.cancellationReason = cancellationReason;
     order.cancelledBy = cancelledBy;
     order.refundDetails = refundInfo;
 
     const savedOrder = await order.save();
+    // 1. Asynchronously dispatch cancellation alert to store owner (ramkumar@sriramandco.in)
+    const merchantEmail = compileMerchantCancellationEmailHtml(savedOrder, {
+      reason: cancellationReason,
+      cancelledBy,
+      refundInfo,
+    });
+    sendEmail({
+      to: 'ramkumar@sriramandco.in',
+      replyTo: order.customerInfo?.email || 'support@sriramandco.com',
+      subject: merchantEmail.subject,
+      html: merchantEmail.html,
+      text: merchantEmail.text,
+    }).catch((err) =>
+      console.warn('[Zoho Mail] Could not dispatch merchant cancellation alert:', getErrorMessage(err))
+    );
 
-    // Asynchronously dispatch Order Cancelled email to customer via Zoho Mail
+    // 2. Asynchronously dispatch Order Cancelled email to customer via Zoho Mail
     sendOrderLifecycleEmail(savedOrder, 'cancelled', {
       cancellationReason,
       cancelledBy,
@@ -776,7 +778,7 @@ router.post('/:idOrNumber/cancel', orderMutationLimiter, authenticateIfPresent, 
     res.json({
       success: true,
       message: order.paymentStatus === 'refunded' || order.paymentStatus === 'refund_initiated'
-        ? `Order #${order.orderNumber} has been cancelled successfully. Your refund of ₹${order.pricing.total} has been initiated back to your original payment method (5–7 business days).`
+        ? `Order #${order.orderNumber} has been cancelled successfully. Store management has been notified to process your refund of ₹${order.pricing.total}.`
         : `Order #${order.orderNumber} has been cancelled successfully.`,
       order: savedOrder,
     });

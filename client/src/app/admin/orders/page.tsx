@@ -549,6 +549,28 @@ export default function AdminOrdersPage() {
                 )}
               </div>
 
+              {/* Pre-Dispatch Cancellation Alert Box (if cancelled) */}
+              {selectedOrder.orderStatus === 'cancelled' && (
+                <div style={{ background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertCircle size={18} color="#DC2626" />
+                      <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#991B1B' }}>Order Cancelled Prior To Dispatch</span>
+                    </div>
+                    <span style={{ background: '#FEE2E2', color: '#B91C1C', fontSize: '0.72rem', fontWeight: 700, padding: '3px 8px', borderRadius: '999px', textTransform: 'uppercase' }}>
+                      Cancelled ({selectedOrder.cancelledBy || 'Customer'})
+                    </span>
+                  </div>
+                  <div style={{ background: '#FFFFFF', padding: '10px 12px', borderRadius: '8px', border: '1px solid #FEE2E2', fontSize: '0.84rem' }}>
+                    <span style={{ fontSize: '0.76rem', color: '#68786D', display: 'block' }}>Cancellation Reason:</span>
+                    <strong style={{ color: '#7F1D1D' }}>{selectedOrder.cancellationReason || 'Requested by customer prior to dispatch'}</strong>
+                  </div>
+                  <div style={{ background: '#FEF3C7', padding: '10px 12px', borderRadius: '8px', border: '1px solid #FDE68A', fontSize: '0.8rem', color: '#92400E' }}>
+                    <strong>Manual Store Refund:</strong> Razorpay automated refunds are disconnected. Please review payment <code>{selectedOrder.razorpayPaymentId || 'N/A'}</code> in the Razorpay Merchant Dashboard to complete manual refund if applicable.
+                  </div>
+                </div>
+              )}
+
               {/* Return Request Box (if present) */}
               {selectedOrder.returnRequest && (
                 <div className={styles.returnSectionBox}>
