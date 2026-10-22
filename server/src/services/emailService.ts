@@ -93,6 +93,7 @@ export async function sendEmail(payload: SendEmailPayload, relayBaseUrl?: string
       const cleanRelayUrl = relayUrl.replace(/\/+$/, '');
       const res = await fetch(`${cleanRelayUrl}/api/email/send`, {
         method: 'POST',
+        signal: AbortSignal.timeout(8000),
         headers: {
           'Content-Type': 'application/json',
           'x-relay-secret': EMAIL_RELAY_SECRET,
