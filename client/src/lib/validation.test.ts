@@ -116,10 +116,10 @@ describe('Checkout Form Validation Suite', () => {
     });
   });
 
-  describe('Email Validation (Optional field)', () => {
-    it('accepts empty email since it is optional', () => {
-      assert.equal(validateEmail('').isValid, true);
-      assert.equal(validateEmail('   ').isValid, true);
+  describe('Email Validation (Required field)', () => {
+    it('rejects empty or whitespace email because email is mandatory', () => {
+      assert.equal(validateEmail('').isValid, false);
+      assert.equal(validateEmail('   ').isValid, false);
     });
 
     it('accepts well-formed email addresses', () => {

@@ -157,12 +157,15 @@ export function validatePincode(pincode: string): ValidationResult {
 }
 
 /**
- * Validates email address (optional, but if provided must be valid)
+ * Validates email address (mandatory for order confirmation and invoice receipts)
  */
 export function validateEmail(email?: string): ValidationResult {
   const trimmed = (email || '').trim();
   if (!trimmed) {
-    return { isValid: true, error: null };
+    return {
+      isValid: false,
+      error: 'Email address is required for order confirmation and receipts',
+    };
   }
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(trimmed)) {

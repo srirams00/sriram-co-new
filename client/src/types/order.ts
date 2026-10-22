@@ -69,5 +69,6 @@ export interface OrderStats {
   totalRevenue: number;
   pendingCount: number;
   deliveredCount: number;
+  returnPendingCount?: number;
   pendingDeliveries?: number;
 }

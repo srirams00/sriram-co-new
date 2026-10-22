@@ -53,6 +53,9 @@ export default function CheckoutPage() {
   const [placedPaymentId, setPlacedPaymentId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Email Gate: Email must be valid before moving to other input boxes
+  const isEmailValid = Boolean(formData.email && !validateEmail(formData.email).error);
+
   // Validate a single field on demand
   const validateField = (name: string, value: string): string | null => {
     let error: string | null = null;
@@ -137,8 +140,8 @@ export default function CheckoutPage() {
     if (!validation.isValid) {
       setFieldErrors(validation.errors);
       setSubmitError('Please correct the highlighted fields before placing your order.');
-      // Auto-focus on first error input
-      const firstErrorField = Object.keys(validation.errors)[0];
+      // Auto-focus on first error input (prioritize email if invalid)
+      const firstErrorField = validation.errors.email ? 'email' : Object.keys(validation.errors)[0];
       if (firstErrorField) {
         const el = document.getElementById(firstErrorField);
         if (el) el.focus();
@@ -172,7 +175,7 @@ export default function CheckoutPage() {
         customerInfo: {
           name: formData.fullName.trim(),
           phone: formData.phone.trim(),
-          email: formData.email.trim() || undefined,
+          email: formData.email.trim(),
           address: formData.address.trim(),
           city: formData.city.trim(),
           postalCode: formData.pincode.trim() || undefined,
@@ -211,7 +214,7 @@ export default function CheckoutPage() {
         order_id: razorpayOrder.razorpayOrderId,
         prefill: {
           name: formData.fullName.trim(),
-          email: formData.email.trim() || undefined,
+          email: formData.email.trim(),
           contact: formData.phone.trim(),
         },
         theme: {
@@ -381,7 +384,69 @@ export default function CheckoutPage() {
                 <span className={styles.stepNumber}>1</span>
                 <h3>Customer Information</h3>
               </div>
-              <div className={styles.formRow}>
+
+              {/* Email Address FIRST: Required before moving to other boxes */}
+              <div className={styles.formGroup} style={{ marginBottom: '18px' }}>
+                <label htmlFor="email">
+                  Email Address (Required for order confirmation &amp; invoices) *
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  aria-required="true"
+                  aria-invalid={Boolean(touched.email && fieldErrors.email)}
+                  aria-describedby={touched.email && fieldErrors.email ? "email-error" : "email-hint"}
+                  placeholder="ramesh@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  onBlur={() => handleBlur('email')}
+                  className={
+                    touched.email
+                      ? fieldErrors.email
+                        ? styles.inputError
+                        : formData.email
+                        ? styles.inputValid
+                        : ''
+                      : ''
+                  }
+                />
+                {touched.email && fieldErrors.email ? (
+                  <span id="email-error" className={styles.fieldError} role="alert">
+                    <AlertCircle size={14} />
+                    {fieldErrors.email}
+                  </span>
+                ) : (
+                  <span id="email-hint" className={styles.fieldHint}>
+                    Enter your email address first to receive order confirmation, tracking updates, and GST tax invoice
+                  </span>
+                )}
+              </div>
+
+              {!isEmailValid && (
+                <div style={{
+                  background: '#F0FDF4',
+                  border: '1px dashed #18A957',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '0.82rem',
+                  color: '#174A2B'
+                }}>
+                  <AlertCircle size={16} color="#18A957" />
+                  <span>Please enter a valid email address above to unlock name and delivery details.</span>
+                </div>
+              )}
+
+              <div
+                className={styles.formRow}
+                style={!isEmailValid ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+              >
                 <div className={styles.formGroup}>
                   <label htmlFor="fullName">Full Name *</label>
                   <input
@@ -389,6 +454,7 @@ export default function CheckoutPage() {
                     name="fullName"
                     type="text"
                     required
+                    disabled={!isEmailValid}
                     autoComplete="name"
                     aria-required="true"
                     aria-invalid={Boolean(touched.fullName && fieldErrors.fullName)}
@@ -421,6 +487,7 @@ export default function CheckoutPage() {
                       name="phone"
                       type="tel"
                       required
+                      disabled={!isEmailValid}
                       autoComplete="tel"
                       aria-required="true"
                       aria-invalid={Boolean(touched.phone && fieldErrors.phone)}
@@ -451,40 +518,13 @@ export default function CheckoutPage() {
                   )}
                 </div>
               </div>
-              <div className={styles.formGroup}>
-                <label htmlFor="email">Email Address (Optional for invoice receipt)</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  aria-invalid={Boolean(touched.email && fieldErrors.email)}
-                  aria-describedby={touched.email && fieldErrors.email ? "email-error" : undefined}
-                  placeholder="ramesh@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  onBlur={() => handleBlur('email')}
-                  className={
-                    touched.email
-                      ? fieldErrors.email
-                        ? styles.inputError
-                        : formData.email
-                        ? styles.inputValid
-                        : ''
-                      : ''
-                  }
-                />
-                {touched.email && fieldErrors.email && (
-                  <span id="email-error" className={styles.fieldError} role="alert">
-                    <AlertCircle size={14} />
-                    {fieldErrors.email}
-                  </span>
-                )}
-              </div>
             </div>
 
             {/* Step 2: Delivery Address */}
-            <div className={styles.stepSection}>
+            <div
+              className={styles.stepSection}
+              style={!isEmailValid ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+            >
               <div className={styles.stepHeader}>
                 <span className={styles.stepNumber}>2</span>
                 <h3>Delivery Address</h3>
@@ -496,6 +536,7 @@ export default function CheckoutPage() {
                   name="address"
                   rows={3}
                   required
+                  disabled={!isEmailValid}
                   autoComplete="street-address"
                   aria-required="true"
                   aria-invalid={Boolean(touched.address && fieldErrors.address)}
@@ -509,7 +550,7 @@ export default function CheckoutPage() {
                       ? fieldErrors.address
                         ? styles.inputError
                         : styles.inputValid
-                      : ''
+                        : ''
                   }
                 />
                 {touched.address && fieldErrors.address ? (
@@ -531,6 +572,7 @@ export default function CheckoutPage() {
                     name="city"
                     type="text"
                     required
+                    disabled={!isEmailValid}
                     autoComplete="address-level2"
                     aria-required="true"
                     aria-invalid={Boolean(touched.city && fieldErrors.city)}
@@ -565,6 +607,7 @@ export default function CheckoutPage() {
                     name="pincode"
                     type="text"
                     required
+                    disabled={!isEmailValid}
                     autoComplete="postal-code"
                     aria-required="true"
                     aria-invalid={Boolean(touched.pincode && fieldErrors.pincode)}

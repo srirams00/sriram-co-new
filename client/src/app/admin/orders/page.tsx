@@ -19,6 +19,7 @@ import {
   Mail,
   Send,
   UserCheck,
+  RotateCcw,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
@@ -32,6 +33,7 @@ export default function AdminOrdersPage() {
     totalRevenue: 0,
     pendingCount: 0,
     deliveredCount: 0,
+    returnPendingCount: 0,
   });
   const [loading, setLoading] = useState(true);
   const [activeStatus, setActiveStatus] = useState<string>('all');
@@ -55,6 +57,8 @@ export default function AdminOrdersPage() {
   // Quick Email Modal State (from row button)
   const [quickEmailOrder, setQuickEmailOrder] = useState<Order | null>(null);
   const [sendingEmailKey, setSendingEmailKey] = useState<string | null>(null);
+  const [returnAdminNotes, setReturnAdminNotes] = useState('');
+  const [updatingReturnId, setUpdatingReturnId] = useState<string | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -165,6 +169,36 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const returnPendingCount = useMemo(() => {
+    return orders.filter(
+      (o) => o.orderStatus === 'return_requested' || o.returnRequest?.status === 'requested'
+    ).length;
+  }, [orders]);
+
+  const handleUpdateReturnStatus = async (
+    orderId: string,
+    newReturnStatus: 'approved' | 'rejected' | 'picked_up' | 'refunded'
+  ) => {
+    setUpdatingReturnId(orderId);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('src_auth_token') || localStorage.getItem('token') || undefined : undefined;
+      const res = await api.updateReturnStatus(orderId, { status: newReturnStatus, adminNotes: returnAdminNotes }, token);
+      
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, ...res.order } : o))
+      );
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder((prev) => (prev ? { ...prev, ...res.order } : null));
+      }
+      showToast(`Return status updated to "${newReturnStatus.replace(/_/g, ' ')}" · Customer notified!`);
+      setReturnAdminNotes('');
+    } catch (err: any) {
+      showToast(`Failed to update return status: ${err.message || 'Network error'}`, 'error');
+    } finally {
+      setUpdatingReturnId(null);
+    }
+  };
+
   const getStatusClass = (status: OrderStatus) => {
     switch (status) {
       case 'placed':
@@ -177,6 +211,10 @@ export default function AdminOrdersPage() {
         return styles.statusOutForDelivery;
       case 'delivered':
         return styles.statusDelivered;
+      case 'return_requested':
+        return styles.statusReturnRequested;
+      case 'returned':
+        return styles.statusReturned;
       case 'cancelled':
         return styles.statusCancelled;
       default:
@@ -266,6 +304,17 @@ export default function AdminOrdersPage() {
           <span className={styles.kpiValue}>{stats.deliveredCount}</span>
           <span className={styles.kpiSubtext}>Completed handoffs</span>
         </div>
+
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiTopRow}>
+            <span className={styles.kpiLabel}>Return Requests</span>
+            <div className={styles.kpiIconWrapper} style={{ backgroundColor: '#FEF2F2', color: '#DC2626' }}>
+              <RotateCcw size={18} />
+            </div>
+          </div>
+          <span className={styles.kpiValue}>{stats.returnPendingCount !== undefined ? stats.returnPendingCount : returnPendingCount}</span>
+          <span className={styles.kpiSubtext}>Requires inspection / pickup</span>
+        </div>
       </div>
 
       {/* Controls Bar: Search & Status Filters */}
@@ -288,6 +337,8 @@ export default function AdminOrdersPage() {
             { key: 'shipped', label: 'Shipped' },
             { key: 'out_for_delivery', label: 'Out for Delivery' },
             { key: 'delivered', label: 'Delivered' },
+            { key: 'return_requested', label: 'Return Requests' },
+            { key: 'returned', label: 'Returned' },
             { key: 'cancelled', label: 'Cancelled' },
           ].map((tab) => (
             <button
@@ -418,6 +469,8 @@ export default function AdminOrdersPage() {
                         <option value="shipped">Shipped</option>
                         <option value="out_for_delivery">Out for Delivery</option>
                         <option value="delivered">Delivered</option>
+                        <option value="return_requested">Return Requested</option>
+                        <option value="returned">Returned</option>
                         <option value="cancelled">Cancelled</option>
                       </select>
                     </td>
@@ -495,6 +548,122 @@ export default function AdminOrdersPage() {
                   </p>
                 )}
               </div>
+
+              {/* Return Request Box (if present) */}
+              {selectedOrder.returnRequest && (
+                <div className={styles.returnSectionBox}>
+                  <div className={styles.returnHeader}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <RotateCcw size={18} color="#DC2626" />
+                      <span className={styles.sectionTitle} style={{ margin: 0, color: '#991B1B' }}>
+                        Customer Return Request
+                      </span>
+                    </div>
+                    <span className={`${styles.returnStatusBadge} ${styles['returnBadge_' + selectedOrder.returnRequest.status]}`}>
+                      {selectedOrder.returnRequest.status.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div className={styles.returnDetailsGrid}>
+                    <div>
+                      <span className={styles.returnMetaLabel}>Requested On:</span>
+                      <span className={styles.returnMetaValue}>
+                        {new Date(selectedOrder.returnRequest.requestedAt).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className={styles.returnMetaLabel}>Return Item:</span>
+                      <span className={styles.returnMetaValue}>
+                        {selectedOrder.returnRequest.item?.name || 'Item'} (Qty: {selectedOrder.returnRequest.item?.quantity || 1})
+                      </span>
+                    </div>
+                    <div>
+                      <span className={styles.returnMetaLabel}>Primary Reason:</span>
+                      <span className={styles.returnMetaValue} style={{ fontWeight: 600, color: '#B91C1C' }}>
+                        {selectedOrder.returnRequest.reason}
+                      </span>
+                    </div>
+                    {selectedOrder.returnRequest.resolvedAt && (
+                      <div>
+                        <span className={styles.returnMetaLabel}>Resolved On:</span>
+                        <span className={styles.returnMetaValue}>
+                          {new Date(selectedOrder.returnRequest.resolvedAt).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={styles.returnFaultBox}>
+                    <span className={styles.returnMetaLabel}>Customer Description &amp; Fault Details:</span>
+                    <p className={styles.returnFaultText}>{selectedOrder.returnRequest.faultDetails}</p>
+                  </div>
+
+                  {selectedOrder.returnRequest.adminNotes && (
+                    <div className={styles.returnAdminNotesBox}>
+                      <span className={styles.returnMetaLabel}>Store Admin Notes:</span>
+                      <p className={styles.returnNotesText}>{selectedOrder.returnRequest.adminNotes}</p>
+                    </div>
+                  )}
+
+                  {/* Admin Action Bar */}
+                  {selectedOrder.returnRequest.status !== 'refunded' && selectedOrder.returnRequest.status !== 'rejected' && (
+                    <div className={styles.returnActionContainer}>
+                      <div className={styles.formField} style={{ marginBottom: '12px' }}>
+                        <label className={styles.formLabel}>Resolution Notes (Reverse Pickup / Inspection):</label>
+                        <input
+                          type="text"
+                          className={styles.formInput}
+                          placeholder="e.g. Approved. Reverse pickup assigned via courier / inspection passed"
+                          value={returnAdminNotes}
+                          onChange={(e) => setReturnAdminNotes(e.target.value)}
+                        />
+                      </div>
+
+                      <div className={styles.returnButtonRow}>
+                        {selectedOrder.returnRequest.status === 'requested' && (
+                          <button
+                            type="button"
+                            disabled={updatingReturnId === selectedOrder.id}
+                            onClick={() => handleUpdateReturnStatus(selectedOrder.id, 'approved')}
+                            className={styles.approveReturnBtn}
+                          >
+                            Approve Return Request
+                          </button>
+                        )}
+
+                        {(selectedOrder.returnRequest.status === 'requested' || selectedOrder.returnRequest.status === 'approved') && (
+                          <button
+                            type="button"
+                            disabled={updatingReturnId === selectedOrder.id}
+                            onClick={() => handleUpdateReturnStatus(selectedOrder.id, 'picked_up')}
+                            className={styles.pickupReturnBtn}
+                          >
+                            Mark as Picked Up
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          disabled={updatingReturnId === selectedOrder.id}
+                          onClick={() => handleUpdateReturnStatus(selectedOrder.id, 'refunded')}
+                          className={styles.refundReturnBtn}
+                        >
+                          Process Refund &amp; Close
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={updatingReturnId === selectedOrder.id}
+                          onClick={() => handleUpdateReturnStatus(selectedOrder.id, 'rejected')}
+                          className={styles.rejectReturnBtn}
+                        >
+                          Reject Return
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Items List */}
               <div>

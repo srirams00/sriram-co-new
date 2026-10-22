@@ -60,7 +60,7 @@
 /* KPI Metrics Grid */
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
 }
 
@@ -364,6 +364,18 @@
   background-color: #FEE2E2;
   color: #B91C1C;
   border-color: #FECACA;
+}
+
+.statusReturnRequested {
+  background-color: #FEF2F2;
+  color: #DC2626;
+  border-color: #FECACA;
+}
+
+.statusReturned {
+  background-color: #F1F5F9;
+  color: #475569;
+  border-color: #CBD5E1;
 }
 
 .actionBtn {
@@ -709,6 +721,179 @@
   padding: 60px 20px;
   text-align: center;
   color: #68786D;
+}
+
+/* Return Requests Modal Section */
+.returnSectionBox {
+  background: #FFFBFB;
+  border: 1px solid #FECACA;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.returnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.returnStatusBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.returnBadge_requested {
+  background-color: #FEF3C7;
+  color: #B45309;
+}
+
+.returnBadge_approved {
+  background-color: #DBEAFE;
+  color: #1D4ED8;
+}
+
+.returnBadge_picked_up {
+  background-color: #EDE9FE;
+  color: #6D28D9;
+}
+
+.returnBadge_refunded {
+  background-color: #DCFCE7;
+  color: #15803D;
+}
+
+.returnBadge_rejected {
+  background-color: #FEE2E2;
+  color: #B91C1C;
+}
+
+.returnDetailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 16px;
+  font-size: 0.82rem;
+  background: #FFFFFF;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #FEE2E2;
+}
+
+.returnMetaLabel {
+  font-size: 0.76rem;
+  color: #68786D;
+  display: block;
+}
+
+.returnMetaValue {
+  font-weight: 500;
+  color: #174A2B;
+}
+
+.returnFaultBox {
+  background: #FFFFFF;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #FEE2E2;
+}
+
+.returnFaultText {
+  margin: 4px 0 0 0;
+  font-size: 0.84rem;
+  color: #334155;
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
+
+.returnAdminNotesBox {
+  background: #F8FAFC;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+}
+
+.returnNotesText {
+  margin: 4px 0 0 0;
+  font-size: 0.84rem;
+  color: #1E293B;
+  font-style: italic;
+}
+
+.returnActionContainer {
+  border-top: 1px solid #FECACA;
+  padding-top: 12px;
+}
+
+.returnButtonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.approveReturnBtn {
+  background-color: #2563EB;
+  color: #FFFFFF;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.approveReturnBtn:hover {
+  background-color: #1D4ED8;
+}
+
+.pickupReturnBtn {
+  background-color: #7C3AED;
+  color: #FFFFFF;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pickupReturnBtn:hover {
+  background-color: #6D28D9;
+}
+
+.refundReturnBtn {
+  background-color: #16A34A;
+  color: #FFFFFF;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.refundReturnBtn:hover {
+  background-color: #15803D;
+}
+
+.rejectReturnBtn {
+  background-color: #DC2626;
+  color: #FFFFFF;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rejectReturnBtn:hover {
+  background-color: #B91C1C;
 }
 
 @media (max-width: 1024px) {

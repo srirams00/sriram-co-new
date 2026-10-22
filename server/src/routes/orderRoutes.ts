@@ -506,6 +506,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void>
     const totalRevenue = allOrders.reduce((sum, o) => sum + (o.pricing?.total || 0), 0);
     const pendingCount = allOrders.filter(o => ['placed', 'shipped', 'confirmed', 'processing', 'out_for_delivery'].includes(o.orderStatus)).length;
     const deliveredCount = allOrders.filter(o => o.orderStatus === 'delivered').length;
+    const returnPendingCount = allOrders.filter(o => o.orderStatus === 'return_requested' || (o.returnRequest && o.returnRequest.status === 'requested')).length;
 
     res.json({
       orders,
@@ -514,6 +515,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void>
         totalRevenue,
         pendingCount,
         deliveredCount,
+        returnPendingCount,
       },
     });
   } catch (error) {

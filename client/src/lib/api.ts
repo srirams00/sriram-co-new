@@ -822,6 +822,7 @@ export const api = {
     }
     return res.json();
   },
+
   async requestReturn(orderId: string, payload: {
     itemId?: string;
     reason: string;
@@ -840,6 +841,28 @@ export const api = {
 
     if (!res.ok) {
       const errorMsg = await extractErrorMessage(res, 'Failed to submit return request');
+      throw new Error(errorMsg);
+    }
+    return res.json();
+  },
+
+  async updateReturnStatus(
+    orderId: string,
+    payload: { status: 'approved' | 'rejected' | 'picked_up' | 'refunded'; adminNotes?: string },
+    token?: string
+  ): Promise<{ success: boolean; message: string; order: any }> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('src_auth_token') || localStorage.getItem('token') || '' : '');
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+    const res = await fetch(`${API_BASE}/orders/${orderId}/return-status`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errorMsg = await extractErrorMessage(res, 'Failed to update return status');
       throw new Error(errorMsg);
     }
     return res.json();
