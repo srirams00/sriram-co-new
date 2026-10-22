@@ -569,3 +569,78 @@ export function compileOrderEmailHtml(
 
   return { subject, html, text };
 }
+
+
+/**
+ * Compiles a branded, responsive password reset email for Sri Ram & Co customers.
+ */
+export function compilePasswordResetEmailHtml(name: string, resetUrl: string): CompiledEmail {
+  const firstName = (name || 'Customer').trim().split(' ')[0];
+  const subject = `Reset your Sri Ram & Co password`;
+  const text = `Hello ${firstName},\n\nWe received a request to reset your password for your Sri Ram & Co account.\n\nPlease visit the link below to set a new password:\n${resetUrl}\n\nThis link is valid for 1 hour. If you did not request this, you can safely ignore this email.\n\nSri Ram & Co Customer Care: ${STORE_CONFIG.phoneDisplay}\nGSTIN: ${STORE_CONFIG.gstin}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: ${THEME.pageBg}; font-family: ${THEME.font}; color: ${THEME.text};">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: ${THEME.pageBg}; padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: ${THEME.cardBg}; border: 1px solid ${THEME.border}; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color: ${THEME.green}; padding: 24px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;">Sri Ram &amp; Co</h1>
+              <p style="margin: 4px 0 0; color: #eef7f0; font-size: 13px;">Kitchen &amp; Home Appliances &bull; Trichy &amp; Chennai</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px 28px;">
+              <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 700; color: ${THEME.text};">Password Reset Request</h2>
+              <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: ${THEME.text};">
+                Hello ${escapeHtml(firstName)},
+              </p>
+              <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: ${THEME.muted};">
+                We received a request to reset the password for your Sri Ram &amp; Co account. Click the button below to set a new password:
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto 28px;">
+                <tr>
+                  <td align="center" style="border-radius: 999px; background-color: ${THEME.green};">
+                    <a href="${escapeHtml(resetUrl)}" target="_blank" style="display: inline-block; padding: 14px 32px; font-family: ${THEME.font}; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 999px;">
+                      Reset Password
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <div style="background-color: ${THEME.surfaceBg}; border: 1px solid ${THEME.border}; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                <p style="margin: 0; font-size: 13px; color: ${THEME.muted}; line-height: 1.5;">
+                  <strong>Note:</strong> This link is secure and will expire in <strong>1 hour</strong>. If you did not request this password reset, please ignore this email or contact our customer helpline.
+                </p>
+              </div>
+              <p style="margin: 0; font-size: 12px; color: ${THEME.muted}; line-height: 1.5; word-break: break-all;">
+                If the button above does not work, copy and paste this link into your browser:<br/>
+                <a href="${escapeHtml(resetUrl)}" style="color: ${THEME.green}; text-decoration: underline;">${escapeHtml(resetUrl)}</a>
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: ${THEME.surfaceBg}; border-top: 1px solid ${THEME.border}; padding: 20px 28px; text-align: center; font-size: 12px; color: ${THEME.muted};">
+              <p style="margin: 0 0 6px;">Need help? Call our Helpline: <a href="${STORE_CONFIG.telUrl}" style="color: ${THEME.green}; font-weight: 600; text-decoration: none;">${STORE_CONFIG.phoneDisplay}</a></p>
+              <p style="margin: 0;">&copy; 2026 Sri Ram &amp; Co. GSTIN: ${STORE_CONFIG.gstin}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject, html, text };
+}

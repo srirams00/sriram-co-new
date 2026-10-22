@@ -773,4 +773,42 @@ export const api = {
     }
     return res.json();
   },
+
+  // Auth & Password Recovery
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+      const errorMsg = await extractErrorMessage(res, 'Failed to request password reset');
+      throw new Error(errorMsg);
+    }
+    return res.json();
+  },
+
+  async verifyResetToken(token: string): Promise<{ valid: boolean; email?: string; message?: string }> {
+    const res = await fetch(`${API_BASE}/auth/verify-reset-token?token=${encodeURIComponent(token)}`);
+    if (!res.ok) {
+      const errorMsg = await extractErrorMessage(res, 'Failed to verify reset token');
+      throw new Error(errorMsg);
+    }
+    return res.json();
+  },
+
+  async resetPassword(token: string, password: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password }),
+    });
+
+    if (!res.ok) {
+      const errorMsg = await extractErrorMessage(res, 'Failed to reset password');
+      throw new Error(errorMsg);
+    }
+    return res.json();
+  },
 };
