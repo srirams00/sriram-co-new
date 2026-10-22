@@ -41,6 +41,7 @@ export interface ReturnRequest {
   agreedToPolicy: boolean;
   requestedAt: string;
   resolvedAt?: string;
+  adminNotes?: string;
 }
 
 export interface Order {

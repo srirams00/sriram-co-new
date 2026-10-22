@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { RefreshCw, Search, AlertCircle, CheckCircle2, X, RotateCcw } from 'lucide-react';
 import ReturnProductModal from '@/components/orders/ReturnProductModal';
 import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
+import { isEligibleForReturn } from '@/lib/returnValidation';
 import { api } from '@/lib/api';
 import { Order, OrderStatus, OrderItem } from '@/types/order';
 import styles from './orders.module.css';
@@ -102,7 +103,7 @@ function OrderCard({
   const isDelivered = order.orderStatus === 'delivered';
   const isCancelled = order.orderStatus === 'cancelled';
   const isPreDispatch = ['placed', 'confirmed', 'processing'].includes(order.orderStatus);
-  const isWithin7Days = isDelivered && (Date.now() - new Date(order.updatedAt || order.createdAt).getTime() <= 7 * 24 * 60 * 60 * 1000);
+  const isWithin7Days = isDelivered && isEligibleForReturn(order.updatedAt || order.createdAt);
   const isReturnRequested = order.orderStatus === 'return_requested' || Boolean(order.returnRequest);
 
   return (

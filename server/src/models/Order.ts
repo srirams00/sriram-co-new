@@ -22,6 +22,7 @@ export interface IReturnRequest {
   agreedToPolicy: boolean;
   requestedAt: Date;
   resolvedAt?: Date;
+  adminNotes?: string;
 }
 
 export interface IOrder extends Document {
@@ -164,6 +165,7 @@ const OrderSchema = new Schema<IOrder>(
         agreedToPolicy: { type: Boolean, required: true, default: false },
         requestedAt: { type: Date, default: Date.now },
         resolvedAt: { type: Date, default: null },
+        adminNotes: { type: String, default: null },
       },
       default: null,
     },
