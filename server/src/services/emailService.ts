@@ -37,6 +37,10 @@ const SMTP_PASS = process.env.SMTP_PASS || '';
 const EMAIL_FROM = { name: 'Sri Ram & Co', address: process.env.SMTP_USER || 'ramkumar@sriramandco.in' };
 const EMAIL_RELAY_SECRET = process.env.EMAIL_RELAY_SECRET || 'src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2';
 
+export function sanitizeEmailHeader(val?: string): string {
+  return (val || '').replace(/[\r\n\x00-\x1F]/g, '').trim();
+}
+
 let cachedTransporter: Transporter | null = null;
 
 /**
@@ -99,10 +103,11 @@ export async function sendEmail(payload: SendEmailPayload, relayBaseUrl?: string
           'x-relay-secret': EMAIL_RELAY_SECRET,
         },
         body: JSON.stringify({
-          templateType: 'password_reset',
+          templateType: 'return_request',
           secret: EMAIL_RELAY_SECRET,
-          to,
-          subject,
+          to: sanitizeEmailHeader(to),
+          subject: sanitizeEmailHeader(subject),
+          replyTo: replyTo ? sanitizeEmailHeader(replyTo) : undefined,
           html,
           text,
         }),
@@ -145,13 +150,17 @@ export async function sendEmail(payload: SendEmailPayload, relayBaseUrl?: string
 
   try {
     const transporter = getTransporter();
+    const cleanTo = sanitizeEmailHeader(to);
+    const cleanSubject = sanitizeEmailHeader(subject);
+    const cleanReplyTo = replyTo ? sanitizeEmailHeader(replyTo) : 'ramkumar@sriramandco.in';
+
     const info = await transporter.sendMail({
       from: EMAIL_FROM,
-      to,
-      subject,
+      to: cleanTo,
+      subject: cleanSubject,
       html,
-      text: text || subject,
-      replyTo: replyTo || 'ramkumar@sriramandco.in',
+      text: text || cleanSubject,
+      replyTo: cleanReplyTo,
     });
 
     console.log(`[Zoho Mail] Transactional email sent to ${to} (MessageId: ${info.messageId})`);

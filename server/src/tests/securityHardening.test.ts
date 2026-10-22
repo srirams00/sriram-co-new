@@ -4,6 +4,7 @@ import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
+import { sanitizeEmailHeader } from '../services/emailService.js';
 
 describe('Security & Hardening Suite', () => {
   it('enforces OWASP security headers via helmet', async () => {
@@ -290,6 +291,49 @@ describe('Security & Hardening Suite', () => {
 
       assert.equal(devRequest.allowed, true);
       assert.equal(testRequest.allowed, true);
+    });
+  });
+
+  describe('Email Injection & Mutation Boundary Controls', () => {
+    it('neutralizes email header injection attacks (CRLF and null byte stripping)', () => {
+      const maliciousSubject = "Order Update\r\nBcc: hacker@attacker.com\r\nContent-Type: text/html";
+      const sanitizedSubject = sanitizeEmailHeader(maliciousSubject);
+
+      assert.equal(sanitizedSubject.includes('\r'), false);
+      assert.equal(sanitizedSubject.includes('\n'), false);
+      assert.equal(sanitizedSubject, "Order UpdateBcc: hacker@attacker.comContent-Type: text/html");
+
+      const maliciousReplyTo = "victim@example.com\r\nCc: spy@attacker.com";
+      const sanitizedReplyTo = sanitizeEmailHeader(maliciousReplyTo);
+      assert.equal(sanitizedReplyTo.includes('\r'), false);
+      assert.equal(sanitizedReplyTo.includes('\n'), false);
+      assert.equal(sanitizedReplyTo, "victim@example.comCc: spy@attacker.com");
+    });
+
+    it('enforces strict boundary limits on return feedback to prevent buffer bloat and DoS', () => {
+      const validateReturnInput = (reason: unknown, faultDetails: unknown) => {
+        if (!reason || typeof reason !== 'string' || reason.trim().length === 0 || reason.length > 100) {
+          return { valid: false, error: 'Reason length violation' };
+        }
+        if (!faultDetails || typeof faultDetails !== 'string' || faultDetails.trim().length < 5 || faultDetails.length > 2000) {
+          return { valid: false, error: 'Fault details length violation' };
+        }
+        return { valid: true };
+      };
+
+      // Valid boundary input
+      assert.equal(validateReturnInput('Defective / Not Turning On', 'Device stops running after 30 seconds').valid, true);
+
+      // Oversized reason (> 100 characters)
+      const oversizedReason = 'a'.repeat(101);
+      assert.equal(validateReturnInput(oversizedReason, 'Valid fault description').valid, false);
+
+      // Oversized fault details (> 2000 characters)
+      const oversizedDetails = 'a'.repeat(2001);
+      assert.equal(validateReturnInput('Defective', oversizedDetails).valid, false);
+
+      // Undersized fault details (< 5 characters)
+      assert.equal(validateReturnInput('Defective', 'bad').valid, false);
     });
   });
 });

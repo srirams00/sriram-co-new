@@ -41,6 +41,17 @@ const paymentVerificationLimiter = rateLimit({
   },
 });
 
+// Rate limiter for order cancellations and return requests (prevents abuse, email flooding, and phone brute-forcing)
+const orderMutationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: 'Too many requests submitted for this order. Please wait 15 minutes before trying again.',
+  },
+});
+
 // POST /api/orders/razorpay/create-order - Create Razorpay order with server-side price recalculation (Anti-tamper)
 router.post('/razorpay/create-order', orderCreationLimiter, authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -606,7 +617,7 @@ router.patch('/:id/status', requireAdmin, async (req: Request, res: Response): P
 });
 
 // POST /api/orders/:idOrNumber/cancel - Customer Pre-Dispatch Cancellation & Automated Refund Endpoint
-router.post('/:idOrNumber/cancel', authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/:idOrNumber/cancel', orderMutationLimiter, authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { idOrNumber } = req.params;
     const { reason, phone, email } = req.body;
@@ -894,18 +905,18 @@ router.post('/admin/preview-email', requireAdmin, async (req: Request, res: Resp
 
 
 // POST /api/orders/:idOrNumber/return - Customer Delivered Product Return Request
-router.post('/:idOrNumber/return', authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/:idOrNumber/return', orderMutationLimiter, authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { idOrNumber } = req.params;
     const { itemId, reason, faultDetails, agreedToPolicy, phone, email } = req.body;
 
-    // 1. Validation
-    if (!reason || typeof reason !== 'string') {
-      res.status(400).json({ message: 'Return reason is required' });
+    // 1. Validation with boundary length enforcement
+    if (!reason || typeof reason !== 'string' || reason.trim().length === 0 || reason.length > 100) {
+      res.status(400).json({ message: 'Return reason is required (up to 100 characters)' });
       return;
     }
-    if (!faultDetails || typeof faultDetails !== 'string' || faultDetails.trim().length < 5) {
-      res.status(400).json({ message: 'Please provide detailed feedback regarding the fault (minimum 5 characters)' });
+    if (!faultDetails || typeof faultDetails !== 'string' || faultDetails.trim().length < 5 || faultDetails.length > 2000) {
+      res.status(400).json({ message: 'Please provide detailed feedback regarding the fault (between 5 and 2000 characters)' });
       return;
     }
     if (agreedToPolicy !== true) {
