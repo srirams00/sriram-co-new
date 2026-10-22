@@ -266,12 +266,7 @@ export default function LoginPage() {
             </div>
 
             <div className={styles.inputGroup}>
-              <div className={styles.labelRow}>
-                <label htmlFor="loginPassword">Password</label>
-                <Link href="/forgot-password" className={styles.forgotLink}>
-                  Forgot Password?
-                </Link>
-              </div>
+              <label htmlFor="loginPassword">Password</label>
               <div className={styles.passwordWrapper}>
                 <input
                   id="loginPassword"
@@ -294,6 +289,11 @@ export default function LoginPage() {
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
+              </div>
+              <div className={styles.forgotLinkRow}>
+                <Link href="/forgot-password" className={styles.forgotLink}>
+                  Forgot Password?
+                </Link>
               </div>
               {touched.password && errors.password && (
                 <div id="loginPassword-error" className={styles.fieldError} role="alert">
