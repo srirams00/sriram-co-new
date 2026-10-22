@@ -269,7 +269,7 @@ router.post('/forgot-password', authLimiter, async (req: Request, res: Response,
     const user = await User.findOne({ email: email.toLowerCase() });
 
     // Anti-enumeration protection (OWASP): always return success even if email does not exist
-    if (!user || user.role !== 'customer') {
+    if (!user) {
       res.json({
         success: true,
         message: 'If an account exists with this email address, a password reset link has been dispatched to your inbox.',
