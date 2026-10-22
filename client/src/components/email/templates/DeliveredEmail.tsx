@@ -39,7 +39,7 @@ export function DeliveredEmail() {
         left={
           <InfoBlock
             title="If something isn’t right"
-            body="If an item is faulty, damaged or not working, tell us within 7 days of delivery and we’ll arrange a replacement."
+            body="If an item is faulty, damaged or not working, tell us within 3 days of delivery and we’ll arrange a replacement."
             linkLabel="Returns &amp; Refunds"
             href={links.returns}
           />

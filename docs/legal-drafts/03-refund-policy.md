@@ -18,8 +18,8 @@ Sri Ram & Co is dedicated to complete customer satisfaction and full transparenc
 
 ---
 
-## 3. 5-DAY RETURN & REPLACEMENT NOTIFICATION WINDOW
-Customers must inspect their orders upon delivery. In the event of an issue, **customers should inform Sri Ram & Co within five (5) business days of delivery** to initiate a return or replacement request.
+## 3. 3-DAY RETURN & REPLACEMENT NOTIFICATION WINDOW
+Customers must inspect their orders upon delivery. In the event of an issue, **customers should inform Sri Ram & Co within three (3) days of delivery** to initiate a return or replacement request.
 
 ### Eligible Return & Replacement Conditions:
 1. **Dead-On-Arrival (DOA):** The product fails to power on or operate upon unboxing.
@@ -27,8 +27,8 @@ Customers must inspect their orders upon delivery. In the event of an issue, **c
 3. **Mismatched SKU / Wrong Item:** The received item does not match the product ordered.
 4. **Missing Components:** Original factory accessories, cords, or attachments are absent from the sealed packaging.
 
-### How to Initiate a Request (Within 5 Business Days):
-1. Contact customer support via WhatsApp or email (`ramkumar@sriramandco.in` / +91 93454 03136) **within 5 business days** of receiving your package.
+### How to Initiate a Request (Within 3 Days):
+1. Contact customer support via WhatsApp or email (`ramkumar@sriramandco.in` / +91 93454 03136) **within 3 days** of receiving your package.
 2. Provide your Order Number, photographs or a short video showing the defect/damage, and the serial number on the carton.
 3. Our store logistics team will coordinate doorstep pickup or a replacement exchange at **zero additional charge**.
 
@@ -51,5 +51,5 @@ The following items and conditions are not eligible for standard return:
 
 ---
 
-## 6. POST 5-DAY ISSUES: 1-YEAR COMPREHENSIVE WARRANTY
-Issues reported after the initial 5 business days return window are fully protected under Sri Ram & Co's **1-Year (12 Months) Comprehensive Warranty**. All products sold by Sri Ram & Co include 1 year of warranty coverage backed by your official GST tax invoice.
+## 6. POST 3-DAY ISSUES: 1-YEAR COMPREHENSIVE WARRANTY
+Issues reported after the initial 3-day return window are fully protected under Sri Ram & Co's **1-Year (12 Months) Comprehensive Warranty**. All products sold by Sri Ram & Co include 1 year of warranty coverage backed by your official GST tax invoice.

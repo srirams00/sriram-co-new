@@ -6,13 +6,13 @@ import { Clock, ShieldCheck, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Return & Refund Policy | Sri Ram & Co',
-  description: 'Return, replacement, and refund policy for Sri Ram & Co: 5 business days notification window and 5-7 days refund processing SLA.',
+  description: 'Return, replacement, and refund policy for Sri Ram & Co: 3-day notification window and 5-7 days refund processing SLA.',
   alternates: {
     canonical: '/refund-policy',
   },
   openGraph: {
     title: 'Return & Refund Policy | Sri Ram & Co',
-    description: 'Learn about our 5-day return notification process, 5-7 days refund timeline, and 1-year product warranty.',
+    description: 'Learn about our 3-day return notification process, 5-7 days refund timeline, and 1-year product warranty.',
   },
 };
 
@@ -21,7 +21,7 @@ export default function RefundPolicyPage() {
     <LegalPageLayout
       currentSlug="refund-policy"
       title="Return, Replacement & Refund Policy"
-      subtitle="Clear, fair, and objective guidelines for order cancellations, 5-day return notification, and 5-7 day refund processing."
+      subtitle="Clear, fair, and objective guidelines for order cancellations, 3-day return notification, and 5-7 day refund processing."
       effectiveDate="October 14, 2026"
       statuteBadge="Consumer Protection Act, 2019 & E-Commerce Rules, 2020"
     >
@@ -37,10 +37,10 @@ export default function RefundPolicyPage() {
         <div className={styles.calloutBox} style={{ borderLeftColor: '#18A957' }}>
           <div className={styles.calloutTitle}>
             <Clock size={18} />
-            5 Business Days Notification Window
+            3-Day Notification Window
           </div>
           <p className={styles.calloutText}>
-            Customers should notify Sri Ram &amp; Co <strong>within five (5) business days of delivery</strong> in the event of receiving 
+            Customers should notify Sri Ram &amp; Co <strong>within three (3) days of delivery</strong> in the event of receiving
             a Dead-On-Arrival unit, transit breakage, missing accessories, or a defective product.
           </p>
         </div>
@@ -73,9 +73,9 @@ export default function RefundPolicyPage() {
       </section>
 
       <section>
-        <h2>3. 5-Day Return &amp; Replacement Criteria</h2>
+        <h2>3. 3-Day Return &amp; Replacement Criteria</h2>
         <p>
-          To initiate a return or replacement, you must inform us <strong>within 5 business days of receiving your order</strong>. 
+          To initiate a return or replacement, you must inform us <strong>within 3 days of receiving your order</strong>.
           The following situations qualify for immediate store collection and replacement:
         </p>
         <div className={styles.tableContainer}>
@@ -112,7 +112,7 @@ export default function RefundPolicyPage() {
           </table>
         </div>
 
-        <h3>How to Initiate Your Request (Within 5 Business Days):</h3>
+        <h3>How to Initiate Your Request (Within 3 Days):</h3>
         <ol>
           <li>Send an email to <strong>ramkumar@sriramandco.in</strong> or WhatsApp our support line at <strong>+91 93454 03136</strong>.</li>
           <li>Provide your Order Number (e.g., <code>SRC-123456</code>), along with photos or a brief video displaying the issue and carton serial number.</li>
@@ -144,19 +144,19 @@ export default function RefundPolicyPage() {
           <li>Consumable items (e.g., cutting blades, replacement filters, cleaning chemicals) whose factory tamper seals have been broken.</li>
           <li>Products exhibiting signs of deliberate damage, water ingress into non-waterproof housings, or external electrical surge burn.</li>
           <li>Items returned without their original manufacturer box, packaging foam, warranty card, and accessories.</li>
-          <li>Requests initiated after the expiration of the 5 business days notification window.</li>
+          <li>Requests initiated after the expiration of the 3-day notification window.</li>
         </ul>
       </section>
 
       <section>
-        <h2>6. Beyond 5 Days: 1-Year Comprehensive Warranty</h2>
+        <h2>6. Beyond 3 Days: 1-Year Comprehensive Warranty</h2>
         <div className={styles.calloutBox}>
           <div className={styles.calloutTitle}>
             <ShieldCheck size={18} />
             Universal 1-Year Warranty Protection
           </div>
           <p className={styles.calloutText}>
-            If an issue arises after the initial 5 business days, your purchase is completely safeguarded under Sri Ram &amp; Co&apos;s 
+            If an issue arises after the initial 3 days, your purchase is completely safeguarded under Sri Ram &amp; Co&apos;s
             <strong> 1-Year (12 Months) Comprehensive Warranty</strong>. We coordinate technician visits, genuine spare parts, 
             and repair services across Tamil Nadu at zero labor cost.
           </p>

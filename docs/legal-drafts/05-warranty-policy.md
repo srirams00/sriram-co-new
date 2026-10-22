@@ -12,8 +12,8 @@ At Sri Ram & Co, quality and reliability are our foundation. **Every single prod
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  TIER 1: 5-Day Initial Store Replacement Guarantee     │
-│  • Inform within 5 business days of delivery           │
+│  TIER 1: 3-Day Initial Store Replacement Guarantee     │
+│  • Inform within 3 days of delivery                    │
 │  • Instant 100% Free Store Pickup & Replacement        │
 │  • Covers DOA, transit damage, or missing components   │
 └───────────────────────────┬────────────────────────────┘
@@ -29,14 +29,14 @@ At Sri Ram & Co, quality and reliability are our foundation. **Every single prod
 
 ---
 
-## 2. TIER 1: INITIAL 5-BUSINESS-DAY STORE REPLACEMENT
-- If any appliance, motor, or tool fails to power on (DOA) or suffers from a manufacturing defect upon arrival, the customer should inform us **within five (5) business days of delivery**.
+## 2. TIER 1: INITIAL 3-DAY STORE REPLACEMENT
+- If any appliance, motor, or tool fails to power on (DOA) or suffers from a manufacturing defect upon arrival, the customer should inform us **within three (3) days of delivery**.
 - Sri Ram & Co will coordinate doorstep collection and exchange the product for a brand-new sealed unit with zero additional shipping or service fees.
 
 ---
 
 ## 3. TIER 2: FULL 1-YEAR (12 MONTHS) COMPREHENSIVE WARRANTY
-After the initial 5 business days, your product remains covered under the **1-Year Comprehensive Warranty**:
+After the initial 3 days, your product remains covered under the **1-Year Comprehensive Warranty**:
 1. **Universal 1-Year Coverage:** All products (home appliances, kitchen essentials, power tools, cleaning equipment, garden gear, and personal care appliances) carry **1 full year of warranty protection**.
 2. **Authorized Service & Genuine Parts:** Repairs are performed using 100% genuine manufacturer spare parts through authorized technician networks across Trichy, Chennai, and Tamil Nadu.
 3. **Store Facilitation:** If you ever experience issues booking a technician, our dedicated store customer service team handles coordination on your behalf.

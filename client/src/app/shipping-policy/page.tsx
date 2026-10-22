@@ -123,11 +123,11 @@ export default function ShippingPolicyPage() {
         <div className={styles.calloutBox}>
           <div className={styles.calloutTitle}>
             <Clock size={18} />
-            Remember: 5 Business Days Return Notice Window
+            Remember: 3-Day Return Notice Window
           </div>
           <p className={styles.calloutText}>
             If you detect any hidden transit damage or component defect after unboxing, simply inform our store team 
-            <strong> within 5 business days</strong> for an immediate free exchange.
+            <strong> within 3 days</strong> for an immediate free exchange.
           </p>
         </div>
       </section>

@@ -91,16 +91,6 @@ export default function HeroSection() {
           '<'
         )
         .from(
-          `.${styles.imageBackdrop}`,
-          {
-            opacity: 0,
-            scale: 0.95,
-            duration: 0.8,
-            ease: 'power2.out',
-          },
-          '-=0.6'
-        )
-        .from(
           `.${styles.floatingBadge}`,
           {
             opacity: 0,
@@ -170,6 +160,7 @@ export default function HeroSection() {
               width={853}
               height={766}
               priority
+              unoptimized
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 550px"
               className={styles.heroImage}
             />

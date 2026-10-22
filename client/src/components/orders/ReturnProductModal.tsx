@@ -81,7 +81,7 @@ export default function ReturnProductModal({
         <div className={styles.header}>
           <div className={styles.titleBlock}>
             <span className={styles.badge}>
-              <RotateCcw size={12} /> 7-Day Replacement &amp; Return
+              <RotateCcw size={12} /> 3-Day Replacement &amp; Return
             </span>
             <h2 id="return-modal-title" className={styles.title}>
               Return Product
@@ -184,7 +184,7 @@ export default function ReturnProductModal({
               </Link>
               , and{' '}
               <Link href="/warranty-policy" target="_blank" className={styles.link}>
-                7-Day Warranty Policy
+                Warranty &amp; Service Policy
               </Link>
               .
             </label>
