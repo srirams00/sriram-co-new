@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Package, ShoppingBag, Users, LogOut, MessageSquare } from 'lucide-react';
+import { api } from '@/lib/api';
 import styles from './AdminSidebar.module.css';
 
 const DASHBOARD_ROUTE = '/48191d90cc476d1c72aaec9997cc977c';
@@ -12,6 +13,26 @@ const ADMIN_LOGIN_ROUTE = '/f0d06b7799107f8da21a05984c29bb10';
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [orderCount, setOrderCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    const fetchOrderCount = async () => {
+      try {
+        const token = localStorage.getItem('src_auth_token') || undefined;
+        const { stats } = await api.getAdminOrders(token);
+        if (isCurrent) setOrderCount(stats.totalOrders);
+      } catch (error) {
+        console.error('Failed to fetch sidebar order count:', error);
+      }
+    };
+
+    fetchOrderCount();
+    return () => {
+      isCurrent = false;
+    };
+  }, [pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('src_auth_token');
@@ -64,7 +85,7 @@ export default function AdminSidebar() {
             <ShoppingBag size={18} />
             <span>Orders</span>
           </div>
-          <span className={styles.navBadge}>12</span>
+          {orderCount !== null && <span className={styles.navBadge}>{orderCount}</span>}
         </Link>
 
         <Link
