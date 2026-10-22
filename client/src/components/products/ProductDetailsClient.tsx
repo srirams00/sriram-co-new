@@ -327,7 +327,7 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
               <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Applicable Policies:</span>
               <Link href="/warranty-policy" className={styles.statutoryPolicyLink}>Warranty &amp; Service Terms</Link>
               <Link href="/shipping-policy" className={styles.statutoryPolicyLink}>Shipping &amp; Delivery SLA</Link>
-              <Link href="/refund-policy" className={styles.statutoryPolicyLink}>7-Day Replacement Guarantee</Link>
+              <Link href="/refund-policy" className={styles.statutoryPolicyLink}>3-Day Replacement Guarantee</Link>
             </div>
           </div>
         </div>

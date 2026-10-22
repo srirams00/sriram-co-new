@@ -300,8 +300,8 @@ export function compileOrderEmailHtml(
       <table role="presentation" width="100%">
         <tr>
           <td style="width: 50%; vertical-align: top; padding-right: 12px;">
-            <p style="margin: 0; font-size: 13px; font-weight: 700; color: ${THEME.text};">7-Day Store Replacement</p>
-            <p style="margin: 4px 0 0; font-size: 12px; color: ${THEME.muted}; line-height: 1.5;">If any item is damaged or faulty within 7 days of delivery, contact our store directly for immediate replacement.</p>
+            <p style="margin: 0; font-size: 13px; font-weight: 700; color: ${THEME.text};">3-Day Store Replacement</p>
+            <p style="margin: 4px 0 0; font-size: 12px; color: ${THEME.muted}; line-height: 1.5;">If any item is damaged or faulty within 3 days of delivery, contact our store directly for immediate replacement.</p>
             <a href="${STORE_CONFIG.siteUrl}/refund-policy" style="display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 600; color: ${THEME.green}; text-decoration: underline;">Returns &amp; Refunds</a>
           </td>
           <td style="width: 50%; vertical-align: top; padding-left: 12px; border-left: 1px solid ${THEME.border};">

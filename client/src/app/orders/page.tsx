@@ -211,7 +211,7 @@ function OrderCard({
         </div>
       ) : (
         <div className={styles.dispatchedNotice}>
-          📦 Order is {order.orderStatus === 'shipped' || order.orderStatus === 'processing' ? 'shipped' : order.orderStatus === 'out_for_delivery' ? 'out for delivery' : 'delivered'}. Covered by Sri Ram &amp; Co <strong>7-Day Store Replacement Policy</strong>. Need support? Call +91 93454 03136.
+          📦 Order is {order.orderStatus === 'shipped' || order.orderStatus === 'processing' ? 'shipped' : order.orderStatus === 'out_for_delivery' ? 'out for delivery' : 'delivered'}. Covered by Sri Ram &amp; Co <strong>3-Day Store Replacement Policy</strong>. Need support? Call +91 93454 03136.
         </div>
       )}
     </div>

@@ -16,23 +16,19 @@ describe('Customer Return Validation Suite (Client TDD)', () => {
     assert.ok(RETURN_REASONS.includes('Other (describe below)'));
   });
 
-  it('determines return eligibility based on 7-day delivery cutoff', () => {
-    const now = new Date();
+  it('determines return eligibility based on 3-day delivery cutoff', () => {
+    const now = Date.now();
 
-    // 2 days ago -> eligible
-    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString();
-    assert.equal(isEligibleForReturn(twoDaysAgo), true);
+    const twoDaysAgo = new Date(now - 2 * 24 * 60 * 60 * 1000).toISOString();
+    assert.equal(isEligibleForReturn(twoDaysAgo, now), true);
 
-    // 7 days exact -> eligible
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    assert.equal(isEligibleForReturn(sevenDaysAgo), true);
+    const threeDaysAgo = new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString();
+    assert.equal(isEligibleForReturn(threeDaysAgo, now), true);
 
-    // 8 days ago -> expired / ineligible
-    const eightDaysAgo = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString();
-    assert.equal(isEligibleForReturn(eightDaysAgo), false);
+    const justOverThreeDaysAgo = new Date(now - 3 * 24 * 60 * 60 * 1000 - 1).toISOString();
+    assert.equal(isEligibleForReturn(justOverThreeDaysAgo, now), false);
 
-    // Missing date -> ineligible
-    assert.equal(isEligibleForReturn(undefined), false);
+    assert.equal(isEligibleForReturn(undefined, now), false);
   });
 
   it('validates a complete and legitimate return request form', () => {

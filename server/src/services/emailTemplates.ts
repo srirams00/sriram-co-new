@@ -339,8 +339,8 @@ export function compileOrderEmailHtml(
       <table role="presentation" width="100%">
         <tr>
           <td style="width: 50%; vertical-align: top; padding-right: 12px;">
-            <p style="margin: 0; font-size: 13px; font-weight: 700; color: ${THEME.text};">7-Day Store Replacement</p>
-            <p style="margin: 4px 0 0; font-size: 12px; color: ${THEME.muted}; line-height: 1.5;">If any item is damaged or faulty within 7 days of delivery, contact our store directly for immediate replacement.</p>
+            <p style="margin: 0; font-size: 13px; font-weight: 700; color: ${THEME.text};">3-Day Store Replacement</p>
+            <p style="margin: 4px 0 0; font-size: 12px; color: ${THEME.muted}; line-height: 1.5;">If any item is damaged or faulty within 3 days of delivery, contact our store directly for immediate replacement.</p>
             <a href="${STORE_CONFIG.siteUrl}/refund-policy" style="display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 600; color: ${THEME.green}; text-decoration: underline;">Returns &amp; Refunds</a>
           </td>
           <td style="width: 50%; vertical-align: top; padding-left: 12px; border-left: 1px solid ${THEME.border};">
@@ -713,7 +713,7 @@ export function compileMerchantReturnEmailHtml(order: any, returnRequest: any): 
                 <tr><td><strong>Phone:</strong></td><td><a href="tel:${escapeHtml(customer.phone || '')}" style="color:${THEME.green};text-decoration:none;">${escapeHtml(customer.phone || '')}</a></td></tr>
                 <tr><td><strong>Email:</strong></td><td><a href="mailto:${escapeHtml(customer.email || '')}" style="color:${THEME.green};text-decoration:none;">${escapeHtml(customer.email || '')}</a></td></tr>
                 <tr><td><strong>Address:</strong></td><td>${escapeHtml(customer.address || '')}, ${escapeHtml(customer.city || '')} ${escapeHtml(customer.postalCode || '')}</td></tr>
-                <tr><td><strong>Policy Acknowledged:</strong></td><td>Yes (7-day warranty agreement ticked)</td></tr>
+                <tr><td><strong>Policy Acknowledged:</strong></td><td>Yes (3-day return policy acknowledged)</td></tr>
               </table>
             </td>
           </tr>
@@ -842,7 +842,7 @@ export function compileCustomerReturnResolutionEmailHtml(order: any, returnReque
       <div style="background-color:#fef2f2;border:1px solid #fee2e2;border-radius:12px;padding:16px;margin-bottom:20px;">
         <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#991b1b;">Review Findings:</p>
         <p style="margin:0;font-size:13px;color:#7f1d1d;line-height:1.5;">
-          ${escapeHtml(adminNotes || 'After inspection against our 7-Day Replacement Policy, this return request could not be accepted.')}
+          ${escapeHtml(adminNotes || 'After inspection against our 3-Day Replacement Policy, this return request could not be accepted.')}
         </p>
       </div>
       <p style="font-size:13px;color:${THEME.muted};line-height:1.5;margin:0 0 16px;">
@@ -850,7 +850,7 @@ export function compileCustomerReturnResolutionEmailHtml(order: any, returnReque
       </p>
     `;
     text = `Hello ${firstName},\n\nRegarding your return request for "${item.name}" (Order #${orderNumber}):\n\n` +
-      `Update: ${adminNotes || 'This return request could not be accepted under our 7-day policy.'}\n\n` +
+      `Update: ${adminNotes || 'This return request could not be accepted under our 3-day policy.'}\n\n` +
       `Customer Support: ${STORE_CONFIG.phoneDisplay}\nSri Ram & Co`;
   } else if (status === 'refunded') {
     subject = `Refund Credited: Order #${orderNumber}`;

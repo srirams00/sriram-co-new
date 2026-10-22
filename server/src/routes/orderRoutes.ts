@@ -669,7 +669,7 @@ router.post('/:idOrNumber/cancel', orderMutationLimiter, authenticateIfPresent, 
 
     if (order.orderStatus === 'shipped' || order.orderStatus === 'out_for_delivery' || order.orderStatus === 'delivered') {
       res.status(400).json({
-        message: `Order cannot be cancelled because it has already ${order.orderStatus === 'shipped' ? 'shipped' : order.orderStatus === 'out_for_delivery' ? 'gone out for delivery' : 'been delivered'}. In accordance with Sri Ram & Co store policy, please refer to our 7-Day Return / Replacement Policy once your delivery arrives.`,
+        message: `Order cannot be cancelled because it has already ${order.orderStatus === 'shipped' ? 'shipped' : order.orderStatus === 'out_for_delivery' ? 'gone out for delivery' : 'been delivered'}. In accordance with Sri Ram & Co store policy, please refer to our 3-Day Return / Replacement Policy once your delivery arrives.`,
       });
       return;
     }
@@ -968,12 +968,12 @@ router.post('/:idOrNumber/return', orderMutationLimiter, authenticateIfPresent, 
       return;
     }
 
-    // 7-day window check
+    // 3-day window check
     const deliveredAt = order.updatedAt || order.createdAt;
-    const returnWindowMs = 7 * 24 * 60 * 60 * 1000;
+    const returnWindowMs = 3 * 24 * 60 * 60 * 1000;
     if (Date.now() - new Date(deliveredAt).getTime() > returnWindowMs) {
       res.status(400).json({
-        message: 'The 7-day return window for this order has expired. Please contact Sri Ram & Co support for warranty assistance.',
+        message: 'The 3-day return window for this order has expired. Please contact Sri Ram & Co support for warranty assistance.',
       });
       return;
     }

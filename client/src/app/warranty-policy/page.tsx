@@ -59,7 +59,7 @@ export default function WarrantyPolicyPage() {
             <tbody>
               <tr>
                 <td><strong>Tier 1: Store Replacement Guarantee</strong></td>
-                <td><strong>Initial 5 Business Days</strong> from delivery</td>
+                <td><strong>Initial 3 Days</strong> from delivery</td>
                 <td>Dead-On-Arrival (DOA), transit cracks, missing accessories, or initial defects.</td>
                 <td>Immediate 100% free store pickup &amp; replacement with a new sealed box.</td>
               </tr>
@@ -75,10 +75,10 @@ export default function WarrantyPolicyPage() {
       </section>
 
       <section>
-        <h2>2. Tier 1: Initial 5-Business-Day Store Swap</h2>
+        <h2>2. Tier 1: Initial 3-Day Store Swap</h2>
         <p>
           If your appliance or tool fails to power on upon arrival or experiences any initial manufacturing defect, 
-          simply inform Sri Ram &amp; Co <strong>within five (5) business days of delivery</strong>.
+          simply inform Sri Ram &amp; Co <strong>within three (3) days of delivery</strong>.
         </p>
         <ul>
           <li>Our delivery fleet coordinates doorstep collection at <strong>zero cost</strong>.</li>
