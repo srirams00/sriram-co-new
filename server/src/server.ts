@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -85,7 +86,7 @@ app.use(morgan('dev'));
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (process.env.NODE_ENV === 'production' && process.env.CF_SECRET_TOKEN) {
     // Allow Razorpay direct webhooks, root status, or health checks to bypass
-    if (req.path === '/api/payment/webhook' || req.path === '/api/health' || req.path === '/') {
+    if (req.path === '/api/payment/webhook' || req.path === '/api/orders/razorpay/webhook' || req.path === '/api/health' || req.path === '/') {
       return next();
     }
 
@@ -100,9 +101,17 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       }
     }
 
-    // Enforce Cloudflare secret header for direct non-browser / server-to-server calls
-    const incomingSecret = req.headers['x-from-cloudflare'];
-    if (incomingSecret !== process.env.CF_SECRET_TOKEN) {
+    // Enforce Cloudflare secret header with timing-safe comparison to prevent side-channel leaks
+    const incomingSecret = typeof req.headers['x-from-cloudflare'] === 'string' ? req.headers['x-from-cloudflare'] : '';
+    const expectedSecret = process.env.CF_SECRET_TOKEN || '';
+    const incomingBuffer = Buffer.from(incomingSecret, 'utf8');
+    const expectedBuffer = Buffer.from(expectedSecret, 'utf8');
+
+    if (
+      incomingBuffer.length === 0 ||
+      incomingBuffer.length !== expectedBuffer.length ||
+      !crypto.timingSafeEqual(incomingBuffer, expectedBuffer)
+    ) {
       return res.status(403).json({ error: 'Direct origin access forbidden.' });
     }
   }

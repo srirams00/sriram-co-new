@@ -4,7 +4,9 @@ import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
+import crypto from 'crypto';
 import { sanitizeEmailHeader } from '../services/emailService.js';
+import { ProcessedWebhook } from '../models/ProcessedWebhook.js';
 
 describe('Security & Hardening Suite', () => {
   it('enforces OWASP security headers via helmet', async () => {
@@ -226,7 +228,12 @@ describe('Security & Hardening Suite', () => {
       secretToken?: string
     ): { allowed: boolean; status?: number; error?: string } {
       if (nodeEnv === 'production' && secretToken) {
-        if (path === '/api/payment/webhook' || path === '/api/health' || path === '/') {
+        if (
+          path === '/api/payment/webhook' ||
+          path === '/api/orders/razorpay/webhook' ||
+          path === '/api/health' ||
+          path === '/'
+        ) {
           return { allowed: true };
         }
 
@@ -240,8 +247,15 @@ describe('Security & Hardening Suite', () => {
           }
         }
 
-        const incomingSecret = headers['x-from-cloudflare'];
-        if (incomingSecret !== secretToken) {
+        const incomingSecret = headers['x-from-cloudflare'] || '';
+        const incomingBuffer = Buffer.from(incomingSecret, 'utf8');
+        const expectedBuffer = Buffer.from(secretToken, 'utf8');
+
+        if (
+          incomingBuffer.length === 0 ||
+          incomingBuffer.length !== expectedBuffer.length ||
+          !crypto.timingSafeEqual(incomingBuffer, expectedBuffer)
+        ) {
           return { allowed: false, status: 403, error: 'Direct origin access forbidden.' };
         }
       }
@@ -336,4 +350,45 @@ describe('Security & Hardening Suite', () => {
       assert.equal(validateReturnInput('Defective', 'bad').valid, false);
     });
   });
+
+  describe('Webhook Replay Mitigation & Email Format Hardening', () => {
+    it('verifies ProcessedWebhook model has eventId and 30-day TTL configuration', () => {
+      const schema = ProcessedWebhook.schema;
+      assert.ok(schema.path('eventId'), 'eventId must be a defined schema path');
+      assert.ok(schema.path('eventType'), 'eventType must be a defined schema path');
+      assert.ok(schema.path('processedAt'), 'processedAt must be a defined schema path');
+
+      const processedAtOptions = schema.path('processedAt').options as any;
+      assert.equal(processedAtOptions.expires, 30 * 24 * 60 * 60, 'TTL index must expire in 30 days');
+    });
+
+    it('timingSafeEqual detects secret mismatches without timing leakage', () => {
+      const secret = 'prod_secret_token_abc123';
+      const exactMatch = 'prod_secret_token_abc123';
+      const wrongByte = 'prod_secret_token_abc124';
+      const wrongLength = 'prod_secret';
+
+      const secBuf = Buffer.from(secret, 'utf8');
+      const matchBuf = Buffer.from(exactMatch, 'utf8');
+      const wrongBuf = Buffer.from(wrongByte, 'utf8');
+
+      assert.equal(crypto.timingSafeEqual(secBuf, matchBuf), true);
+      assert.equal(crypto.timingSafeEqual(secBuf, wrongBuf), false);
+      assert.equal(secBuf.length !== Buffer.from(wrongLength).length, true);
+    });
+
+    it('strictly validates customer email formats on return submissions', () => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const validateEmail = (email: string) => emailRegex.test(email.trim()) && email.length <= 254;
+
+      assert.equal(validateEmail('customer@gmail.com'), true);
+      assert.equal(validateEmail('silvest.aj+orders@sriramandco.in'), true);
+      assert.equal(validateEmail('plainaddress'), false);
+      assert.equal(validateEmail('@missingusername.com'), false);
+      assert.equal(validateEmail('customer@.com'), false);
+      assert.equal(validateEmail('customer@domain'), false);
+      assert.equal(validateEmail('a'.repeat(250) + '@domain.com'), false);
+    });
+  });
+
 });

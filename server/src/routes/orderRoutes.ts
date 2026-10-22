@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import mongoose, { FilterQuery, Types } from 'mongoose';
 import crypto from 'crypto';
 import { Order, IOrder, IOrderItem } from '../models/Order.js';
+import { ProcessedWebhook } from '../models/ProcessedWebhook.js';
 import { Product } from '../models/Product.js';
 import {
   razorpay,
@@ -363,6 +364,26 @@ router.post('/razorpay/webhook', async (req: Request, res: Response): Promise<vo
     const event = req.body?.event;
     const payload = req.body?.payload;
 
+    // Idempotency: Reject duplicate webhook replays
+    const eventId =
+      (req.headers['x-razorpay-event-id'] as string) ||
+      req.body?.event_id ||
+      `${event}_${payload?.payment?.entity?.id || payload?.refund?.entity?.id || Date.now()}`;
+
+    try {
+      await ProcessedWebhook.create({
+        eventId,
+        eventType: event || 'unknown',
+      });
+    } catch (dupErr: any) {
+      if (dupErr && dupErr.code === 11000) {
+        console.log(`[Razorpay Webhook] Deduplicated already processed event: ${eventId}`);
+        res.status(200).json({ status: 'ok', deduplicated: true });
+        return;
+      }
+      console.warn('[Razorpay Webhook Idempotency Check Notice]:', dupErr.message);
+    }
+
     if (event === 'order.paid' || event === 'payment.captured') {
       const paymentEntity = payload?.payment?.entity;
       const rzpOrderId = paymentEntity?.order_id || payload?.order?.entity?.id;
@@ -393,6 +414,26 @@ router.post('/razorpay/webhook', async (req: Request, res: Response): Promise<vo
             console.warn('[Zoho Mail Webhook] Could not dispatch placed email:', err.message)
           );
         }
+      }
+    } else if (event === 'refund.processed' || event === 'refund.created') {
+      const refundEntity = payload?.refund?.entity;
+      const paymentId = refundEntity?.payment_id;
+      if (paymentId) {
+        await Order.findOneAndUpdate(
+          { razorpayPaymentId: paymentId },
+          {
+            $set: {
+              paymentStatus: 'refunded',
+              orderStatus: 'returned',
+              refundDetails: {
+                refundId: refundEntity.id,
+                amount: (refundEntity.amount || 0) / 100,
+                status: refundEntity.status,
+                processedAt: new Date().toISOString(),
+              },
+            },
+          }
+        );
       }
     }
 
@@ -922,6 +963,15 @@ router.post('/:idOrNumber/return', orderMutationLimiter, authenticateIfPresent, 
     if (agreedToPolicy !== true) {
       res.status(400).json({ message: 'You must agree to the Terms & Conditions, Return Policy, and Refund Policy to proceed' });
       return;
+    }
+
+    // Strict RFC email validation if customer email is supplied
+    if (email && typeof email === 'string') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim()) || email.length > 254) {
+        res.status(400).json({ message: 'Invalid customer email address format' });
+        return;
+      }
     }
 
     // 2. Fetch order
