@@ -304,13 +304,16 @@ router.post('/forgot-password', authLimiter, async (req: Request, res: Response,
 
     const emailContent = compilePasswordResetEmailHtml(user.name, resetUrl);
 
-    // Asynchronously dispatch via Zoho Mail
-    sendEmail({
-      to: user.email,
-      subject: emailContent.subject,
-      html: emailContent.html,
-      text: emailContent.text,
-    }).catch((err) => console.warn('[Zoho Mail] Password reset email error:', err.message));
+    // Asynchronously dispatch via Zoho Mail (with automatic Vercel HTTPS relay)
+    sendEmail(
+      {
+        to: user.email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+      },
+      clientUrl
+    ).catch((err) => console.warn('[Zoho Mail] Password reset email error:', err.message));
 
     res.json({
       success: true,
