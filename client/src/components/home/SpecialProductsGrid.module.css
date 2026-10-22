@@ -10,16 +10,27 @@
 .features {
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 48px;
 }
 
 .feature {
   display: grid;
-  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
   gap: clamp(24px, 4vw, 64px);
   width: 100%;
+  padding-left: max(24px, calc((100vw - var(--container-max)) / 2 + var(--container-padding)));
   padding-right: max(24px, calc((100vw - var(--container-max)) / 2 + var(--container-padding)));
+}
+
+.reverse .imageLink {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.reverse .copy {
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .imageLink {
@@ -28,23 +39,26 @@
   overflow: hidden;
   border-radius: var(--radius-lg);
   background-color: var(--color-bg-neutral);
+  aspect-ratio: 4 / 3;
 }
 
 .image {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  height: 100%;
+  object-fit: contain;
 }
 
-.imageLink:hover .image {
-  transform: scale(1.03);
+.copy {
+  max-width: 520px;
 }
 
-.imageLink:focus-visible {
-  outline: 3px solid var(--color-primary);
-  outline-offset: 4px;
+.productName {
+  margin: 0 0 12px;
+  color: var(--color-forest-green);
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  line-height: 1.2;
 }
 
 .description {
@@ -58,11 +72,18 @@
   .feature {
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
+    padding-left: 24px;
     padding-right: 24px;
   }
 
+  .reverse .imageLink,
+  .reverse .copy {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
   .imageLink {
-    max-width: 420px;
+    max-width: 100%;
   }
 }
 
@@ -73,10 +94,6 @@
 
   .features {
     gap: 28px;
-  }
-
-  .feature {
-    gap: 14px;
   }
 
   .description {

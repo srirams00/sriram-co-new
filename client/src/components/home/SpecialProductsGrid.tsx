@@ -1,10 +1,22 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { PRODUCTS } from '@/data/products';
-import { getOptimizedImageUrl } from '@/lib/utils';
 import styles from './SpecialProductsGrid.module.css';
+
+const featuredProducts = [
+  {
+    name: 'AKARI 16-inch rechargeable fan',
+    image: '/fan-image.jpeg',
+    description:
+      'Stay comfortable through power cuts with a rechargeable 16-inch fan featuring a built-in LED light, three speed settings, and AC/DC and solar charging support.',
+  },
+  {
+    name: 'NEUTON solar-powered fan',
+    image: '/image2.png',
+    description:
+      'Enjoy a refreshing breeze with this table fan and its portable solar panel, a practical choice for everyday use at home.',
+  },
+];
 
 export default function SpecialProductsGrid() {
   return (
@@ -18,15 +30,14 @@ export default function SpecialProductsGrid() {
         </div>
       </div>
       <div className={styles.features}>
-        {PRODUCTS.slice(0, 4).map((product, index) => (
-          <article className={styles.feature} key={product.id}>
-            <Link
-              href={index === 0 ? '/product/akari-8516sf' : `/product/${encodeURIComponent(product.slug || product.id)}`}
-              className={styles.imageLink}
-              aria-label={`View ${index === 0 ? 'AKARI 8516SF' : product.name}`}
-            >
+        {featuredProducts.map((product, index) => (
+          <article
+            className={`${styles.feature} ${index % 2 === 1 ? styles.reverse : ''}`}
+            key={product.name}
+          >
+            <div className={styles.imageLink}>
               <img
-                src={index === 0 ? '/fan-image.jpeg' : getOptimizedImageUrl(product.image, 900)}
+                src={product.image}
                 alt={product.name}
                 className={styles.image}
                 loading="lazy"
@@ -34,8 +45,11 @@ export default function SpecialProductsGrid() {
                 width={800}
                 height={600}
               />
-            </Link>
-            <p className={styles.description}>{product.fullDescription || product.shortDescription}</p>
+            </div>
+            <div className={styles.copy}>
+              <h3 className={styles.productName}>{product.name}</h3>
+              <p className={styles.description}>{product.description}</p>
+            </div>
           </article>
         ))}
       </div>
