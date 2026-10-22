@@ -34,7 +34,7 @@ const SMTP_PORT = Number(process.env.SMTP_PORT) || 465;
 const SMTP_SECURE = process.env.SMTP_SECURE === 'true' || SMTP_PORT === 465;
 const SMTP_USER = process.env.SMTP_USER || 'ramkumar@sriramandco.in';
 const SMTP_PASS = process.env.SMTP_PASS || '';
-const EMAIL_FROM = process.env.EMAIL_FROM || '"Sri Ram & Co" <ramkumar@sriramandco.in>';
+const EMAIL_FROM = { name: 'Sri Ram & Co', address: process.env.SMTP_USER || 'ramkumar@sriramandco.in' };
 const EMAIL_RELAY_SECRET = process.env.EMAIL_RELAY_SECRET || 'src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2';
 
 let cachedTransporter: Transporter | null = null;
