@@ -13,7 +13,7 @@ import {
 } from '../config/razorpay.js';
 import { AuthRequest, authenticate, authenticateIfPresent, requireAdmin } from '../middleware/authMiddleware.js';
 import { sendOrderLifecycleEmail, sendEmail } from '../services/emailService.js';
-import { compileOrderEmailHtml, EmailTemplateType, OrderEmailData } from '../services/emailTemplates.js';
+import { compileOrderEmailHtml, compileMerchantReturnEmailHtml, compileCustomerReturnAckEmailHtml, EmailTemplateType, OrderEmailData } from '../services/emailTemplates.js';
 import { getErrorMessage, isNativeError, isRecord } from '../utils/typeGuards.js';
 import rateLimit from 'express-rate-limit';
 
@@ -889,6 +889,153 @@ router.post('/admin/preview-email', requireAdmin, async (req: Request, res: Resp
     });
   } catch (err: unknown) {
     res.status(500).json({ message: getErrorMessage(err) || 'Error generating email preview' });
+  }
+});
+
+
+// POST /api/orders/:idOrNumber/return - Customer Delivered Product Return Request
+router.post('/:idOrNumber/return', authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { idOrNumber } = req.params;
+    const { itemId, reason, faultDetails, agreedToPolicy, phone, email } = req.body;
+
+    // 1. Validation
+    if (!reason || typeof reason !== 'string') {
+      res.status(400).json({ message: 'Return reason is required' });
+      return;
+    }
+    if (!faultDetails || typeof faultDetails !== 'string' || faultDetails.trim().length < 5) {
+      res.status(400).json({ message: 'Please provide detailed feedback regarding the fault (minimum 5 characters)' });
+      return;
+    }
+    if (agreedToPolicy !== true) {
+      res.status(400).json({ message: 'You must agree to the Terms & Conditions, Return Policy, and Refund Policy to proceed' });
+      return;
+    }
+
+    // 2. Fetch order
+    let order = null;
+    if (mongoose.Types.ObjectId.isValid(idOrNumber)) {
+      order = await Order.findById(idOrNumber);
+    }
+    if (!order) {
+      order = await Order.findOne({ orderNumber: idOrNumber });
+    }
+    if (!order) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+
+    // 3. Authorization check
+    const isOwner = Boolean(req.user && order.user && req.user._id.toString() === order.user.toString());
+    const isAdmin = Boolean(req.user && req.user.role === 'admin');
+    if (!isOwner && !isAdmin) {
+      const orderPhoneDigits = (order.customerInfo?.phone || '').replace(/\D/g, '');
+      const inputPhoneDigits = typeof phone === 'string' ? phone.replace(/\D/g, '') : '';
+      const orderEmailLower = (order.customerInfo?.email || '').trim().toLowerCase();
+      const inputEmailLower = typeof email === 'string' ? email.trim().toLowerCase() : '';
+
+      const phoneMatches = Boolean(
+        inputPhoneDigits.length >= 4 &&
+        (orderPhoneDigits.endsWith(inputPhoneDigits) || inputPhoneDigits.endsWith(orderPhoneDigits))
+      );
+      const emailMatches = Boolean(inputEmailLower && orderEmailLower && inputEmailLower === orderEmailLower);
+
+      if (!phoneMatches && !emailMatches) {
+        res.status(403).json({
+          message: 'Verification failed. Please provide the customer phone number or email used during checkout.',
+        });
+        return;
+      }
+    }
+
+    // 4. Return eligibility checks
+    if (order.orderStatus !== 'delivered') {
+      res.status(400).json({
+        message: `Only delivered products can be returned. Current order status: ${order.orderStatus}`,
+      });
+      return;
+    }
+
+    // 7-day window check
+    const deliveredAt = order.updatedAt || order.createdAt;
+    const returnWindowMs = 7 * 24 * 60 * 60 * 1000;
+    if (Date.now() - new Date(deliveredAt).getTime() > returnWindowMs) {
+      res.status(400).json({
+        message: 'The 7-day return window for this order has expired. Please contact Sri Ram & Co support for warranty assistance.',
+      });
+      return;
+    }
+
+    if (order.returnRequest && order.returnRequest.status === 'requested') {
+      res.status(409).json({
+        message: 'A return request is already under review for this order.',
+      });
+      return;
+    }
+
+    // 5. Identify item to return
+    let returnItem: any = null;
+    if (itemId && Array.isArray(order.orderItems)) {
+      returnItem = order.orderItems.find((it: any) =>
+        (it._id && it._id.toString() === itemId) ||
+        (it.product && (it.product._id?.toString() === itemId || it.product.id?.toString() === itemId))
+      );
+    }
+    if (!returnItem && order.orderItems && order.orderItems.length > 0) {
+      returnItem = order.orderItems[0];
+    }
+
+    const itemDetails = {
+      productId: returnItem?.product?.id || returnItem?.product?._id?.toString() || itemId || 'item',
+      name: returnItem?.product?.name || returnItem?.name || 'Delivered Item',
+      quantity: returnItem?.quantity || 1,
+      price: returnItem?.product?.price || returnItem?.price || order.pricing.total,
+      image: returnItem?.product?.image || returnItem?.image || null,
+    };
+
+    // 6. Save return request
+    order.returnRequest = {
+      status: 'requested',
+      item: itemDetails,
+      reason,
+      faultDetails: faultDetails.trim(),
+      agreedToPolicy: true,
+      requestedAt: new Date(),
+    };
+    order.orderStatus = 'return_requested';
+    await order.save();
+
+    // 7. Dispatch merchant alert to ramkumar@sriramandco.in with customer email as replyTo
+    const merchantEmail = compileMerchantReturnEmailHtml(order, order.returnRequest);
+    sendEmail({
+      to: 'ramkumar@sriramandco.in',
+      replyTo: order.customerInfo?.email || 'support@sriramandco.com',
+      subject: merchantEmail.subject,
+      html: merchantEmail.html,
+      text: merchantEmail.text,
+    }).catch((err) => console.warn('[Zoho Mail] Merchant return alert notice:', getErrorMessage(err)));
+
+    // 8. If customer email exists, dispatch customer acknowledgment email
+    if (order.customerInfo?.email && order.customerInfo.email.includes('@')) {
+      const customerEmail = compileCustomerReturnAckEmailHtml(order, order.returnRequest);
+      sendEmail({
+        to: order.customerInfo.email,
+        subject: customerEmail.subject,
+        html: customerEmail.html,
+        text: customerEmail.text,
+      }).catch((err) => console.warn('[Zoho Mail] Customer return ack notice:', getErrorMessage(err)));
+    }
+
+    res.json({
+      success: true,
+      message: 'Return request submitted successfully. Our support team will review and schedule reverse pickup within 2 business days.',
+      returnRequest: order.returnRequest,
+      order,
+    });
+  } catch (error: unknown) {
+    console.error('Error submitting return request:', error);
+    res.status(500).json({ message: getErrorMessage(error) || 'Failed to submit return request' });
   }
 });
 

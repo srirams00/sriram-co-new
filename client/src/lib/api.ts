@@ -822,4 +822,26 @@ export const api = {
     }
     return res.json();
   },
+  async requestReturn(orderId: string, payload: {
+    itemId?: string;
+    reason: string;
+    faultDetails: string;
+    agreedToPolicy: boolean;
+    phone?: string;
+    email?: string;
+  }, token?: string): Promise<{ success: boolean; message: string; returnRequest: any }> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/orders/${orderId}/return`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errorMsg = await extractErrorMessage(res, 'Failed to submit return request');
+      throw new Error(errorMsg);
+    }
+    return res.json();
+  },
 };

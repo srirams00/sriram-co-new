@@ -8,6 +8,22 @@ export interface IOrderItem {
   image: string;
 }
 
+export interface IReturnRequest {
+  status: 'requested' | 'approved' | 'rejected' | 'picked_up' | 'refunded';
+  item: {
+    productId?: string;
+    name: string;
+    quantity: number;
+    price: number;
+    image?: string;
+  };
+  reason: string;
+  faultDetails: string;
+  agreedToPolicy: boolean;
+  requestedAt: Date;
+  resolvedAt?: Date;
+}
+
 export interface IOrder extends Document {
   id?: string;
   user?: Types.ObjectId;
@@ -24,7 +40,8 @@ export interface IOrder extends Document {
   orderItems: IOrderItem[];
   paymentMethod: 'razorpay' | 'upi' | 'card' | 'netbanking';
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'refund_initiated';
-  orderStatus: 'placed' | 'shipped' | 'confirmed' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
+  orderStatus: 'placed' | 'shipped' | 'confirmed' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled' | 'return_requested' | 'returned';
+  returnRequest?: IReturnRequest;
   cancellationReason?: string;
   cancelledBy?: 'customer' | 'admin' | 'store';
   refundDetails?: Record<string, unknown>;
@@ -125,8 +142,30 @@ const OrderSchema = new Schema<IOrder>(
     },
     orderStatus: {
       type: String,
-      enum: ['placed', 'shipped', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'],
+      enum: ['placed', 'shipped', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled', 'return_requested', 'returned'],
       default: 'placed',
+    },
+    returnRequest: {
+      type: {
+        status: {
+          type: String,
+          enum: ['requested', 'approved', 'rejected', 'picked_up', 'refunded'],
+          default: 'requested',
+        },
+        item: {
+          productId: { type: String, default: null },
+          name: { type: String, required: true },
+          quantity: { type: Number, required: true, default: 1 },
+          price: { type: Number, required: true },
+          image: { type: String, default: null },
+        },
+        reason: { type: String, required: true },
+        faultDetails: { type: String, required: true },
+        agreedToPolicy: { type: Boolean, required: true, default: false },
+        requestedAt: { type: Date, default: Date.now },
+        resolvedAt: { type: Date, default: null },
+      },
+      default: null,
     },
     pricing: {
       subtotal: { type: Number, required: true },
