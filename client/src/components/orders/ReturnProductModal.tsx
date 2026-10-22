@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Order, OrderItem } from '@/types/order';
 import { api } from '@/lib/api';
 import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
+import { RETURN_REASONS, validateReturnSubmission } from '@/lib/returnValidation';
 import { AlertCircle, CheckCircle, Loader2, RotateCcw, X } from 'lucide-react';
 import styles from './ReturnProductModal.module.css';
 
@@ -16,14 +17,7 @@ interface ReturnProductModalProps {
   onSuccess: (updatedOrder: Order) => void;
 }
 
-const RETURN_REASONS = [
-  'Damaged item received (Broken seal / transit damage)',
-  'Defective or malfunctioning (Not working as expected)',
-  'Item different from website description or photos',
-  'Missing accessories / parts / manual',
-  'Performance or quality not satisfactory',
-  'Ordered wrong item / size by mistake',
-];
+
 
 export default function ReturnProductModal({
   isOpen,
@@ -32,7 +26,7 @@ export default function ReturnProductModal({
   item,
   onSuccess,
 }: ReturnProductModalProps) {
-  const [reason, setReason] = useState(RETURN_REASONS[0]);
+  const [reason, setReason] = useState<string>(RETURN_REASONS[0]);
   const [faultDetails, setFaultDetails] = useState('');
   const [agreedToPolicy, setAgreedToPolicy] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,13 +38,10 @@ export default function ReturnProductModal({
     e.preventDefault();
     setError(null);
 
-    if (!faultDetails.trim() || faultDetails.trim().length < 5) {
-      setError('Please provide feedback describing what was wrong (minimum 5 characters).');
-      return;
-    }
-
-    if (!agreedToPolicy) {
-      setError('You must accept the Terms & Conditions, Return Policy, and Refund Policy to proceed.');
+    const validation = validateReturnSubmission({ reason, faultDetails, agreedToPolicy });
+    if (!validation.isValid) {
+      const firstError = Object.values(validation.errors)[0] || 'Please check your inputs.';
+      setError(firstError);
       return;
     }
 

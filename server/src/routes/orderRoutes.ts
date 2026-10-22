@@ -13,7 +13,7 @@ import {
 } from '../config/razorpay.js';
 import { AuthRequest, authenticate, authenticateIfPresent, requireAdmin } from '../middleware/authMiddleware.js';
 import { sendOrderLifecycleEmail, sendEmail } from '../services/emailService.js';
-import { compileOrderEmailHtml, compileMerchantReturnEmailHtml, compileCustomerReturnAckEmailHtml, EmailTemplateType, OrderEmailData } from '../services/emailTemplates.js';
+import { compileOrderEmailHtml, compileMerchantReturnEmailHtml, compileCustomerReturnAckEmailHtml, compileCustomerReturnResolutionEmailHtml, EmailTemplateType, OrderEmailData } from '../services/emailTemplates.js';
 import { getErrorMessage, isNativeError, isRecord } from '../utils/typeGuards.js';
 import rateLimit from 'express-rate-limit';
 
@@ -538,7 +538,7 @@ router.patch('/:id/status', requireAdmin, async (req: Request, res: Response): P
     const { id } = req.params;
     const { orderStatus, paymentStatus } = req.body;
 
-    const validStatuses = ['placed', 'shipped', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'];
+    const validStatuses = ['placed', 'shipped', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled', 'return_requested', 'returned'];
     if (orderStatus && !validStatuses.includes(orderStatus)) {
       res.status(400).json({ message: 'Invalid order status value' });
       return;
@@ -1036,6 +1036,77 @@ router.post('/:idOrNumber/return', authenticateIfPresent, async (req: AuthReques
   } catch (error: unknown) {
     console.error('Error submitting return request:', error);
     res.status(500).json({ message: getErrorMessage(error) || 'Failed to submit return request' });
+  }
+});
+
+
+export interface AdminReturnStatusInput {
+  status: 'approved' | 'rejected' | 'picked_up' | 'refunded';
+  adminNotes?: string;
+}
+
+export function handleAdminReturnStatusUpdate(order: any, input: AdminReturnStatusInput) {
+  if (!order.returnRequest) {
+    throw new Error('No return request exists for this order.');
+  }
+
+  const validStatuses = ['approved', 'rejected', 'picked_up', 'refunded'];
+  if (!validStatuses.includes(input.status)) {
+    throw new Error('Invalid return status transition.');
+  }
+
+  order.returnRequest.status = input.status;
+  if (input.adminNotes !== undefined) {
+    order.returnRequest.adminNotes = input.adminNotes;
+  }
+  order.returnRequest.resolvedAt = new Date();
+
+  if (input.status === 'refunded') {
+    order.orderStatus = 'returned';
+    order.paymentStatus = 'refunded';
+  } else if (input.status === 'rejected') {
+    order.orderStatus = 'delivered';
+  }
+
+  return {
+    success: true,
+    order,
+  };
+}
+
+// PATCH /api/orders/:id/return-status - Admin resolve or update return request status
+router.patch('/:id/return-status', requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { status, adminNotes } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+
+    handleAdminReturnStatusUpdate(order, { status, adminNotes });
+    await order.save();
+
+    // Dispatch return resolution email to customer
+    if (order.customerInfo?.email && order.customerInfo.email.includes('@')) {
+      const resolutionEmail = compileCustomerReturnResolutionEmailHtml(order, order.returnRequest);
+      sendEmail({
+        to: order.customerInfo.email,
+        subject: resolutionEmail.subject,
+        html: resolutionEmail.html,
+        text: resolutionEmail.text,
+      }).catch((err) => console.warn('[Zoho Mail] Customer return resolution notice:', getErrorMessage(err)));
+    }
+
+    res.json({
+      success: true,
+      message: `Return request status updated to "${status}".`,
+      order,
+    });
+  } catch (error: unknown) {
+    res.status(400).json({ message: getErrorMessage(error) || 'Failed to update return status' });
   }
 });
 

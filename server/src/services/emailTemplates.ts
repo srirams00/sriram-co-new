@@ -788,3 +788,132 @@ export function compileCustomerReturnAckEmailHtml(order: any, returnRequest: any
 
   return { subject, html, text };
 }
+
+/**
+ * Compiles customer notification email when admin updates return request status
+ * (e.g. approved, rejected, refunded).
+ */
+export function compileCustomerReturnResolutionEmailHtml(order: any, returnRequest: any): CompiledEmail {
+  const customer = order.customerInfo || {};
+  const item = returnRequest.item || {};
+  const orderNumber = order.orderNumber || order.id || 'N/A';
+  const firstName = (customer.name || 'Customer').trim().split(' ')[0];
+  const status = returnRequest.status;
+  const adminNotes = returnRequest.adminNotes || '';
+  const itemPriceFormatted = Number(item.price || order.pricing?.total || 0).toLocaleString('en-IN');
+
+  let subject = `Return Request Update: Order #${orderNumber}`;
+  let bannerColor = THEME.green;
+  let statusBadge = 'Return Update';
+  let heading = 'Return Status Update';
+  let bodyHtml = '';
+  let text = '';
+
+  if (status === 'approved') {
+    subject = `Return Request Approved: Order #${orderNumber}`;
+    bannerColor = THEME.green;
+    statusBadge = 'Return Approved';
+    heading = 'Your Return Request is Approved';
+    bodyHtml = `
+      <p style="font-size:14px;line-height:1.6;color:${THEME.muted};margin:0 0 16px;">
+        Hello ${escapeHtml(firstName)}, good news! Your return request for <strong>${escapeHtml(item.name || 'Product')}</strong> (Order #${escapeHtml(orderNumber)}) has been approved.
+      </p>
+      <div style="background-color:${THEME.surfaceBg};border:1px solid ${THEME.border};border-radius:12px;padding:16px;margin-bottom:20px;">
+        <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:${THEME.text};">Reverse Pickup Instructions:</p>
+        <p style="margin:0 0 8px;font-size:13px;color:${THEME.muted};line-height:1.5;">
+          Our logistics team has scheduled reverse pickup at your registered address. Please ensure the item is packed securely with all original accessories and box.
+        </p>
+        ${adminNotes ? `<p style="margin:8px 0 0;font-size:13px;color:${THEME.green};font-weight:600;">Store Note: ${escapeHtml(adminNotes)}</p>` : ''}
+      </div>
+    `;
+    text = `Hello ${firstName},\n\nYour return request for "${item.name}" (Order #${orderNumber}) has been Approved.\n\n` +
+      `Our logistics team has scheduled reverse pickup at your address. Please pack all accessories securely.\n` +
+      (adminNotes ? `Note: ${adminNotes}\n\n` : '\n') +
+      `Sri Ram & Co Customer Support: ${STORE_CONFIG.phoneDisplay}`;
+  } else if (status === 'rejected') {
+    subject = `Return Request Update: Order #${orderNumber}`;
+    bannerColor = '#b91c1c';
+    statusBadge = 'Return Rejected';
+    heading = 'Return Request Update';
+    bodyHtml = `
+      <p style="font-size:14px;line-height:1.6;color:${THEME.muted};margin:0 0 16px;">
+        Hello ${escapeHtml(firstName)}, we have completed reviewing your return request for <strong>${escapeHtml(item.name || 'Product')}</strong> (Order #${escapeHtml(orderNumber)}).
+      </p>
+      <div style="background-color:#fef2f2;border:1px solid #fee2e2;border-radius:12px;padding:16px;margin-bottom:20px;">
+        <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#991b1b;">Review Findings:</p>
+        <p style="margin:0;font-size:13px;color:#7f1d1d;line-height:1.5;">
+          ${escapeHtml(adminNotes || 'After inspection against our 7-Day Replacement Policy, this return request could not be accepted.')}
+        </p>
+      </div>
+      <p style="font-size:13px;color:${THEME.muted};line-height:1.5;margin:0 0 16px;">
+        If you have questions or require further assistance, our customer care desk is happy to help at <a href="${STORE_CONFIG.telUrl}" style="color:${THEME.green};font-weight:600;text-decoration:none;">${STORE_CONFIG.phoneDisplay}</a>.
+      </p>
+    `;
+    text = `Hello ${firstName},\n\nRegarding your return request for "${item.name}" (Order #${orderNumber}):\n\n` +
+      `Update: ${adminNotes || 'This return request could not be accepted under our 7-day policy.'}\n\n` +
+      `Customer Support: ${STORE_CONFIG.phoneDisplay}\nSri Ram & Co`;
+  } else if (status === 'refunded') {
+    subject = `Refund Credited: Order #${orderNumber}`;
+    bannerColor = THEME.green;
+    statusBadge = 'Refund Processed';
+    heading = 'Your Refund Has Been Processed';
+    bodyHtml = `
+      <p style="font-size:14px;line-height:1.6;color:${THEME.muted};margin:0 0 16px;">
+        Hello ${escapeHtml(firstName)}, your return has been received and verified. A refund of <strong>₹${itemPriceFormatted}</strong> has been credited to your original payment method.
+      </p>
+      <div style="background-color:${THEME.surfaceBg};border:1px solid ${THEME.border};border-radius:12px;padding:16px;margin-bottom:20px;">
+        <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:${THEME.text};">Refund Settlement Details:</p>
+        <p style="margin:0;font-size:13px;color:${THEME.muted};line-height:1.5;">
+          Depending on your card issuer or UPI provider, the amount typically reflects in your statement within 5-7 business days.
+        </p>
+        ${adminNotes ? `<p style="margin:8px 0 0;font-size:13px;color:${THEME.green};font-weight:600;">Reference: ${escapeHtml(adminNotes)}</p>` : ''}
+      </div>
+    `;
+    text = `Hello ${firstName},\n\nYour return for "${item.name}" (Order #${orderNumber}) has been approved and processed.\n\n` +
+      `Amount ₹${itemPriceFormatted} has been credited to your original payment method. Please allow 5-7 business days for bank settlement.\n` +
+      (adminNotes ? `Note: ${adminNotes}\n\n` : '\n') +
+      `Sri Ram & Co Customer Support: ${STORE_CONFIG.phoneDisplay}`;
+  } else {
+    subject = `Return Update: Order #${orderNumber}`;
+    heading = 'Return Item Picked Up';
+    bodyHtml = `
+      <p style="font-size:14px;line-height:1.6;color:${THEME.muted};margin:0 0 16px;">
+        Hello ${escapeHtml(firstName)}, your returned item <strong>${escapeHtml(item.name || 'Product')}</strong> has been picked up and is in transit to our Trichy quality hub.
+      </p>
+    `;
+    text = `Hello ${firstName},\n\nYour returned item has been picked up.\n\nSri Ram & Co`;
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:${THEME.pageBg};font-family:${THEME.font};color:${THEME.text};">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${THEME.pageBg};padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:600px;background-color:${THEME.cardBg};border:1px solid ${THEME.border};border-radius:16px;overflow:hidden;">
+          <tr>
+            <td style="background-color:${bannerColor};padding:24px;text-align:center;">
+              <span style="background-color:rgba(255,255,255,0.2);color:#ffffff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;text-transform:uppercase;">${statusBadge}</span>
+              <h1 style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:700;">${heading}</h1>
+              <p style="margin:4px 0 0;color:#f0fdf4;font-size:13px;">Order #${escapeHtml(orderNumber)}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px;">
+              ${bodyHtml}
+              <p style="font-size:12px;color:${THEME.muted};margin:20px 0 0;">Need support? Contact Sri Ram &amp; Co at <a href="${STORE_CONFIG.telUrl}" style="color:${THEME.green};font-weight:600;text-decoration:none;">${STORE_CONFIG.phoneDisplay}</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject, html, text };
+}
