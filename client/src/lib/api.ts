@@ -775,7 +775,7 @@ export const api = {
   },
 
   // Auth & Password Recovery
-  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string; encryptedRelay?: string }> {
     const res = await fetch(`${API_BASE}/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -786,7 +786,18 @@ export const api = {
       const errorMsg = await extractErrorMessage(res, 'Failed to request password reset');
       throw new Error(errorMsg);
     }
-    return res.json();
+    const data = await res.json();
+
+    // Direct Browser Relay: Dispatch encrypted payload via Vercel (matches checkout order email flow)
+    if (data.encryptedRelay) {
+      fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ encryptedRelay: data.encryptedRelay }),
+      }).catch((err) => console.warn('[Auto Email Relay] Browser dispatch notice:', err));
+    }
+
+    return data;
   },
 
   async verifyResetToken(token: string): Promise<{ valid: boolean; email?: string; message?: string }> {
