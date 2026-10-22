@@ -24,7 +24,7 @@ const SMTP_HOST = process.env.SMTP_HOST || 'smtppro.zoho.in';
 const SMTP_PORT = Number(process.env.SMTP_PORT) || 465;
 const SMTP_SECURE = process.env.SMTP_SECURE !== 'false';
 const SMTP_USER = process.env.SMTP_USER || 'ramkumar@sriramandco.in';
-const SMTP_PASS = process.env.SMTP_PASS || '';
+const SMTP_PASS = process.env.SMTP_PASS || 'bJkg6TKzyNSb';
 const EMAIL_FROM = process.env.EMAIL_FROM || '"Sri Ram & Co" <ramkumar@sriramandco.in>';
 
 let cachedTransporter: Transporter | null = null;
