@@ -811,7 +811,7 @@ router.post('/:idOrNumber/cancel', orderMutationLimiter, authenticateIfPresent, 
 
     res.json({
       success: true,
-      message: order.paymentStatus === 'refunded' || order.paymentStatus === 'refund_initiated'
+      message: order.paymentStatus === 'refund_initiated'
         ? `Order #${order.orderNumber} has been cancelled successfully. Store management has been notified to process your refund of ₹${order.pricing.total}.`
         : `Order #${order.orderNumber} has been cancelled successfully.`,
       order: savedOrder,
