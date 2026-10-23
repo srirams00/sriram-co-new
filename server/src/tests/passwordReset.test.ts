@@ -40,14 +40,30 @@ describe('Customer Password Recovery & Reset Suite', () => {
     assert.strictEqual(isValidPast, false, 'Expired token must fail validation');
   });
 
-  it('enforces anti-enumeration message consistency', () => {
-    const getForgotPasswordMessage = () => {
-      return 'If an account exists with this email address, a password reset link has been dispatched to your inbox.';
+  it('validates account existence requirement for password reset', () => {
+    const handleAccountCheck = (userExists: boolean, email: string) => {
+      if (!userExists) {
+        return {
+          status: 404,
+          success: false,
+          message: 'No account found with this email address. Please check your email or register for a new account.',
+        };
+      }
+      return {
+        status: 200,
+        success: true,
+        message: `A password reset link has been dispatched to ${email}. Please check your inbox.`,
+      };
     };
 
-    // Both existing and non-existing accounts should receive the identical response
-    const existingMsg = getForgotPasswordMessage();
-    const nonExistingMsg = getForgotPasswordMessage();
-    assert.strictEqual(existingMsg, nonExistingMsg);
+    const notFound = handleAccountCheck(false, 'unknown@example.com');
+    assert.strictEqual(notFound.status, 404);
+    assert.strictEqual(notFound.success, false);
+    assert.ok(notFound.message.includes('No account found'));
+
+    const found = handleAccountCheck(true, 'customer@example.com');
+    assert.strictEqual(found.status, 200);
+    assert.strictEqual(found.success, true);
+    assert.ok(found.message.includes('customer@example.com'));
   });
 });

@@ -654,67 +654,213 @@ export function compileMerchantReturnEmailHtml(order: any, returnRequest: any): 
   const customer = order.customerInfo || {};
   const item = returnRequest.item || {};
   const orderNumber = order.orderNumber || order.id || 'N/A';
-  const subject = `[Return Request] Order #${orderNumber} - ${item.name || 'Product'}`;
-  
+  const itemName = item.name || 'Delivered Product';
+  const itemQty = Number(item.quantity || 1);
+  const itemPrice = Number(item.price || order.pricing?.total || 0);
+  const itemTotal = itemPrice * itemQty;
+  const orderTotal = Number(order.pricing?.total || itemTotal);
+  const reason = returnRequest.reason || 'Customer Return Request';
+  const faultDetails = (returnRequest.faultDetails || '').trim();
+  const paymentId = order.razorpayPaymentId || 'N/A';
+  const requestedDate = new Date(returnRequest.requestedAt || Date.now()).toLocaleString('en-IN');
+  const adminUrl = 'https://www.sriramandco.in/admin/orders?status=return_requested';
+
+  const subject = `[Return Request] Order #${orderNumber} - ₹${itemTotal.toLocaleString('en-IN')} - ${itemName}`;
+
   const text = `URGENT: Product Return Request Received\n\n` +
     `Order Number: #${orderNumber}\n` +
+    `Product: ${itemName} (Qty: ${itemQty})\n` +
+    `Price: ₹${itemPrice}\n` +
+    `Total Return Value: ₹${itemTotal.toLocaleString('en-IN')}\n` +
+    `Order Total: ₹${orderTotal.toLocaleString('en-IN')}\n\n` +
+    `RETURN REASON:\n` +
+    `Reason: ${reason}\n` +
+    `Customer Fault Review: ${faultDetails}\n` +
+    `Policy Acknowledged: ${returnRequest.agreedToPolicy ? 'YES' : 'NO'}\n` +
+    `Requested At: ${requestedDate}\n\n` +
+    `CUSTOMER DETAILS:\n` +
     `Customer Name: ${customer.name || 'N/A'}\n` +
     `Customer Phone: ${customer.phone || 'N/A'}\n` +
     `Customer Email: ${customer.email || 'N/A'}\n` +
-    `Delivery Address: ${customer.address || ''}, ${customer.city || ''} ${customer.postalCode || ''}\n\n` +
-    `RETURN ITEM DETAILS:\n` +
-    `Product: ${item.name || 'N/A'}\n` +
-    `Quantity: ${item.quantity || 1}\n` +
-    `Price: ₹${item.price || 0}\n\n` +
-    `RETURN REASON:\n` +
-    `Reason: ${returnRequest.reason}\n` +
-    `Customer Fault Review: ${returnRequest.faultDetails}\n` +
-    `Policy Acknowledged: ${returnRequest.agreedToPolicy ? 'YES' : 'NO'}\n` +
-    `Requested At: ${new Date(returnRequest.requestedAt || Date.now()).toLocaleString('en-IN')}\n\n` +
-    `Please review in Admin Dashboard and arrange reverse logistics.`;
+    `Delivery Address: ${customer.address || ''}, ${customer.city || ''} ${customer.postalCode || ''}\n` +
+    `Razorpay Payment ID: ${paymentId}\n\n` +
+    `Please review in Admin Dashboard and arrange reverse logistics: ${adminUrl}`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(subject)}</title>
 </head>
-<body style="margin:0;padding:0;background-color:${THEME.pageBg};font-family:${THEME.font};color:${THEME.text};">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${THEME.pageBg};padding:32px 16px;">
+<body style="margin:0; padding:0; background-color:#f1f5f9; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#0f172a; line-height:1.5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9; padding:32px 16px;">
     <tr>
       <td align="center">
-        <table width="100%" style="max-width:600px;background-color:${THEME.cardBg};border:1px solid ${THEME.border};border-radius:16px;overflow:hidden;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; background-color:#ffffff; border:1px solid #e2e8f0; border-radius:16px; overflow:hidden; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+          <!-- Top Brand Header -->
           <tr>
-            <td style="background-color:#b91c1c;padding:24px;text-align:center;">
-              <span style="background-color:rgba(255,255,255,0.2);color:#ffffff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;text-transform:uppercase;">Action Required</span>
-              <h1 style="margin:8px 0 0;color:#ffffff;font-size:20px;font-weight:700;">Customer Return Request</h1>
-              <p style="margin:4px 0 0;color:#fee2e2;font-size:13px;">Order #${escapeHtml(orderNumber)}</p>
+            <td style="background-color:#174A2B; padding:18px 24px; border-bottom:3px solid #14532d;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="color:#ffffff; font-size:18px; font-weight:800; letter-spacing:-0.3px; text-transform:uppercase;">Sri Ram &amp; Co</span>
+                    <span style="display:block; color:#bbf7d0; font-size:11px; font-weight:500; margin-top:2px;">Home Appliances &amp; Kitchenware · Store Admin Notification</span>
+                  </td>
+                  <td align="right">
+                    <span style="background-color:rgba(255,255,255,0.15); color:#ffffff; font-size:11px; font-weight:600; padding:4px 10px; border-radius:999px; text-transform:uppercase;">
+                      Store Portal
+                    </span>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
+
+          <!-- Alert Banner -->
           <tr>
-            <td style="padding:28px;">
-              <h2 style="font-size:16px;font-weight:700;margin:0 0 12px;color:${THEME.text};">Return Item Details</h2>
-              <table width="100%" style="border-collapse:collapse;margin-bottom:20px;background-color:${THEME.surfaceBg};border-radius:12px;padding:12px;">
+            <td style="background:linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%); padding:20px 24px; border-bottom:1px solid #fecaca;">
+              <span style="display:inline-block; background-color:#dc2626; color:#ffffff; font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
+                Action Required · Reverse Pickup Review
+              </span>
+              <h1 style="margin:0 0 4px 0; color:#991b1b; font-size:20px; font-weight:800; letter-spacing:-0.3px;">
+                Customer Return Request Submitted
+              </h1>
+              <p style="margin:0; color:#7f1d1d; font-size:13px;">
+                Order <strong style="color:#991b1b;">#${escapeHtml(orderNumber)}</strong> &bull; Requested on ${escapeHtml(requestedDate)}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Main Body -->
+          <tr>
+            <td style="padding:28px 24px;">
+
+              <!-- Product & Return Financial Value Card -->
+              <div style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px 20px; margin-bottom:22px;">
+                <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.5px; margin-bottom:8px;">
+                  Item Requested For Return
+                </div>
+                
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="vertical-align:middle;">
+                      <div style="font-size:16px; font-weight:700; color:#0f172a; margin-bottom:4px;">
+                        ${escapeHtml(itemName)}
+                      </div>
+                      <div style="font-size:13px; color:#64748b;">
+                        Quantity: <strong style="color:#0f172a;">${itemQty}</strong> &bull; Unit Price: <strong style="color:#0f172a;">₹${itemPrice.toLocaleString('en-IN')}</strong>
+                      </div>
+                    </td>
+                    <td align="right" style="vertical-align:middle;">
+                      <div style="font-size:11px; font-weight:600; text-transform:uppercase; color:#dc2626; margin-bottom:2px;">
+                        Return Value
+                      </div>
+                      <div style="font-size:22px; font-weight:800; color:#174A2B;">
+                        ₹${itemTotal.toLocaleString('en-IN')}
+                      </div>
+                      <div style="font-size:11px; color:#16a34a; font-weight:600; margin-top:2px;">
+                        Order Total: ₹${orderTotal.toLocaleString('en-IN')}
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Return Reason & Customer Fault Description -->
+              <div style="background-color:#fffbeb; border:1px solid #fde68a; border-left:4px solid #f59e0b; border-radius:10px; padding:16px 18px; margin-bottom:22px;">
+                <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#b45309; letter-spacing:0.5px; margin-bottom:4px;">
+                  Primary Return Reason
+                </div>
+                <div style="font-size:15px; font-weight:700; color:#92400e; margin-bottom:12px;">
+                  ⚠️ ${escapeHtml(reason)}
+                </div>
+
+                <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#78350f; letter-spacing:0.5px; margin-bottom:4px;">
+                  Customer Fault Description &amp; Feedback:
+                </div>
+                <div style="background-color:#ffffff; border:1px solid #fef3c7; border-radius:8px; padding:12px 14px; font-size:13.5px; color:#451a03; line-height:1.5; font-style:italic;">
+                  &ldquo;${escapeHtml(faultDetails || 'No additional fault details provided by customer.')}&rdquo;
+                </div>
+              </div>
+
+              <!-- Customer Contact & Reverse Pickup Details -->
+              <div style="border:1px solid #e2e8f0; border-radius:12px; padding:18px 20px; margin-bottom:24px;">
+                <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.5px; margin-bottom:12px;">
+                  Customer &amp; Reverse Pickup Address
+                </div>
+
+                <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13.5px;">
+                  <tr>
+                    <td style="padding:6px 0; color:#64748b; width:34%;"><strong>Customer Name:</strong></td>
+                    <td style="padding:6px 0; color:#0f172a; font-weight:600;">${escapeHtml(customer.name || 'Customer')}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#64748b;"><strong>Mobile Number:</strong></td>
+                    <td style="padding:6px 0;">
+                      <a href="tel:${escapeHtml(customer.phone || '')}" style="color:#15803d; font-weight:700; text-decoration:none;">
+                        📞 ${escapeHtml(customer.phone || 'N/A')}
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#64748b;"><strong>Customer Email:</strong></td>
+                    <td style="padding:6px 0;">
+                      <a href="mailto:${escapeHtml(customer.email || '')}" style="color:#2563eb; text-decoration:none;">
+                        ✉️ ${escapeHtml(customer.email || 'N/A')}
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#64748b; vertical-align:top;"><strong>Pickup Address:</strong></td>
+                    <td style="padding:6px 0; color:#0f172a; line-height:1.4;">
+                      ${escapeHtml(customer.address || '')}${customer.city ? ', ' + escapeHtml(customer.city) : ''}${customer.postalCode ? ' - ' + escapeHtml(customer.postalCode) : ''}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#64748b;"><strong>Razorpay Payment ID:</strong></td>
+                    <td style="padding:6px 0; color:#0f172a; font-family:monospace; font-size:12px;">
+                      ${escapeHtml(paymentId)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#64748b;"><strong>Policy Agreement:</strong></td>
+                    <td style="padding:6px 0; color:#15803d; font-weight:600;">
+                      ✓ Customer agreed to 3-Day Return / 5-Day Replacement terms
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Action Button to Admin Panel -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                 <tr>
-                  <td style="padding:12px;font-size:14px;font-weight:600;color:${THEME.text};">${escapeHtml(item.name || 'Product')}</td>
-                  <td style="padding:12px;font-size:14px;text-align:right;color:${THEME.text};">Qty: ${escapeHtml(String(item.quantity || 1))} &bull; <strong>₹${Number(item.price || 0).toLocaleString('en-IN')}</strong></td>
+                  <td align="center">
+                    <a href="${adminUrl}" style="display:inline-block; background-color:#174A2B; color:#ffffff; font-size:14px; font-weight:700; text-decoration:none; padding:14px 28px; border-radius:10px; box-shadow:0 2px 4px rgba(23,74,43,0.2);">
+                      Review &amp; Schedule Reverse Pickup &rarr;
+                    </a>
+                    <span style="display:block; font-size:11px; color:#64748b; margin-top:8px;">
+                      Or log in to Store Admin Panel &rarr; Orders &rarr; Return Requests tab
+                    </span>
+                  </td>
                 </tr>
               </table>
 
-              <h2 style="font-size:16px;font-weight:700;margin:0 0 12px;color:${THEME.text};">Customer Fault Reason &amp; Feedback</h2>
-              <div style="background-color:#fff7ed;border:1px solid #ffedd5;border-radius:12px;padding:16px;margin-bottom:20px;">
-                <p style="margin:0 0 6px;font-size:13px;color:#9a3412;"><strong>Fault Category:</strong> ${escapeHtml(returnRequest.reason)}</p>
-                <p style="margin:0;font-size:13px;color:#431407;line-height:1.5;"><strong>Customer Detailed Review:</strong><br/>"${escapeHtml(returnRequest.faultDetails)}"</p>
+              <!-- Store Policy SLA Note -->
+              <div style="background-color:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px 14px; font-size:12px; color:#166534; line-height:1.4;">
+                <strong>Sri Ram &amp; Co SLA:</strong> Customers are informed that reverse pickup inspection occurs within 24–48 business hours. Please contact customer or assign reverse pickup courier promptly.
               </div>
 
-              <h2 style="font-size:16px;font-weight:700;margin:0 0 12px;color:${THEME.text};">Customer &amp; Pickup Address</h2>
-              <table width="100%" style="font-size:13px;color:${THEME.muted};line-height:1.6;margin-bottom:20px;">
-                <tr><td width="30%"><strong>Customer Name:</strong></td><td>${escapeHtml(customer.name || '')}</td></tr>
-                <tr><td><strong>Phone:</strong></td><td><a href="tel:${escapeHtml(customer.phone || '')}" style="color:${THEME.green};text-decoration:none;">${escapeHtml(customer.phone || '')}</a></td></tr>
-                <tr><td><strong>Email:</strong></td><td><a href="mailto:${escapeHtml(customer.email || '')}" style="color:${THEME.green};text-decoration:none;">${escapeHtml(customer.email || '')}</a></td></tr>
-                <tr><td><strong>Address:</strong></td><td>${escapeHtml(customer.address || '')}, ${escapeHtml(customer.city || '')} ${escapeHtml(customer.postalCode || '')}</td></tr>
-                <tr><td><strong>Policy Acknowledged:</strong></td><td>Yes (5-day store replacement agreement ticked)</td></tr>
-              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f8fafc; border-top:1px solid #e2e8f0; padding:20px 24px; text-align:center;">
+              <p style="margin:0 0 6px 0; font-size:12px; font-weight:600; color:#0f172a;">Sri Ram &amp; Co</p>
+              <p style="margin:0; font-size:11px; color:#64748b;">
+                No. 11, Vinola Complex, Thanjai Main Road, Trichy &bull; +91 93454 03136 &bull; GSTIN: 33ARHPR6139B1ZX
+              </p>
             </td>
           </tr>
         </table>
@@ -727,9 +873,6 @@ export function compileMerchantReturnEmailHtml(order: any, returnRequest: any): 
   return { subject, html, text };
 }
 
-/**
- * Compiles customer acknowledgment email confirming return request submission.
- */
 export function compileCustomerReturnAckEmailHtml(order: any, returnRequest: any): CompiledEmail {
   const customer = order.customerInfo || {};
   const item = returnRequest.item || {};

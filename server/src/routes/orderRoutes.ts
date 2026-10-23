@@ -706,6 +706,23 @@ router.patch('/:id/status', requireAdmin, async (req: Request, res: Response): P
         }).catch((err) =>
           console.warn(`[Zoho Mail] Could not dispatch ${emailType} email:`, getErrorMessage(err))
         );
+
+        if (orderStatus === 'cancelled') {
+          const merchantEmail = compileMerchantCancellationEmailHtml(updatedOrder, {
+            reason: req.body.cancellationReason || 'Cancelled by store admin',
+            cancelledBy: req.body.cancelledBy || 'store',
+            refundInfo: updatedOrder.refundDetails,
+          });
+          sendEmail({
+            to: 'ramkumar@sriramandco.in',
+            replyTo: updatedOrder.customerInfo?.email || 'support@sriramandco.com',
+            subject: merchantEmail.subject,
+            html: merchantEmail.html,
+            text: merchantEmail.text,
+          }).catch((err) =>
+            console.warn('[Zoho Mail] Could not dispatch merchant cancellation alert from admin patch:', getErrorMessage(err))
+          );
+        }
       }
     }
 

@@ -23,6 +23,7 @@ import testimonialRoutes from './routes/testimonialRoutes';
 import orderRoutes from './routes/orderRoutes';
 import authRoutes from './routes/authRoutes';
 import reviewRoutes from './routes/reviewRoutes';
+import contactRoutes from './routes/contactRoutes';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -145,6 +146,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Root fallback
 app.get('/', (_req: Request, res: Response) => {
@@ -172,7 +174,6 @@ const handleGracefulShutdown = (signal: string) => {
     try {
       if (mongoose.connection.readyState !== 0) {
         await mongoose.connection.close(false);
-        console.log('💾 MongoDB connection cleanly closed.');
       }
       process.exit(0);
     } catch (err) {

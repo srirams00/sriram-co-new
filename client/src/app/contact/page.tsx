@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Phone, Mail, MapPin, Clock, MessageCircle, Send, CheckCircle2 } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, MessageCircle, Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { STORES } from '@/data/stores';
 import { getWhatsAppUrl } from '@/lib/utils';
+import { api } from '@/lib/api';
 import styles from './contact.module.css';
 
 export default function ContactPage() {
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -17,9 +20,37 @@ export default function ContactPage() {
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormSubmitted(true);
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      await api.sendContactInquiry({
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim() || undefined,
+        storeBranch: formData.storeBranch,
+        inquiryType: formData.inquiryType,
+        message: formData.message.trim(),
+      });
+      setFormSubmitted(true);
+    } catch (err: any) {
+      setSubmitError(
+        err.message || 'Unable to deliver your message right now. Please call us directly or chat on WhatsApp.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetForm = () => {
+    setFormSubmitted(false);
+    setSubmitError(null);
+    setFormData((prev) => ({
+      ...prev,
+      message: '',
+    }));
   };
 
   const whatsappUrl = getWhatsAppUrl('9345403136', 'Hello Sriram & Co, I am visiting your contact page and would like direct assistance.');
@@ -127,6 +158,30 @@ export default function ContactPage() {
                 Fill out the details below and our store manager will get back to you within 2 business hours.
               </p>
 
+              {submitError && (
+                <div
+                  role="alert"
+                  aria-live="assertive"
+                  style={{
+                    backgroundColor: '#FEF2F2',
+                    border: '1px solid #FCA5A5',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    color: '#991B1B',
+                    fontSize: '0.875rem',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                  }}
+                >
+                  <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <strong>Delivery issue:</strong> {submitError}
+                  </div>
+                </div>
+              )}
+
               {formSubmitted ? (
                 <div className={styles.formSuccess}>
                   <CheckCircle2 size={48} color="#16a34a" />
@@ -137,7 +192,7 @@ export default function ContactPage() {
                   <button
                     type="button"
                     className="btn btn-primary"
-                    onClick={() => setFormSubmitted(false)}
+                    onClick={handleResetForm}
                   >
                     Send Another Inquiry
                   </button>
@@ -152,7 +207,11 @@ export default function ContactPage() {
                       required
                       placeholder="e.g. Anandha Krishnan"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, name: e.target.value });
+                        if (submitError) setSubmitError(null);
+                      }}
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -165,7 +224,11 @@ export default function ContactPage() {
                         required
                         placeholder="+91 94432 00000"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, phone: e.target.value });
+                          if (submitError) setSubmitError(null);
+                        }}
+                        disabled={isSubmitting}
                       />
                     </div>
                     <div className={styles.formGroup}>
@@ -175,7 +238,11 @@ export default function ContactPage() {
                         type="email"
                         placeholder="name@example.com"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value });
+                          if (submitError) setSubmitError(null);
+                        }}
+                        disabled={isSubmitting}
                       />
                     </div>
                   </div>
@@ -187,6 +254,7 @@ export default function ContactPage() {
                         id="storeBranch"
                         value={formData.storeBranch}
                         onChange={(e) => setFormData({ ...formData, storeBranch: e.target.value })}
+                        disabled={isSubmitting}
                       >
                         <option value="Trichy">Trichy (Main Store)</option>
                         <option value="Chennai">Chennai (T. Nagar Store)</option>
@@ -199,6 +267,7 @@ export default function ContactPage() {
                         id="inquiryType"
                         value={formData.inquiryType}
                         onChange={(e) => setFormData({ ...formData, inquiryType: e.target.value })}
+                        disabled={isSubmitting}
                       >
                         <option value="Product Inquiry">Product Inquiry / Price</option>
                         <option value="Service Request">Warranty / Spare Part Request</option>
@@ -216,13 +285,31 @@ export default function ContactPage() {
                       required
                       placeholder="Please let us know how we can help you..."
                       value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, message: e.target.value });
+                        if (submitError) setSubmitError(null);
+                      }}
+                      disabled={isSubmitting}
                     />
                   </div>
 
-                  <button type="submit" className={`btn btn-primary btn-lg ${styles.submitBtn}`}>
-                    <Send size={18} />
-                    <span>Submit Inquiry</span>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={`btn btn-primary btn-lg ${styles.submitBtn}`}
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>Sending Message...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send size={18} />
+                        <span>Submit Inquiry</span>
+                      </>
+                    )}
                   </button>
                 </form>
               )}
