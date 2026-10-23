@@ -826,7 +826,7 @@ export function compileMerchantReturnEmailHtml(order: any, returnRequest: any): 
                   <tr>
                     <td style="padding:6px 0; color:#64748b;"><strong>Policy Agreement:</strong></td>
                     <td style="padding:6px 0; color:#15803d; font-weight:600;">
-                      ✓ Customer agreed to 3-Day Return / 5-Day Replacement terms
+                      ✓ Customer agreed to 3-Day Return &amp; Replacement terms
                     </td>
                   </tr>
                 </table>
@@ -985,7 +985,7 @@ export function compileCustomerReturnResolutionEmailHtml(order: any, returnReque
       <div style="background-color:#fef2f2;border:1px solid #fee2e2;border-radius:12px;padding:16px;margin-bottom:20px;">
         <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#991b1b;">Review Findings:</p>
         <p style="margin:0;font-size:13px;color:#7f1d1d;line-height:1.5;">
-          ${escapeHtml(adminNotes || 'After inspection against our 5-Day Replacement Policy, this return request could not be accepted.')}
+          ${escapeHtml(adminNotes || 'After inspection against our 3-Day Return & Replacement Policy, this return request could not be accepted.')}
         </p>
       </div>
       <p style="font-size:13px;color:${THEME.muted};line-height:1.5;margin:0 0 16px;">
@@ -993,7 +993,7 @@ export function compileCustomerReturnResolutionEmailHtml(order: any, returnReque
       </p>
     `;
     text = `Hello ${firstName},\n\nRegarding your return request for "${item.name}" (Order #${orderNumber}):\n\n` +
-      `Update: ${adminNotes || 'This return request could not be accepted under our 5-day replacement policy.'}\n\n` +
+      `Update: ${adminNotes || 'This return request could not be accepted under our 3-day return & replacement policy.'}\n\n` +
       `Customer Support: ${STORE_CONFIG.phoneDisplay}\nSri Ram & Co`;
   } else if (status === 'refunded') {
     subject = `Refund Credited: Order #${orderNumber}`;

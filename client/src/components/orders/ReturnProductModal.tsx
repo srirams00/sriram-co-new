@@ -223,7 +223,7 @@ export default function ReturnProductModal({
                   <tr>
                     <td style="padding:6px 0; color:#64748b;"><strong>Policy Agreement:</strong></td>
                     <td style="padding:6px 0; color:#15803d; font-weight:600;">
-                      ✓ Customer agreed to 3-Day Return / 5-Day Replacement terms
+                      ✓ Customer agreed to 3-Day Return &amp; Replacement terms
                     </td>
                   </tr>
                 </table>

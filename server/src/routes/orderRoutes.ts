@@ -785,7 +785,7 @@ router.post('/:idOrNumber/cancel', orderMutationLimiter, authenticateIfPresent, 
 
     if (order.orderStatus === 'shipped' || order.orderStatus === 'out_for_delivery' || order.orderStatus === 'delivered') {
       res.status(400).json({
-        message: `Order cannot be cancelled because it has already ${order.orderStatus === 'shipped' ? 'shipped' : order.orderStatus === 'out_for_delivery' ? 'gone out for delivery' : 'been delivered'}. In accordance with Sri Ram & Co store policy, please refer to our 3-Day Return / 5-Day Replacement Policy once your delivery arrives.`,
+        message: `Order cannot be cancelled because it has already ${order.orderStatus === 'shipped' ? 'shipped' : order.orderStatus === 'out_for_delivery' ? 'gone out for delivery' : 'been delivered'}. In accordance with Sri Ram & Co store policy, please refer to our 3-Day Return & Replacement Policy once your delivery arrives.`,
       });
       return;
     }
