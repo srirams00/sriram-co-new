@@ -366,6 +366,7 @@ export default function OrdersPage() {
       }
 
       setCancelModalOrder(null);
+      setActiveTab('all');
       setSuccessToast(response.message || `Order #${updated.orderNumber} cancelled successfully. Refund initiated.`);
       setTimeout(() => setSuccessToast(null), 8000);
     } catch (err: unknown) {

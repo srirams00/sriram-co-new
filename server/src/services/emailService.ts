@@ -98,9 +98,10 @@ export async function sendEmail(payload: SendEmailPayload, relayBaseUrl?: string
   // CRITICAL: Always use https://www.sriramandco.in as the production relay endpoint.
   // Preview domains like review.sriramandco.in or *.vercel.app have Vercel Authentication enabled,
   // which blocks backend-to-frontend HTTP calls with 401 Protected Deployment.
-  const relayUrl = process.env.NODE_ENV === 'production'
-    ? 'https://www.sriramandco.in'
-    : (relayBaseUrl || process.env.CLIENT_URL);
+  const relayUrl =
+    process.env.EMAIL_RELAY_URL ||
+    relayBaseUrl ||
+    (process.env.NODE_ENV === 'production' ? 'https://www.sriramandco.in' : (process.env.CLIENT_URL || 'https://www.sriramandco.in'));
   if (relayUrl && process.env.NODE_ENV !== 'test') {
     try {
       const cleanRelayUrl = relayUrl.replace(/\/+$/, '');
@@ -109,10 +110,12 @@ export async function sendEmail(payload: SendEmailPayload, relayBaseUrl?: string
         signal: AbortSignal.timeout(8000),
         headers: {
           'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) SriRamAndCo/1.0',
           'x-relay-secret': EMAIL_RELAY_SECRET,
+          'x-src-secret': EMAIL_RELAY_SECRET,
         },
         body: JSON.stringify({
-          templateType: 'return_request',
+          templateType: 'system_relay',
           secret: EMAIL_RELAY_SECRET,
           to: sanitizeEmailHeader(to),
           subject: sanitizeEmailHeader(subject),

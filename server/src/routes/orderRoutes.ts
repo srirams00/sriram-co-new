@@ -462,7 +462,10 @@ router.get('/mine', authenticate, async (req: AuthRequest, res: Response): Promi
 
     const orders = await Order.find({
       user: req.user._id,
-      paymentStatus: { $in: ['paid', 'refunded', 'refund_initiated'] },
+      $or: [
+        { paymentStatus: { $in: ['paid', 'refunded', 'refund_initiated'] } },
+        { orderStatus: { $in: ['placed', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'return_requested', 'returned', 'cancelled'] } },
+      ],
     }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
@@ -475,18 +478,26 @@ router.get('/mine', authenticate, async (req: AuthRequest, res: Response): Promi
 router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
     const { status, search } = req.query;
-    const query: FilterQuery<IOrder> = {
-      paymentStatus: { $in: ['paid', 'refunded', 'refund_initiated'] },
-    };
+    const query: FilterQuery<IOrder> = {};
 
     if (status && status !== 'all') {
       if (status === 'placed') {
         query.orderStatus = { $in: ['placed', 'confirmed'] };
       } else if (status === 'shipped') {
         query.orderStatus = { $in: ['shipped', 'processing'] };
+      } else if (status === 'return_requested') {
+        query.$or = [
+          { orderStatus: 'return_requested' },
+          { 'returnRequest.status': 'requested' },
+        ];
       } else {
         query.orderStatus = status;
       }
+    } else {
+      query.$or = [
+        { paymentStatus: { $in: ['paid', 'refunded', 'refund_initiated'] } },
+        { orderStatus: { $in: ['placed', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'return_requested', 'returned', 'cancelled'] } },
+      ];
     }
 
     // ReDoS-safe search input escaping and length limitation
@@ -507,7 +518,10 @@ router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void>
 
     // Calculate aggregated stats across all orders
     const allOrders = await Order.find({
-      paymentStatus: { $in: ['paid', 'refunded', 'refund_initiated'] },
+      $or: [
+        { paymentStatus: { $in: ['paid', 'refunded', 'refund_initiated'] } },
+        { orderStatus: { $in: ['placed', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'return_requested', 'returned', 'cancelled'] } },
+      ],
     });
     const totalOrders = allOrders.length;
     const totalRevenue = allOrders.reduce((sum, o) => sum + (o.pricing?.total || 0), 0);
@@ -774,9 +788,9 @@ router.post('/:idOrNumber/cancel', orderMutationLimiter, authenticateIfPresent, 
       note: 'Cancellation registered. Store owner notified for manual review/processing.',
     };
 
-    if (order.paymentStatus === 'paid') {
+    if (order.paymentStatus === 'paid' || order.razorpayPaymentId) {
       order.paymentStatus = 'refund_initiated';
-    } else {
+    } else if (order.paymentStatus !== 'refunded' && order.paymentStatus !== 'refund_initiated') {
       order.paymentStatus = 'failed';
     }
     order.orderStatus = 'cancelled';
@@ -785,29 +799,30 @@ router.post('/:idOrNumber/cancel', orderMutationLimiter, authenticateIfPresent, 
     order.refundDetails = refundInfo;
 
     const savedOrder = await order.save();
-    // 1. Asynchronously dispatch cancellation alert to store owner (ramkumar@sriramandco.in)
+    // 1. Dispatch cancellation alerts to store owner (ramkumar@sriramandco.in) and customer
     const merchantEmail = compileMerchantCancellationEmailHtml(savedOrder, {
       reason: cancellationReason,
       cancelledBy,
       refundInfo,
     });
-    sendEmail({
-      to: 'ramkumar@sriramandco.in',
-      replyTo: order.customerInfo?.email || 'support@sriramandco.com',
-      subject: merchantEmail.subject,
-      html: merchantEmail.html,
-      text: merchantEmail.text,
-    }).catch((err) =>
-      console.warn('[Zoho Mail] Could not dispatch merchant cancellation alert:', getErrorMessage(err))
-    );
 
-    // 2. Asynchronously dispatch Order Cancelled email to customer via Zoho Mail
-    sendOrderLifecycleEmail(savedOrder, 'cancelled', {
-      cancellationReason,
-      cancelledBy,
-    }).catch((err) =>
-      console.warn('[Zoho Mail] Could not dispatch cancellation email:', getErrorMessage(err))
-    );
+    try {
+      await Promise.allSettled([
+        sendEmail({
+          to: 'ramkumar@sriramandco.in',
+          replyTo: order.customerInfo?.email || 'support@sriramandco.com',
+          subject: merchantEmail.subject,
+          html: merchantEmail.html,
+          text: merchantEmail.text,
+        }),
+        sendOrderLifecycleEmail(savedOrder, 'cancelled', {
+          cancellationReason,
+          cancelledBy,
+        }),
+      ]);
+    } catch (emailErr) {
+      console.warn('[Zoho Mail] Cancellation email notification error:', getErrorMessage(emailErr));
+    }
 
     res.json({
       success: true,
@@ -1107,23 +1122,26 @@ router.post('/:idOrNumber/return', orderMutationLimiter, authenticateIfPresent, 
 
     // 7. Dispatch merchant alert to ramkumar@sriramandco.in with customer email as replyTo
     const merchantEmail = compileMerchantReturnEmailHtml(order, order.returnRequest);
-    sendEmail({
-      to: 'ramkumar@sriramandco.in',
-      replyTo: order.customerInfo?.email || 'support@sriramandco.com',
-      subject: merchantEmail.subject,
-      html: merchantEmail.html,
-      text: merchantEmail.text,
-    }).catch((err) => console.warn('[Zoho Mail] Merchant return alert notice:', getErrorMessage(err)));
-
-    // 8. If customer email exists, dispatch customer acknowledgment email
-    if (order.customerInfo?.email && order.customerInfo.email.includes('@')) {
-      const customerEmail = compileCustomerReturnAckEmailHtml(order, order.returnRequest);
-      sendEmail({
-        to: order.customerInfo.email,
-        subject: customerEmail.subject,
-        html: customerEmail.html,
-        text: customerEmail.text,
-      }).catch((err) => console.warn('[Zoho Mail] Customer return ack notice:', getErrorMessage(err)));
+    try {
+      await Promise.allSettled([
+        sendEmail({
+          to: 'ramkumar@sriramandco.in',
+          replyTo: order.customerInfo?.email || 'support@sriramandco.com',
+          subject: merchantEmail.subject,
+          html: merchantEmail.html,
+          text: merchantEmail.text,
+        }),
+        order.customerInfo?.email && order.customerInfo.email.includes('@')
+          ? sendEmail({
+              to: order.customerInfo.email,
+              subject: compileCustomerReturnAckEmailHtml(order, order.returnRequest).subject,
+              html: compileCustomerReturnAckEmailHtml(order, order.returnRequest).html,
+              text: compileCustomerReturnAckEmailHtml(order, order.returnRequest).text,
+            })
+          : Promise.resolve({ success: true }),
+      ]);
+    } catch (returnEmailErr) {
+      console.warn('[Zoho Mail] Return alert notification error:', getErrorMessage(returnEmailErr));
     }
 
     res.json({

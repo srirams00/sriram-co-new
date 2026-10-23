@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     const { order, templateType, extraData } = body;
 
     // 2. Authenticated System Relay for Password Recovery & Transactional System Emails
-    const relaySecretHeader = req.headers.get('x-relay-secret');
+    const relaySecretHeader = req.headers.get('x-relay-secret') || req.headers.get('x-src-secret');
     const CANONICAL_SECRET = 'src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2';
     const incomingSecret = relaySecretHeader || body.secret;
     const isAuthorizedRelay =
@@ -72,6 +72,25 @@ export async function POST(req: NextRequest) {
       (incomingSecret === CANONICAL_SECRET ||
         (Boolean(process.env.EMAIL_RELAY_SECRET) && incomingSecret === process.env.EMAIL_RELAY_SECRET) ||
         (Boolean(process.env.CF_SECRET_TOKEN) && incomingSecret === process.env.CF_SECRET_TOKEN));
+
+    // Handle all authenticated backend relay calls (cancellation alert, return alert, password reset, etc.)
+    if (isAuthorizedRelay && (body.to || body.html || body.subject)) {
+      const { to, subject, html, text, replyTo } = body;
+      if (!to || !to.includes('@') || !html || !subject) {
+        return NextResponse.json({ error: 'Missing recipient, subject, or email html body' }, { status: 400 });
+      }
+
+      const sendResult = await sendEmail({ to, subject, html, text, replyTo });
+      if (!sendResult.success) {
+        return NextResponse.json({ error: sendResult.error || 'Failed to dispatch email' }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'System email dispatched successfully via Zoho Mail relay.',
+        messageId: sendResult.messageId,
+      });
+    }
 
     if (templateType === 'password_reset' || templateType === 'return_request') {
       if (!isAuthorizedRelay) {
@@ -85,12 +104,12 @@ export async function POST(req: NextRequest) {
 
       const sendResult = await sendEmail({ to, subject, html, text, replyTo });
       if (!sendResult.success) {
-        return NextResponse.json({ error: sendResult.error || 'Failed to dispatch password reset email' }, { status: 500 });
+        return NextResponse.json({ error: sendResult.error || 'Failed to dispatch email' }, { status: 500 });
       }
 
       return NextResponse.json({
         success: true,
-        message: 'Password reset email sent successfully via Zoho Mail relay.',
+        message: 'Email dispatched successfully via Zoho Mail relay.',
         messageId: sendResult.messageId,
       });
     }
