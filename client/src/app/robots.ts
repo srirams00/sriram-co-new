@@ -26,8 +26,6 @@ export default function robots(): MetadataRoute.Robots {
           '/admin/*',
           '/f0d06b7799107f8da21a05984c29bb10',
           '/f0d06b7799107f8da21a05984c29bb10/*',
-          '/48191d90cc476d1c72aaec9997cc977c',
-          '/48191d90cc476d1c72aaec9997cc977c/*',
           '/account',
           '/account/*',
           '/checkout',

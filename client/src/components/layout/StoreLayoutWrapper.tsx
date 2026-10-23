@@ -9,7 +9,6 @@ import CartDrawer from '@/components/cart/CartDrawer';
 
 const ADMIN_SLUGS = [
   'f0d06b7799107f8da21a05984c29bb10',
-  '48191d90cc476d1c72aaec9997cc977c',
 ];
 
 export default function StoreLayoutWrapper({

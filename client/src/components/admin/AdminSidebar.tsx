@@ -7,7 +7,7 @@ import { LayoutDashboard, Package, ShoppingBag, Users, LogOut, MessageSquare } f
 import { api } from '@/lib/api';
 import styles from './AdminSidebar.module.css';
 
-const DASHBOARD_ROUTE = '/48191d90cc476d1c72aaec9997cc977c';
+const DASHBOARD_ROUTE = '/admin';
 const ADMIN_LOGIN_ROUTE = '/f0d06b7799107f8da21a05984c29bb10';
 
 export default function AdminSidebar() {
@@ -41,7 +41,7 @@ export default function AdminSidebar() {
     router.push(ADMIN_LOGIN_ROUTE);
   };
 
-  const isDashboardActive = pathname.startsWith(DASHBOARD_ROUTE);
+  const isDashboardActive = pathname === DASHBOARD_ROUTE;
   const isProductsActive = pathname.startsWith('/admin/products');
 
   return (
