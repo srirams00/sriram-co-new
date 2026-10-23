@@ -530,6 +530,40 @@ router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void>
   }
 });
 
+router.delete('/:id', requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      res.status(400).json({ message: 'Invalid order ID.' });
+      return;
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      res.status(404).json({ message: 'Order not found.' });
+      return;
+    }
+
+    if (!isOrderEligibleForDeletion(order.orderStatus)) {
+      res.status(409).json({ message: 'Only delivered orders can be deleted.' });
+      return;
+    }
+
+    const deletedOrder = await Order.findOneAndDelete({
+      _id: order._id,
+      orderStatus: 'delivered',
+    });
+    if (!deletedOrder) {
+      res.status(409).json({ message: 'The order changed before it could be deleted. Refresh and try again.' });
+      return;
+    }
+
+    res.json({ success: true, orderNumber: deletedOrder.orderNumber });
+  } catch (error) {
+    console.error('Admin order deletion error:', error);
+    res.status(500).json({ message: 'Could not delete the order.' });
+  }
+});
+
 // GET /api/orders/:orderNumber - Fetch order details by order number (Protected / PII-sanitized for guests)
 router.get('/:orderNumber', authenticateIfPresent, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -1108,6 +1142,10 @@ router.post('/:idOrNumber/return', orderMutationLimiter, authenticateIfPresent, 
 export interface AdminReturnStatusInput {
   status: 'approved' | 'rejected' | 'picked_up' | 'refunded';
   adminNotes?: string;
+}
+
+export function isOrderEligibleForDeletion(orderStatus: string): boolean {
+  return orderStatus === 'delivered';
 }
 
 export function handleAdminReturnStatusUpdate(order: any, input: AdminReturnStatusInput) {

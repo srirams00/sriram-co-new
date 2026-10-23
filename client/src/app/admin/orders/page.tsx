@@ -20,6 +20,7 @@ import {
   Send,
   UserCheck,
   RotateCcw,
+  Trash2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
@@ -59,6 +60,7 @@ export default function AdminOrdersPage() {
   const [sendingEmailKey, setSendingEmailKey] = useState<string | null>(null);
   const [returnAdminNotes, setReturnAdminNotes] = useState('');
   const [updatingReturnId, setUpdatingReturnId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -91,6 +93,29 @@ export default function AdminOrdersPage() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchOrders();
+  };
+
+  const handleDeleteOrder = async (order: Order) => {
+    if (order.orderStatus !== 'delivered') {
+      showToast('Only delivered orders can be deleted.', 'error');
+      return;
+    }
+    if (!window.confirm(`Permanently delete delivered order ${order.orderNumber}? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingId(order.id);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('src_auth_token') || undefined : undefined;
+      await api.deleteAdminOrder(order.id, token);
+      setOrders((prev) => prev.filter((item) => item.id !== order.id));
+      showToast(`Delivered order ${order.orderNumber} was permanently deleted.`);
+      await fetchOrders();
+    } catch (err: any) {
+      showToast(`Failed to delete order: ${err.message || 'Network error'}`, 'error');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleStatusChange = async (
@@ -495,6 +520,18 @@ export default function AdminOrdersPage() {
                           <Mail size={12} />
                           <span>Email</span>
                         </button>
+                        {order.orderStatus === 'delivered' && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteOrder(order)}
+                            className={styles.deleteBtn}
+                            title="Permanently delete this delivered order"
+                            disabled={deletingId === order.id}
+                          >
+                            <Trash2 size={12} />
+                            <span>{deletingId === order.id ? 'Deleting…' : 'Delete'}</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

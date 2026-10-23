@@ -653,6 +653,22 @@ export const api = {
     return res.json();
   },
 
+  async deleteAdminOrder(id: string, token?: string): Promise<{ success: boolean; orderNumber: string }> {
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers,
+    });
+
+    if (!res.ok) {
+      const errorMsg = await extractErrorMessage(res, 'Failed to delete order');
+      throw new Error(errorMsg);
+    }
+    return res.json();
+  },
+
   async updateOrderStatus(
     id: string,
     orderStatus?: string,
@@ -769,6 +785,22 @@ export const api = {
 
     if (!res.ok) {
       const errorMsg = await extractErrorMessage(res, 'Failed to fetch customers');
+      throw new Error(errorMsg);
+    }
+    return res.json();
+  },
+
+  async deleteAdminCustomer(id: string, token?: string): Promise<{ success: boolean; message: string }> {
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/auth/customers/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers,
+    });
+
+    if (!res.ok) {
+      const errorMsg = await extractErrorMessage(res, 'Failed to delete customer account');
       throw new Error(errorMsg);
     }
     return res.json();

@@ -13,6 +13,7 @@ import {
   Calendar,
   AlertCircle,
   ShieldCheck,
+  Trash2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
@@ -29,10 +30,13 @@ export default function AdminCustomersPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(null);
 
   const fetchCustomers = async () => {
     setLoading(true);
     setErrorMsg(null);
+    setSuccessMsg(null);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('src_auth_token') || undefined : undefined;
       const res = await api.getAdminCustomers(token, searchQuery);
@@ -44,6 +48,32 @@ export default function AdminCustomersPage() {
       setErrorMsg(err.message || 'Failed to fetch customer directory');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteCustomer = async (customer: Customer) => {
+    const confirmed = window.confirm(
+      `Permanently delete the account for ${customer.name} (${customer.email})? Their sign-in and profile will be removed, but their order history will be kept.`
+    );
+    if (!confirmed) return;
+
+    setDeletingCustomerId(customer.id);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('src_auth_token') || undefined : undefined;
+      const result = await api.deleteAdminCustomer(customer.id, token);
+      setCustomers((prev) => prev.filter((item) => item.id !== customer.id));
+      setStats((prev) => ({
+        totalCustomers: Math.max(0, prev.totalCustomers - 1),
+        activeCustomers: Math.max(0, prev.activeCustomers - (customer.ordersCount > 0 ? 1 : 0)),
+        totalRevenue: Math.max(0, prev.totalRevenue - customer.totalSpent),
+      }));
+      setSuccessMsg(result.message);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to delete customer account');
+    } finally {
+      setDeletingCustomerId(null);
     }
   };
 
@@ -88,6 +118,12 @@ export default function AdminCustomersPage() {
         <div style={{ background: '#FEECEC', color: '#DC2626', padding: '12px 16px', borderRadius: '10px', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <AlertCircle size={16} />
           <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {successMsg && (
+        <div role="status" style={{ background: '#ECFDF5', color: '#065F46', padding: '12px 16px', borderRadius: '10px', fontSize: '0.86rem' }}>
+          {successMsg}
         </div>
       )}
 
@@ -163,6 +199,7 @@ export default function AdminCustomersPage() {
                 <th>Orders</th>
                 <th>Total Spend</th>
                 <th>Joined</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -211,6 +248,19 @@ export default function AdminCustomersPage() {
                         year: 'numeric',
                       })}
                     </span>
+                  </td>
+
+                  <td>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCustomer(customer)}
+                      className={styles.deleteBtn}
+                      title={`Delete ${customer.name}'s account`}
+                      disabled={deletingCustomerId !== null}
+                    >
+                      <Trash2 size={13} />
+                      <span>{deletingCustomerId === customer.id ? 'Deleting…' : 'Delete'}</span>
+                    </button>
                   </td>
                 </tr>
               ))}

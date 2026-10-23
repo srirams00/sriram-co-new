@@ -585,4 +585,36 @@ router.get('/customers', requireAdmin, async (req: Request, res: Response, next:
   }
 });
 
+router.delete('/customers/:id', requireAdmin, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      throw new AppError('Invalid customer ID.', 400, 'INVALID_CUSTOMER_ID');
+    }
+
+    const customer = await User.findById(req.params.id);
+    if (!customer || !isCustomerAccountDeletable(customer.role)) {
+      throw new AppError('Customer account not found.', 404, 'CUSTOMER_NOT_FOUND');
+    }
+
+    const deletedCustomer = await User.findOneAndDelete({
+      _id: customer._id,
+      role: 'customer',
+    });
+    if (!deletedCustomer) {
+      throw new AppError('Customer account changed before deletion. Refresh and try again.', 409, 'CUSTOMER_CHANGED');
+    }
+
+    res.json({
+      success: true,
+      message: 'Customer account deleted. Existing order records were kept.',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+export function isCustomerAccountDeletable(role: string): boolean {
+  return role === 'customer';
+}
+
 export default router;

@@ -238,6 +238,32 @@
   color: #68786D;
 }
 
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  background: #FEF2F2;
+  color: #B91C1C;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.deleteBtn:hover:not(:disabled) {
+  border-color: #B91C1C;
+  background: #B91C1C;
+  color: #FFFFFF;
+}
+
+.deleteBtn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .emptyState {
   padding: 60px 20px;
   text-align: center;
