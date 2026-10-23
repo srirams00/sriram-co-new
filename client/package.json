@@ -18,7 +18,8 @@
     "next": "^15.5.28",
     "nodemailer": "^10.1.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "sriram-and-co-workspace": "file:.."
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
