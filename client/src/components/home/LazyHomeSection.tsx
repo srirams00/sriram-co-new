@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { STORES } from '@/data/stores';
+import type { Category } from '@/types/product';
 import styles from './LazyHomeSection.module.css';
 
 type HomeSection =
@@ -24,17 +25,20 @@ const sectionLabels: Record<HomeSection, string> = {
   contact: 'Contact our store',
 };
 
-async function loadSection(section: HomeSection): Promise<ReactNode> {
+async function loadSection(
+  section: HomeSection,
+  categoryData?: Category[]
+): Promise<ReactNode> {
   switch (section) {
     case 'specialProducts': {
       const { default: SpecialProductsGrid } = await import('./SpecialProductsGrid');
       return <SpecialProductsGrid />;
     }
     case 'categories': {
-      const [{ api }, { default: CategoryGrid }] = await Promise.all([
-        import('@/lib/api'),
-        import('./CategoryGrid'),
-      ]);
+      const { default: CategoryGrid } = await import('./CategoryGrid');
+      if (categoryData) return <CategoryGrid categories={categoryData} />;
+
+      const { api } = await import('@/lib/api');
       return <CategoryGrid categories={await api.getCategories()} />;
     }
     case 'bestSellers': {
@@ -66,7 +70,13 @@ async function loadSection(section: HomeSection): Promise<ReactNode> {
   }
 }
 
-export default function LazyHomeSection({ section }: { section: HomeSection }) {
+export default function LazyHomeSection({
+  section,
+  categoryData,
+}: {
+  section: HomeSection;
+  categoryData?: Category[];
+}) {
   const sectionRef = useRef<HTMLElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
   const [content, setContent] = useState<ReactNode>(null);
@@ -104,7 +114,7 @@ export default function LazyHomeSection({ section }: { section: HomeSection }) {
     let cancelled = false;
     setError(null);
 
-    loadSection(section)
+    loadSection(section, categoryData)
       .then((loadedContent) => {
         if (!cancelled) setContent(loadedContent);
       })

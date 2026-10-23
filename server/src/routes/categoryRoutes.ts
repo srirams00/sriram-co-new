@@ -24,6 +24,29 @@ const CATEGORY_SLUG_ALIAS: Record<string, string> = {
   'personal': 'personal-care',
 };
 
+function buildProductFilter(category: Pick<ICategory, 'slug' | 'name'>) {
+  return {
+    isArchived: { $ne: true },
+    $or: [
+      { categorySlug: category.slug },
+      { category: new RegExp(`^${category.name}$`, 'i') },
+    ],
+  };
+}
+
+async function getRepresentativeProductImage(
+  productFilter: ReturnType<typeof buildProductFilter>
+): Promise<string | undefined> {
+  const representativeProduct = await Product.findOne({
+    ...productFilter,
+    image: { $exists: true, $ne: '' },
+  })
+    .select('image')
+    .sort({ reviewCount: -1, rating: -1, createdAt: -1 });
+
+  return representativeProduct?.image;
+}
+
 // GET /api/categories - List all categories
 router.get('/', async (_req: Request, res: Response): Promise<void> => {
   try {
@@ -37,20 +60,14 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
     const categories = await Category.find({}).sort({ name: 1 });
     const categoriesWithCount = await Promise.all(
       categories.map(async (cat) => {
-        const productFilter = {
-          isArchived: { $ne: true },
-          $or: [
-            { categorySlug: cat.slug },
-            { category: new RegExp(`^${cat.name}$`, 'i') },
-          ],
-        };
-        const [count, representativeProduct] = await Promise.all([
+        const productFilter = buildProductFilter(cat);
+        const [count, image] = await Promise.all([
           Product.countDocuments(productFilter),
-          Product.findOne(productFilter).select('image').sort({ createdAt: 1 }),
+          getRepresentativeProductImage(productFilter),
         ]);
         const obj = cat.toJSON();
         obj.itemCount = count;
-        if (representativeProduct?.image) obj.image = representativeProduct.image;
+        if (image) obj.image = image;
         return obj;
       })
     );
@@ -86,21 +103,15 @@ router.get('/:slug', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const productFilter = {
-      isArchived: { $ne: true },
-      $or: [
-        { categorySlug: category.slug },
-        { category: new RegExp(`^${category.name}$`, 'i') },
-      ],
-    };
-    const [count, representativeProduct] = await Promise.all([
+    const productFilter = buildProductFilter(category);
+    const [count, image] = await Promise.all([
       Product.countDocuments(productFilter),
-      Product.findOne(productFilter).select('image').sort({ createdAt: 1 }),
+      getRepresentativeProductImage(productFilter),
     ]);
 
     const categoryObj = category.toJSON();
     categoryObj.itemCount = count;
-    if (representativeProduct?.image) categoryObj.image = representativeProduct.image;
+    if (image) categoryObj.image = image;
 
     cacheService.set(cacheKey, categoryObj, 60);
     res.json(categoryObj);
