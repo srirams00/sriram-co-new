@@ -37,15 +37,20 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
     const categories = await Category.find({}).sort({ name: 1 });
     const categoriesWithCount = await Promise.all(
       categories.map(async (cat) => {
-        const count = await Product.countDocuments({
+        const productFilter = {
           isArchived: { $ne: true },
           $or: [
             { categorySlug: cat.slug },
             { category: new RegExp(`^${cat.name}$`, 'i') },
           ],
-        });
+        };
+        const [count, representativeProduct] = await Promise.all([
+          Product.countDocuments(productFilter),
+          Product.findOne(productFilter).select('image').sort({ createdAt: 1 }),
+        ]);
         const obj = cat.toJSON();
         obj.itemCount = count;
+        if (representativeProduct?.image) obj.image = representativeProduct.image;
         return obj;
       })
     );
@@ -81,16 +86,21 @@ router.get('/:slug', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const count = await Product.countDocuments({
+    const productFilter = {
       isArchived: { $ne: true },
       $or: [
         { categorySlug: category.slug },
         { category: new RegExp(`^${category.name}$`, 'i') },
       ],
-    });
+    };
+    const [count, representativeProduct] = await Promise.all([
+      Product.countDocuments(productFilter),
+      Product.findOne(productFilter).select('image').sort({ createdAt: 1 }),
+    ]);
 
     const categoryObj = category.toJSON();
     categoryObj.itemCount = count;
+    if (representativeProduct?.image) categoryObj.image = representativeProduct.image;
 
     cacheService.set(cacheKey, categoryObj, 60);
     res.json(categoryObj);
