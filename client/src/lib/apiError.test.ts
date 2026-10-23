@@ -40,10 +40,32 @@ describe('API Error Extraction Suite', () => {
     assert.equal(message, 'Forbidden: Admin privileges required');
   });
 
+  it('extracts data.message on 404 response for unregistered email during password reset', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        success: false,
+        message: 'No account found with this email address. Please check your email or register for a new account.',
+      }),
+      { status: 404, headers: { 'Content-Type': 'application/json' } }
+    );
+
+    const message = await extractErrorMessage(mockResponse, 'Failed to send reset link');
+    assert.equal(
+      message,
+      'No account found with this email address. Please check your email or register for a new account.'
+    );
+  });
+
   it('provides helpful human message for 401 Unauthorized when body is empty or non-JSON', async () => {
     const mockResponse = new Response('Unauthorized', { status: 401 });
     const message = await extractErrorMessage(mockResponse, 'Failed to create product');
     assert.equal(message, 'Your session has expired or authentication is required. Please log in again.');
+  });
+
+  it('provides helpful human message for 404 Not Found when body is empty or non-JSON', async () => {
+    const mockResponse = new Response('Not Found', { status: 404 });
+    const message = await extractErrorMessage(mockResponse, 'Failed to fetch resource');
+    assert.equal(message, 'The requested resource or endpoint was not found.');
   });
 
   it('provides helpful human message for 413 Payload Too Large', async () => {

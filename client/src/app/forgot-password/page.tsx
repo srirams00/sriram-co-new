@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, CheckCircle, ArrowLeft, Mail } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import styles from '../login/auth.module.css';
 
@@ -30,6 +30,9 @@ export default function ForgotPasswordPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setEmail(val);
+    if (serverError) {
+      setServerError(null);
+    }
     if (touched) {
       setError(validateEmail(val));
     }
@@ -48,11 +51,15 @@ export default function ForgotPasswordPage() {
 
     try {
       const res = await api.forgotPassword(email.trim());
-      setSuccessMessage(
-        res.message ||
-          'If an account exists with this email address, a password reset link has been dispatched to your inbox.'
-      );
-      setSubmitted(true);
+      if (res && res.success) {
+        setSuccessMessage(
+          res.message ||
+            `A password reset link has been dispatched to ${email.trim()}. Please check your inbox.`
+        );
+        setSubmitted(true);
+      } else {
+        setServerError(res?.message || 'Unable to process your request. Please check the email entered.');
+      }
     } catch (err: any) {
       setServerError(err.message || 'Unable to process your request. Please try again.');
     } finally {
@@ -79,7 +86,7 @@ export default function ForgotPasswordPage() {
               Restore access to your home essentials.
             </h2>
             <p className={styles.editorialDesc}>
-              Quick, secure self-service recovery. Enter your email and we'll dispatch a one-click reset link straight to your inbox.
+              Quick, secure self-service recovery. Enter your email and we&apos;ll dispatch a one-click reset link straight to your inbox.
             </p>
           </div>
 
@@ -102,7 +109,35 @@ export default function ForgotPasswordPage() {
 
           {serverError && (
             <div className={styles.errorBanner} role="alert" aria-live="assertive">
-              {serverError}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  {serverError.toLowerCase().includes('no account') ? (
+                    <>
+                      <strong style={{ display: 'block', marginBottom: '3px' }}>Account Not Found</strong>
+                      <div>{serverError}</div>
+                      <div style={{ marginTop: '8px' }}>
+                        <Link
+                          href="/register"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            color: '#991B1B',
+                            fontWeight: 700,
+                            textDecoration: 'underline',
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          Don&apos;t have an account? Create one now &rarr;
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <div>{serverError}</div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -119,7 +154,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               <p className={styles.authNoticeText}>
-                The password reset link is valid for <strong>1 hour</strong>. Please check your spam or promotions folder if the email doesn't appear in your main inbox shortly.
+                The password reset link is valid for <strong>1 hour</strong>. Please check your spam or promotions folder if the email doesn&apos;t appear in your main inbox shortly.
               </p>
 
               <Link href="/login" className={styles.submitBtn} style={{ textAlign: 'center', textDecoration: 'none' }}>
@@ -127,12 +162,13 @@ export default function ForgotPasswordPage() {
               </Link>
 
               <div className={styles.switchPrompt}>
-                Didn't receive the email?{' '}
+                Didn&apos;t receive the email?{' '}
                 <button
                   type="button"
                   onClick={() => {
                     setSubmitted(false);
                     setSuccessMessage('');
+                    setServerError(null);
                   }}
                   className={styles.switchLink}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}

@@ -269,11 +269,11 @@ router.post('/forgot-password', authLimiter, async (req: Request, res: Response,
 
     const user = await User.findOne({ email: email.toLowerCase() });
 
-    // Anti-enumeration protection (OWASP): always return success even if email does not exist
+    // Verify that an account exists with this email address
     if (!user) {
-      res.json({
-        success: true,
-        message: 'If an account exists with this email address, a password reset link has been dispatched to your inbox.',
+      res.status(404).json({
+        success: false,
+        message: 'No account found with this email address. Please check your email or register for a new account.',
       });
       return;
     }
@@ -326,7 +326,7 @@ router.post('/forgot-password', authLimiter, async (req: Request, res: Response,
 
     res.json({
       success: true,
-      message: 'If an account exists with this email address, a password reset link has been dispatched to your inbox.',
+      message: `A password reset link has been dispatched to ${user.email}. Please check your inbox.`,
       encryptedRelay,
     });
   } catch (error) {

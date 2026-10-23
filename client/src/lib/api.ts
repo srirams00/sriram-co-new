@@ -899,4 +899,40 @@ export const api = {
     }
     return res.json();
   },
+
+  async sendContactInquiry(payload: {
+    name: string;
+    phone: string;
+    email?: string;
+    storeBranch?: string;
+    inquiryType?: string;
+    message: string;
+  }): Promise<{ success: boolean; message: string; messageId?: string }> {
+    // 1. Try Next.js serverless route for direct, zero-delay Zoho Mail transmission
+    try {
+      const localRes = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (localRes.ok) {
+        return await localRes.json();
+      }
+    } catch {
+      // Fallback to Express backend API
+    }
+
+    // 2. Fallback to Express backend endpoint
+    const res = await fetch(`${API_BASE}/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errorMsg = await extractErrorMessage(res, 'Failed to send your message. Please try again.');
+      throw new Error(errorMsg);
+    }
+    return res.json();
+  },
 };
