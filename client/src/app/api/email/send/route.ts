@@ -148,6 +148,40 @@ export async function POST(req: NextRequest) {
 
     const result = await sendOrderLifecycleEmail(order, type, extraData || {});
 
+    // When an order is cancelled, also dispatch the merchant alert to ramkumar@sriramandco.in
+    if (type === 'cancelled') {
+      const cancellationReason = extraData?.cancellationReason || order.cancellationReason || 'Requested prior to dispatch';
+      const cancelledBy = extraData?.cancelledBy || order.cancelledBy || 'customer';
+      const merchantHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #174A2B; background: #ffffff;">
+          <div style="background: #fee2e2; border: 1px solid #fca5a5; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <h2 style="color: #991b1b; margin: 0 0 8px 0; font-size: 1.25rem;">[Order Cancellation Alert] #${order.orderNumber}</h2>
+            <p style="margin: 0; color: #7f1d1d; font-size: 0.95rem;">An order has been cancelled ${cancelledBy === 'customer' ? 'by the customer' : 'by store administration'}.</p>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.95rem;">
+            <tr><td style="padding: 8px 0; color: #68786D;"><strong>Order Number:</strong></td><td style="padding: 8px 0; font-weight: 600;">#${order.orderNumber}</td></tr>
+            <tr><td style="padding: 8px 0; color: #68786D;"><strong>Customer Name:</strong></td><td style="padding: 8px 0;">${order.customerInfo?.name || 'Customer'}</td></tr>
+            <tr><td style="padding: 8px 0; color: #68786D;"><strong>Phone:</strong></td><td style="padding: 8px 0;">${order.customerInfo?.phone || 'N/A'}</td></tr>
+            <tr><td style="padding: 8px 0; color: #68786D;"><strong>Email:</strong></td><td style="padding: 8px 0;">${customerEmail}</td></tr>
+            <tr><td style="padding: 8px 0; color: #68786D;"><strong>Total Amount:</strong></td><td style="padding: 8px 0; font-size: 1.1rem; font-weight: 700; color: #174A2B;">₹${order.pricing?.total || 0}</td></tr>
+            <tr><td style="padding: 8px 0; color: #68786D;"><strong>Cancellation Reason:</strong></td><td style="padding: 8px 0; color: #dc2626; font-weight: 600;">${cancellationReason}</td></tr>
+            <tr><td style="padding: 8px 0; color: #68786D;"><strong>Payment Gateway ID:</strong></td><td style="padding: 8px 0;"><code>${order.razorpayPaymentId || 'N/A'}</code></td></tr>
+          </table>
+          <div style="background: #fef3c7; border: 1px solid #fde68a; padding: 14px; border-radius: 8px; font-size: 0.85rem; color: #92400e;">
+            <strong>Store Action Note:</strong> Automated Razorpay refunds are disconnected. Please verify payment in Razorpay Dashboard to process manual customer refund.
+          </div>
+        </div>
+      `;
+
+      await sendEmail({
+        to: 'ramkumar@sriramandco.in',
+        replyTo: customerEmail,
+        subject: `[Order Cancelled] #${order.orderNumber} - ₹${order.pricing?.total || 0} - ${cancellationReason}`,
+        html: merchantHtml,
+        text: `Order #${order.orderNumber} cancelled (${cancellationReason}). Customer: ${order.customerInfo?.name} (${order.customerInfo?.phone}). Amount: ₹${order.pricing?.total}. Razorpay ID: ${order.razorpayPaymentId || 'N/A'}`,
+      }).catch((e) => console.warn('[Relay] Merchant cancellation alert dispatch error:', e));
+    }
+
     if (!result.success) {
       return NextResponse.json({ error: result.error || 'Failed to dispatch order email' }, { status: 500 });
     }

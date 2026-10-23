@@ -98,47 +98,57 @@ export async function sendEmail(payload: SendEmailPayload, relayBaseUrl?: string
   // CRITICAL: Always use https://www.sriramandco.in as the production relay endpoint.
   // Preview domains like review.sriramandco.in or *.vercel.app have Vercel Authentication enabled,
   // which blocks backend-to-frontend HTTP calls with 401 Protected Deployment.
-  const relayUrl =
-    process.env.EMAIL_RELAY_URL ||
-    relayBaseUrl ||
-    (process.env.NODE_ENV === 'production' ? 'https://www.sriramandco.in' : (process.env.CLIENT_URL || 'https://www.sriramandco.in'));
-  if (relayUrl && process.env.NODE_ENV !== 'test') {
-    try {
-      const cleanRelayUrl = relayUrl.replace(/\/+$/, '');
-      const res = await fetch(`${cleanRelayUrl}/api/email/send`, {
-        method: 'POST',
-        signal: AbortSignal.timeout(8000),
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) SriRamAndCo/1.0',
-          'x-relay-secret': EMAIL_RELAY_SECRET,
-          'x-src-secret': EMAIL_RELAY_SECRET,
-        },
-        body: JSON.stringify({
-          templateType: 'system_relay',
-          secret: EMAIL_RELAY_SECRET,
-          to: sanitizeEmailHeader(to),
-          subject: sanitizeEmailHeader(subject),
-          replyTo: replyTo ? sanitizeEmailHeader(replyTo) : undefined,
-          html,
-          text,
-        }),
-      });
+  const candidateRelayUrls: string[] = Array.from(
+    new Set(
+      [
+        process.env.EMAIL_RELAY_URL,
+        'https://sriram-co-new.vercel.app',
+        'https://www.sriramandco.in',
+        relayBaseUrl,
+        process.env.CLIENT_URL,
+      ].filter(Boolean) as string[]
+    )
+  );
 
-      if (res.ok) {
-        const data = (await res.json()) as { success: boolean; messageId?: string };
-        console.log(`[Zoho Relay] Email successfully relayed via Vercel to ${to} (MessageId: ${data.messageId})`);
-        return {
-          success: true,
-          messageId: data.messageId,
-          simulated: false,
-        };
-      } else {
-        const errorBody = await res.text();
-        console.warn(`[Zoho Relay] Vercel relay returned status ${res.status} (${errorBody}), falling back to direct SMTP...`);
+  if (process.env.NODE_ENV !== 'test' && candidateRelayUrls.length > 0) {
+    for (const rawUrl of candidateRelayUrls) {
+      try {
+        const cleanRelayUrl = rawUrl.replace(/\/+$/, '');
+        const res = await fetch(`${cleanRelayUrl}/api/email/send`, {
+          method: 'POST',
+          signal: AbortSignal.timeout(8000),
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) SriRamAndCo/1.0',
+            'x-relay-secret': EMAIL_RELAY_SECRET,
+            'x-src-secret': EMAIL_RELAY_SECRET,
+          },
+          body: JSON.stringify({
+            templateType: 'system_relay',
+            secret: EMAIL_RELAY_SECRET,
+            to: sanitizeEmailHeader(to),
+            subject: sanitizeEmailHeader(subject),
+            replyTo: replyTo ? sanitizeEmailHeader(replyTo) : undefined,
+            html,
+            text,
+          }),
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as { success: boolean; messageId?: string };
+          console.log(`[Zoho Relay] Email successfully relayed via ${cleanRelayUrl} to ${to} (MessageId: ${data.messageId})`);
+          return {
+            success: true,
+            messageId: data.messageId,
+            simulated: false,
+          };
+        } else {
+          const errorBody = await res.text();
+          console.warn(`[Zoho Relay] Relay ${cleanRelayUrl} returned status ${res.status} (${errorBody}), trying fallback...`);
+        }
+      } catch (relayErr: any) {
+        console.warn(`[Zoho Relay] Relay ${rawUrl} attempt error: ${relayErr.message}, trying fallback...`);
       }
-    } catch (relayErr: any) {
-      console.warn(`[Zoho Relay] Vercel relay attempt error: ${relayErr.message}, falling back to direct SMTP...`);
     }
   }
 

@@ -62,6 +62,35 @@ export default function ReturnProductModal({
           orderStatus: 'return_requested',
           returnRequest: res.returnRequest,
         };
+        // Dual-dispatch: Trigger immediate Vercel email relay for return request directly from the browser
+        fetch('/api/email/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-relay-secret': 'src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2',
+          },
+          body: JSON.stringify({
+            secret: 'src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2',
+            to: 'ramkumar@sriramandco.in',
+            replyTo: order.customerInfo?.email || 'support@sriramandco.com',
+            subject: `[Return Request] Order #${order.orderNumber} - ${reason}`,
+            html: `<div style="font-family: sans-serif; padding: 20px; color: #174A2B;">
+              <h2 style="color: #dc2626;">Customer Return Request Submitted</h2>
+              <p>A customer has requested a return for Order <strong>#${order.orderNumber}</strong>.</p>
+              <ul>
+                <li><strong>Customer:</strong> ${order.customerInfo?.name || 'Customer'}</li>
+                <li><strong>Phone:</strong> ${order.customerInfo?.phone || 'N/A'}</li>
+                <li><strong>Email:</strong> ${order.customerInfo?.email || 'N/A'}</li>
+                <li><strong>Item:</strong> ${item.name} (Qty: ${item.quantity || 1})</li>
+                <li><strong>Reason:</strong> ${reason}</li>
+                <li><strong>Fault Description:</strong> ${faultDetails.trim()}</li>
+              </ul>
+              <p>Please review and update the status in your Store Admin Panel under <em>Return Requests</em>.</p>
+            </div>`,
+            text: `Return Request for Order #${order.orderNumber}. Item: ${item.name}. Reason: ${reason}. Customer: ${order.customerInfo?.name} (${order.customerInfo?.phone}). Description: ${faultDetails.trim()}`,
+          }),
+        }).catch((e) => console.warn('[Return Relay] Direct return alert error:', e));
+
         onSuccess(updated);
         onClose();
       } else {

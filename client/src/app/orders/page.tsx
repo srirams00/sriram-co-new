@@ -365,6 +365,20 @@ export default function OrdersPage() {
         setSearchedOrder(updated);
       }
 
+      // Dual-dispatch: trigger immediate Vercel email relay directly from the browser
+      fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order: updated,
+          templateType: 'cancelled',
+          extraData: {
+            cancellationReason: finalReason,
+            cancelledBy: 'customer',
+          },
+        }),
+      }).catch((e) => console.warn('[Email Relay] Direct cancellation email notice error:', e));
+
       setCancelModalOrder(null);
       setActiveTab('all');
       setSuccessToast(response.message || `Order #${updated.orderNumber} cancelled successfully. Refund initiated.`);

@@ -31,3 +31,9 @@ services:
         sync: false
       - key: EMAIL_FROM
         value: '"Sri Ram & Co" <ramkumar@sriramandco.in>'
+      - key: EMAIL_RELAY_URL
+        value: https://sriram-co-new.vercel.app
+      - key: EMAIL_RELAY_SECRET
+        value: src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2
+      - key: CF_SECRET_TOKEN
+        value: src_sec_8f93b2a1c0d45e67a9b8c7d6e5f4a3b2
