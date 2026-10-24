@@ -56,10 +56,12 @@ const seedDatabase = async () => {
 
     // Seed Default Users
     console.log('👤 Seeding Default Users (Admin & Customer)...');
+    const adminEmail = process.env.ADMIN_INITIAL_EMAIL || process.env.ADMIN_EMAIL || 'admin.ops@sriramandco.in';
+    const adminPassword = process.env.ADMIN_INITIAL_PASSWORD || process.env.ADMIN_PASSWORD || 'SrC@2026!k9Q$mV7xP#4Wb8zL';
     const adminUser = new User({
-      name: 'Sriram Admin',
-      email: 'admin@sriramandco.com',
-      password: 'AdminPassword123!',
+      name: 'Sri Ram & Co Admin Operations',
+      email: adminEmail,
+      password: adminPassword,
       role: 'admin',
       phone: '+91 93454 03136',
       address: {
@@ -89,7 +91,7 @@ const seedDatabase = async () => {
     await customerUser.save();
 
     console.log('✅ Default users created:');
-    console.log('   - Admin: admin@sriramandco.com / AdminPassword123!');
+    console.log(`   - Admin: ${adminEmail} / ${adminPassword}`);
     console.log('   - Customer: customer@example.com / Customer123!');
 
     console.log('🎉 Database seeding completed successfully!');

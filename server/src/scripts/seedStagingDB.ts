@@ -100,10 +100,12 @@ export async function createAndSeedStagingDB(): Promise<void> {
   console.log(`✅ Seeded ${testimonials.length} testimonials.`);
 
   console.log('👤 Seeding Staging Administrator and Customer...');
+  const adminEmail = process.env.ADMIN_INITIAL_EMAIL || process.env.ADMIN_EMAIL || 'admin.ops@sriramandco.in';
+  const adminPassword = process.env.ADMIN_INITIAL_PASSWORD || process.env.ADMIN_PASSWORD || 'SrC@2026!k9Q$mV7xP#4Wb8zL';
   const adminUser = new User({
-    name: 'Sriram Admin',
-    email: 'admin@sriramandco.com',
-    password: 'AdminPassword123!',
+    name: 'Sri Ram & Co Admin Operations',
+    email: adminEmail,
+    password: adminPassword,
     role: 'admin',
     phone: '+91 93454 03136',
     address: {
