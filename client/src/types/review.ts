@@ -1,4 +1,6 @@
 export interface ProductReview {
+  id?: string;
+  _id?: string;
   customerName: string;
   rating: number;
   comment: string;

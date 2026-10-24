@@ -103,12 +103,12 @@ router.delete('/:reviewId', requireAdmin, async (req: AuthRequest, res: Response
 
 router.get('/:productId', authenticateIfPresent, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const parsedId = ProductIdSchema.safeParse(req.params.productId);
-    if (!parsedId.success) {
-      throw new AppError('Invalid product ID', 400, 'INVALID_PRODUCT_ID');
-    }
+    const rawId = req.params.productId;
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(rawId);
+    const product = isObjectId
+      ? await Product.findById(rawId).select('_id')
+      : await Product.findOne({ slug: rawId.trim().toLowerCase() }).select('_id');
 
-    const product = await Product.findById(parsedId.data).select('_id');
     if (!product) {
       throw new AppError('Product not found', 404, 'PRODUCT_NOT_FOUND');
     }
@@ -126,7 +126,14 @@ router.get('/:productId', authenticateIfPresent, async (req: AuthRequest, res: R
     const canReview = Boolean(req.user) && !existingReview;
 
     res.json({
-      reviews,
+      reviews: reviews.map((r) => ({
+        id: r._id.toString(),
+        _id: r._id.toString(),
+        customerName: r.customerName,
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: r.createdAt,
+      })),
       ...summary,
       canReview,
       hasReviewed: Boolean(existingReview),
@@ -143,19 +150,19 @@ router.post('/:productId', authenticate, reviewLimiter, async (req: AuthRequest,
       throw new AppError('Authentication token required', 401, 'NOT_AUTHORIZED');
     }
 
-    const parsedId = ProductIdSchema.safeParse(req.params.productId);
-    if (!parsedId.success) {
-      throw new AppError('Invalid product ID', 400, 'INVALID_PRODUCT_ID');
+    const rawId = req.params.productId;
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(rawId);
+    const product = isObjectId
+      ? await Product.findById(rawId).select('_id')
+      : await Product.findOne({ slug: rawId.trim().toLowerCase() }).select('_id');
+
+    if (!product) {
+      throw new AppError('Product not found', 404, 'PRODUCT_NOT_FOUND');
     }
 
     const parsedReview = ReviewInputSchema.safeParse(req.body);
     if (!parsedReview.success) {
       throw new AppError('Enter a rating and a review between 10 and 1,000 characters.', 400, 'INVALID_REVIEW');
-    }
-
-    const product = await Product.findById(parsedId.data).select('_id');
-    if (!product) {
-      throw new AppError('Product not found', 404, 'PRODUCT_NOT_FOUND');
     }
 
     const existingReview = await Review.exists({ product: product._id, user: customer._id });
@@ -181,6 +188,8 @@ router.post('/:productId', authenticate, reviewLimiter, async (req: AuthRequest,
 
     res.status(201).json({
       review: {
+        id: review._id.toString(),
+        _id: review._id.toString(),
         customerName: review.customerName,
         rating: review.rating,
         comment: review.comment,

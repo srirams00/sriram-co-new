@@ -21,6 +21,7 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { formatCurrency, calculateDiscount, getWhatsAppUrl, getOptimizedImageUrl, getEffectiveOriginalPrice } from '@/lib/utils';
 import ProductReviews from './ProductReviews';
+import RatingStars from './RatingStars';
 import styles from './ProductDetailsClient.module.css';
 
 interface ProductDetailsClientProps {
@@ -157,6 +158,16 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
           <div className={styles.infoColumn}>
             <div className={styles.categoryBadge}>{product.category}</div>
             <h1 className={styles.productTitle}>{product.name}</h1>
+
+            {product.rating > 0 && (
+              <a href="#reviews-section" className={styles.ratingOverviewLink} aria-label={`Rated ${product.rating.toFixed(1)} out of 5 stars based on ${product.reviewCount} reviews`}>
+                <RatingStars rating={product.rating} size={16} />
+                <span className={styles.ratingOverviewScore}>{product.rating.toFixed(1)}</span>
+                <span className={styles.ratingOverviewCount}>
+                  ({product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'})
+                </span>
+              </a>
+            )}
 
             {/* Price Box */}
             <div className={styles.priceSection}>
@@ -357,7 +368,7 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
           </div>
         )}
 
-        <ProductReviews productId={product.id} />
+        <ProductReviews productId={product.id || product.slug} />
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (

@@ -575,3 +575,35 @@
     gap: 12px;
   }
 }
+
+.ratingOverviewLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: -4px;
+  margin-bottom: 16px;
+  text-decoration: none;
+  width: fit-content;
+  transition: opacity var(--transition-fast);
+}
+
+.ratingOverviewLink:hover {
+  opacity: 0.85;
+}
+
+.ratingOverviewScore {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.ratingOverviewCount {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.ratingOverviewLink:hover .ratingOverviewCount {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
